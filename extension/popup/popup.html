@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>67 Jumpscare</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header class="head">
+    <div class="logo">67</div>
+    <div class="head-text">
+      <h1>Jumpscare</h1>
+      <p id="count">0 scares so far</p>
+    </div>
+    <label class="switch" title="Turn the whole thing on or off">
+      <input type="checkbox" id="enabled">
+      <span class="slider"></span>
+    </label>
+  </header>
+
+  <main>
+    <section class="card">
+      <label class="row" for="volume">
+        <span>Volume</span>
+        <output id="volumeOut">70%</output>
+      </label>
+      <input type="range" id="volume" min="0" max="100" step="5">
+
+      <label class="row" for="durationMs">
+        <span>Duration</span>
+        <output id="durationOut">2.2s</output>
+      </label>
+      <input type="range" id="durationMs" min="800" max="6000" step="100">
+
+      <label class="row" for="cooldownMs">
+        <span>Cooldown</span>
+        <output id="cooldownOut">1.5s</output>
+      </label>
+      <input type="range" id="cooldownMs" min="0" max="10000" step="500">
+    </section>
+
+    <section class="card toggles">
+      <label class="check">
+        <input type="checkbox" id="sound">
+        <span>Scream <em>sound on</em></span>
+      </label>
+      <label class="check">
+        <input type="checkbox" id="looseMatch">
+        <span>Loose match <em>&ldquo;6-7&rdquo; and &ldquo;6 7&rdquo; count too</em></span>
+      </label>
+      <label class="check">
+        <input type="checkbox" id="skipPassword">
+        <span>Spare password fields <em>never fire while typing a password</em></span>
+      </label>
+    </section>
+
+    <section class="card">
+      <label class="row" for="blocklist">
+        <span>Never scare me on</span>
+      </label>
+      <textarea id="blocklist" rows="3" spellcheck="false"
+                placeholder="one hostname per line&#10;mail.google.com&#10;docs.google.com"></textarea>
+    </section>
+
+    <button id="test" class="test">Test it on this tab</button>
+    <p id="status" class="status" role="status"></p>
+  </main>
+
+  <script src="popup.js"></script>
+</body>
+</html>

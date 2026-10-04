@@ -1,0 +1,41 @@
+{
+  "manifest_version": 3,
+  "name": "67 Jumpscare",
+  "version": "1.0.0",
+  "description": "Type 67 anywhere and the 67 kid jumpscares you. Fully offline, no network, no tracking.",
+  "permissions": [
+    "storage"
+  ],
+  "action": {
+    "default_title": "67 Jumpscare",
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "assets/icon16.png",
+      "32": "assets/icon32.png",
+      "48": "assets/icon48.png",
+      "128": "assets/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "assets/icon16.png",
+    "32": "assets/icon32.png",
+    "48": "assets/icon48.png",
+    "128": "assets/icon128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content/scare.js"
+      ],
+      "run_at": "document_start",
+      "all_frames": true,
+      "match_about_blank": true
+    }
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ]
+}
