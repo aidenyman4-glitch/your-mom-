@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "67 Jumpscare",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Type 67 anywhere and the 67 kid jumpscares you. Fully offline, no network, no tracking.",
   "permissions": [
     "storage"

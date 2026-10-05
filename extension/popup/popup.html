@@ -20,6 +20,16 @@
 
   <main>
     <section class="card">
+      <label class="row"><span>Intensity</span></label>
+      <div class="seg" id="intensity" role="radiogroup" aria-label="Intensity">
+        <button type="button" role="radio" data-value="mild">Mild</button>
+        <button type="button" role="radio" data-value="normal">Normal</button>
+        <button type="button" role="radio" data-value="nightmare">Nightmare</button>
+      </div>
+      <p class="seg-note" id="intensityNote"></p>
+    </section>
+
+    <section class="card">
       <label class="row" for="volume">
         <span>Volume</span>
         <output id="volumeOut">70%</output>

@@ -12,6 +12,8 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..');
+const DREAD_MS = 600;   // nightmare intensity: silent beat before the hit
+const SCARE_MS = 2600;  // default duration, after the dread beat
 const EXT = path.join(ROOT, 'extension');
 const FIXTURE = path.join(__dirname, 'fixture.html');
 const PORT = Number(process.env.PORT) || 8731;
@@ -71,6 +73,8 @@ function serve() {
 
   // --- the headline behaviour --------------------------------------------
   check('typing "67" in an input fires the scare', await typeAndWatch('#a', '67'));
+  await page.waitForTimeout(DREAD_MS); // let the face land before we look at it
+  if (process.env.SHOTS) await page.screenshot({ path: path.join(ROOT, 'docs/scare.png') });
 
   await page.keyboard.press('Escape');
   await page.waitForTimeout(400);
@@ -122,8 +126,35 @@ function serve() {
         geom ? `z=${geom.z} ${geom.w}x${geom.h}` : 'no overlay');
   check('shadow root is closed to page scripts', !!geom && geom.closed);
 
-  await page.waitForTimeout(2600);
-  check('overlay auto-dismisses after its duration', !(await scared()));
+  await page.waitForTimeout(DREAD_MS + SCARE_MS + 700);
+  check('overlay auto-dismisses after dread + duration', !(await scared()));
+  await reset();
+
+  // --- page-level effects must leave no trace ------------------------------
+  const beforeTitle = await page.title();
+  await typeAndWatch('#a', '67', 30);
+  await page.waitForTimeout(DREAD_MS + 150);
+  const during = await page.evaluate(() => ({
+    quaking: document.body.classList.contains('sj-quake'),
+    overflow: document.documentElement.style.overflow,
+    title: document.title,
+  }));
+  check('nightmare shakes the page itself', during.quaking);
+  check('scroll is locked during the scare', during.overflow === 'hidden');
+  check('tab title is hijacked during the scare', during.title === '6 7');
+
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(400);
+  const after = await page.evaluate(() => ({
+    quaking: document.body.classList.contains('sj-quake'),
+    overflow: document.documentElement.style.overflow,
+    styles: document.querySelectorAll('[data-sixty-seven-jumpscare-css]').length,
+    title: document.title,
+  }));
+  check('page shake is removed afterwards', !after.quaking);
+  check('scroll lock is released afterwards', after.overflow !== 'hidden');
+  check('injected page stylesheet is removed', after.styles === 0);
+  check('tab title is restored', after.title === beforeTitle, `${after.title} vs ${beforeTitle}`);
   await reset();
 
   // --- the popup drives settings live --------------------------------------

@@ -5,10 +5,11 @@
 
   const DEFAULTS = {
     enabled: true,
-    volume: 0.7,
+    volume: 0.8,
     sound: true,
-    durationMs: 2200,
+    durationMs: 2600,
     cooldownMs: 1500,
+    intensity: "nightmare",
     looseMatch: true,
     skipPassword: true,
     blocklist: [],
@@ -28,12 +29,27 @@
     looseMatch: $("looseMatch"),
     skipPassword: $("skipPassword"),
     blocklist: $("blocklist"),
+    intensity: $("intensity"),
+    intensityNote: $("intensityNote"),
     count: $("count"),
     test: $("test"),
     status: $("status")
   };
 
   const secs = (ms) => (ms / 1000).toFixed(1).replace(/\.0$/, "") + "s";
+
+  const NOTES = {
+    mild: "Face and scream, no flashing. The gentle one.",
+    normal: "Short dread beat, strobe and glitch before the hit.",
+    nightmare: "Long dread beat, strobing, the page itself shakes."
+  };
+
+  function paintIntensity(value) {
+    for (const b of el.intensity.querySelectorAll("button")) {
+      b.setAttribute("aria-checked", String(b.dataset.value === value));
+    }
+    el.intensityNote.textContent = NOTES[value] || "";
+  }
 
   function paintLabels() {
     el.volumeOut.textContent = el.volume.value + "%";
@@ -57,6 +73,7 @@
     el.durationMs.value = Number(cfg.durationMs) || DEFAULTS.durationMs;
     el.cooldownMs.value = Number(cfg.cooldownMs) || 0;
     el.blocklist.value = (cfg.blocklist || []).join("\n");
+    paintIntensity(cfg.intensity || "nightmare");
     paintLabels();
     paintCount(cfg.scareCount);
   });
@@ -68,6 +85,13 @@
     save({ enabled: el.enabled.checked });
     flash(el.enabled.checked ? "Armed." : "Disarmed.");
   });
+  el.intensity.addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-value]");
+    if (!btn) return;
+    paintIntensity(btn.dataset.value);
+    save({ intensity: btn.dataset.value });
+  });
+
   el.sound.addEventListener("change", () => save({ sound: el.sound.checked }));
   el.looseMatch.addEventListener("change", () => save({ looseMatch: el.looseMatch.checked }));
   el.skipPassword.addEventListener("change", () => save({ skipPassword: el.skipPassword.checked }));

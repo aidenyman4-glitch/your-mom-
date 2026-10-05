@@ -165,3 +165,35 @@ textarea::placeholder { color: #5b5668; }
   font-size: 11px;
   color: var(--muted);
 }
+
+/* ---- intensity selector ---- */
+.seg {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  padding: 3px;
+  border-radius: 8px;
+  background: #0f0e13;
+  border: 1px solid var(--line);
+}
+
+.seg button {
+  padding: 6px 4px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  font: 600 12px/1 system-ui, sans-serif;
+  cursor: pointer;
+}
+
+.seg button:hover { color: var(--text); }
+.seg button[aria-checked="true"] { background: var(--red); color: #fff; }
+.seg button:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
+
+.seg-note {
+  margin: 7px 0 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--muted);
+}
