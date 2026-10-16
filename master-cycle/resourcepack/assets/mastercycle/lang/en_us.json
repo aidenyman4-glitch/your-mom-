@@ -5,5 +5,7 @@
   "subtitles.mastercycle.fuel.add": "Master Cycle refuels",
   "subtitles.mastercycle.fuel.empty": "Master Cycle sputters out",
   "subtitles.mastercycle.cycle.summon": "Master Cycle materializes",
-  "subtitles.mastercycle.cycle.dismiss": "Master Cycle dematerializes"
+  "subtitles.mastercycle.cycle.dismiss": "Master Cycle dematerializes",
+  "subtitles.mastercycle.engine.stop": "Master Cycle powers down",
+  "subtitles.mastercycle.fuel.low": "Master Cycle low on fuel"
 }

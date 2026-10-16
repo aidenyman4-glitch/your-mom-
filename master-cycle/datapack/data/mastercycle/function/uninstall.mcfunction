@@ -11,6 +11,10 @@ scoreboard objectives remove mc.gen
 scoreboard objectives remove mc.hum
 scoreboard objectives remove mc.jcd
 scoreboard objectives remove mc.boost
+scoreboard objectives remove mc.ridden
+scoreboard objectives remove mc.air
+scoreboard objectives remove mc.low
+scoreboard objectives remove mc.skid
 scoreboard objectives remove mc.id
 scoreboard objectives remove mc.stored
 scoreboard objectives remove mc.cd
@@ -19,5 +23,6 @@ scoreboard objectives remove mc.tmp
 scoreboard objectives remove mc.const
 data remove storage mastercycle:tmp m
 data remove storage mastercycle:tmp turn
+data remove storage mastercycle:tmp hum
 data remove storage mastercycle:hud bar
 tellraw @s {"text":"Master Cycle uninstalled. Now disable the data pack with /datapack disable.","color":"aqua"}

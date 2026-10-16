@@ -68,5 +68,25 @@
         "attenuation_distance": 16
       }
     ]
+  },
+  "engine.stop": {
+    "subtitle": "subtitles.mastercycle.engine.stop",
+    "sounds": [
+      {
+        "name": "mastercycle:stop",
+        "volume": 1.0,
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "fuel.low": {
+    "subtitle": "subtitles.mastercycle.fuel.low",
+    "sounds": [
+      {
+        "name": "mastercycle:fuel_low",
+        "volume": 1.0,
+        "attenuation_distance": 16
+      }
+    ]
   }
 }

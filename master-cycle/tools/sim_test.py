@@ -223,6 +223,27 @@ def speed(s):
     return s.get("cycle", "mc.speed")
 
 
+
+def ride_tick(s, keys=(), on_ground=True, ridden=True, t20=1, t40=1):
+    """One full game tick of cycle/tick: hitbox, ride detection, driving,
+    effects, HUD. Predicates answer for the cycle and its rider."""
+    s.preds = {f"mastercycle:input/{k}" for k in keys}
+    if on_ground:
+        s.preds.add("mastercycle:on_ground")
+    if ridden:
+        s.preds.add("mastercycle:has_rider")
+    s.set("#t20", "mc.tmp", t20)
+    s.set("#t40", "mc.tmp", t40)
+    s.executor = "cycle"
+    s.stored.clear()
+    s.run_function("mastercycle:cycle/tick")
+    return s
+
+
+def count(s, needle):
+    return sum(needle in line for line in s.log)
+
+
 failures = []
 
 
@@ -374,6 +395,75 @@ def main():
         bar = next((line for line in s.log if line.startswith("data modify storage mastercycle:hud bar")), "")
         check(want in bar and s.get("#kmh", "mc.tmp") == 43,
               f"fuel {fuel} -> {s.get('#pct', 'mc.tmp')}% {want}, 600 -> {s.get('#kmh', 'mc.tmp')} km/h")
+
+    print("effects & sounds (full tick loop):")
+    s = make_sim()
+    s.set("cycle", "mc.cid", 1)
+    s.set("cycle", "mc.fuel", 1250)
+    for _ in range(100):
+        ride_tick(s, ["forward"])
+    check(count(s, "mastercycle:fuel.low") == 1, f"low-fuel chime plays once when crossing 20% ({count(s, 'mastercycle:fuel.low')}x)")
+    s.set("cycle", "mc.fuel", 3000)
+    ride_tick(s, ["forward"])
+    s.set("cycle", "mc.fuel", 1100)
+    ride_tick(s, ["forward"])
+    check(count(s, "mastercycle:fuel.low") == 2, "and re-arms after refuelling above the line")
+
+    s = make_sim(); s.set("cycle", "mc.cid", 1)
+    for _ in range(6):
+        ride_tick(s, [], on_ground=False)
+    ride_tick(s, [])
+    check(count(s, "entity.breeze.land") == 1, "landing after 6 airborne ticks: thump + dust")
+    ride_tick(s, [], on_ground=False); ride_tick(s, [], on_ground=False); ride_tick(s, [])
+    check(count(s, "entity.breeze.land") == 1, "a 2-tick bump doesn't count as a landing")
+
+    s = make_sim(); s.set("cycle", "mc.cid", 1)
+    for _ in range(5):
+        ride_tick(s, ["forward", "sprint"])
+    check(s.get("cycle", "mc.boost") == 1 and count(s, "effect give @s minecraft:speed") == 5,
+          "boosting gives the rider a hidden Speed effect each tick (FOV kick)")
+    check(count(s, "mastercycle:engine.boost") == 1, "boost sound plays once when the boost starts")
+    ride_tick(s, [], ridden=False)
+    check(count(s, "mastercycle:engine.stop") == 1 and s.get("cycle", "mc.boost") == 0 and s.get("cycle", "mc.ridden") == 0,
+          "getting off: power-down sound, boost state reset")
+    ride_tick(s, [], ridden=False)
+    check(count(s, "mastercycle:engine.stop") == 1, "power-down plays only once")
+    for _ in range(3):
+        ride_tick(s, ["forward", "sprint"])
+    check(count(s, "mastercycle:engine.boost") == 2, "next boost after remounting plays its sound again")
+
+    s = make_sim(); s.set("cycle", "mc.cid", 1)
+    ride_tick(s, [])
+    p_idle = s.stored.get("hum.p")
+    for _ in range(60):
+        ride_tick(s, ["forward", "sprint"])
+    p_fast = s.stored.get("hum.p")
+    for _ in range(9):
+        ride_tick(s, ["forward", "sprint"])
+        p_fast = s.stored.get("hum.p") or p_fast
+    check(p_idle is not None and abs(p_idle - 0.65) < 0.01 and p_fast is not None and abs(p_fast - 1.4575) < 0.01,
+          f"engine hum pitch follows speed: {p_idle} idle -> {p_fast} at full boost")
+
+    s = make_sim(); s.set("cycle", "mc.cid", 1)
+    for _ in range(40):
+        ride_tick(s, ["forward"])
+    for _ in range(10):
+        ride_tick(s, ["backward"])
+    check(count(s, "entity.breeze.slide") == 1, "hard braking screeches once per skid")
+
+    s = make_sim(); s.set("cycle", "mc.cid", 1)
+    ride_tick(s, [], ridden=False, t40=0)
+    check(count(s, "particle minecraft:dust") == 4, "a parked cycle with fuel pulses from both hubs every 2 s")
+    s.set("cycle", "mc.fuel", 0); s.log.clear()
+    ride_tick(s, [], ridden=False, t40=0)
+    check(count(s, "particle minecraft:dust") == 0, "an empty parked cycle stays dark")
+
+    s = make_sim()
+    s.set("#hud_fuel", "mc.tmp", 9000); s.set("#hud_speed", "mc.tmp", 0); s.set("#boosting", "mc.tmp", 0)
+    s.executor = "rider"; s.log.clear()
+    s.run_function("mastercycle:hud/show")
+    bar = next((line for line in s.log if line.startswith("data modify storage mastercycle:hud bar")), "")
+    check(s.get("#pct", "mc.tmp") == 100 and "▮" * 10 in bar, "fuel above the tank size shows a full gauge, not a stale one")
 
     print()
     if failures:

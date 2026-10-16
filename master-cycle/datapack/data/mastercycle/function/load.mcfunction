@@ -10,6 +10,10 @@ scoreboard objectives add mc.gen dummy
 scoreboard objectives add mc.hum dummy
 scoreboard objectives add mc.jcd dummy
 scoreboard objectives add mc.boost dummy
+scoreboard objectives add mc.ridden dummy
+scoreboard objectives add mc.air dummy
+scoreboard objectives add mc.low dummy
+scoreboard objectives add mc.skid dummy
 # ---- per-player state ------------------------------------------------------
 scoreboard objectives add mc.id dummy
 scoreboard objectives add mc.stored dummy
@@ -24,7 +28,9 @@ scoreboard players set #4 mc.const 4
 scoreboard players set #5 mc.const 5
 scoreboard players set #10 mc.const 10
 scoreboard players set #20 mc.const 20
+scoreboard players set #40 mc.const 40
 scoreboard players set #72 mc.const 72
+scoreboard players set #85 mc.const 85
 scoreboard players set #100 mc.const 100
 scoreboard players set #1000 mc.const 1000
 scoreboard players set #4000 mc.const 4000
@@ -48,6 +54,9 @@ scoreboard players set #cfg.max_fuel mc.const 6000
 scoreboard players set #cfg.starter_fuel mc.const 1200
 scoreboard players set #cfg.boost_burn mc.const 3
 scoreboard players set #cfg.jump_burn mc.const 25
+
+# Low-fuel warning chime when the tank drops to this (default 20%).
+scoreboard players set #cfg.low_fuel mc.const 1200
 
 scoreboard players operation #cfg.reverse_neg mc.const = #cfg.reverse_speed mc.const
 scoreboard players operation #cfg.reverse_neg mc.const *= #-1 mc.const

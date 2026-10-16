@@ -8,7 +8,10 @@ execute if score #found mc.tmp matches 0 run function mastercycle:cycle/spawn_hi
 
 # ridden: read WASD and drive. Empty but still rolling: coast to a stop.
 execute if predicate mastercycle:has_rider run function mastercycle:drive/tick
+execute unless predicate mastercycle:has_rider if score @s mc.ridden matches 1 run function mastercycle:fx/dismount
 execute unless predicate mastercycle:has_rider unless score @s mc.speed matches 0 run function mastercycle:drive/coast_unridden
+# parked with fuel: the hubs pulse faintly every 2 seconds
+execute if score #t40 mc.tmp matches 0 unless predicate mastercycle:has_rider if score @s mc.fuel matches 1.. run function mastercycle:fx/idle
 
 # once a second: mirror fuel to the owner, and remove stale duplicates
 execute if score #t20 mc.tmp matches 0 run function mastercycle:cycle/owner_sync

@@ -90,7 +90,30 @@ Fuel isn't used up in creative mode.
 | **Movement** | Speed and heading are scoreboard values. Each tick the heading becomes a direction vector (integer sine via Bhaskara's approximation, error under 0.003) and is written to the stand's `Motion`. The game then moves the stand with real collision, gravity and step-up. If a push mostly vanishes, the cycle hit a wall: it loses speed and plays a clunk. |
 | **Fuel** | `mc.fuel` score on the cycle. Each player's `mc.stored` holds their cycle's fuel when it's put away. |
 | **Ownership** | Each player gets an `mc.id`. Cycles store `mc.owner` and a generation number, so a stale copy left in an unloaded chunk removes itself when the owner has summoned a newer one. |
-| **Effects** | `end_rod`, cyan `dust`, `soul_fire_flame`, `sculk_charge_pop` and `electric_spark` particles behind the rear wheel when accelerating or boosting. Custom engine hum (re-pitched by speed), start, boost, refuel, fuel-empty, summon and dismiss sounds play via `playsound mastercycle:…`. |
+| **Effects** | See [Sound and particle effects](#sound-and-particle-effects) below. |
+
+### Sound and particle effects
+
+| Moment | Sound | Particles / other |
+|---|---|---|
+| Summon (slate) | `cycle.summon` + beacon chime | Ring of light on the ground, cyan dust, sparks |
+| Get on | `engine.start` | Light burst |
+| Riding | `engine.hum` every half second. Pitch rises from 0.65 to 1.46 and volume from 0.45 to 0.83 with speed | — |
+| Accelerating | — | Cyan dust and light trail behind the rear wheel |
+| Boost | `engine.boost` when it kicks in | Thick cyan and blue flame plume and sparks. A hidden Speed effect widens your field of view while boosting |
+| Hard braking | Screech (once per skid) | Tyre smoke |
+| Hop / landing | Breeze jump / breeze land | Light burst / dust and sparks at both wheels |
+| Wall crash | Shield clunk | Crit sparks at the front |
+| Tank drops to 20% | `fuel.low` (two falling tones, once) | Action bar turns gold: "low fuel" |
+| Tank runs dry | `fuel.empty` (sputter) | Smoke, then "⚠ Fuel Empty!" |
+| Refuel | `fuel.add` + respawn-anchor charge | Sparks and light |
+| Get off | `engine.stop` (power-down) | Light burst |
+| Parked with fuel | — | Hubs pulse faintly every 2 seconds |
+| Put away / recalled | `cycle.dismiss` | Spark ring, reverse-portal swirl |
+
+Sounds only reach players within 48 blocks in the same dimension. The custom
+sounds (`mastercycle:…`) need the resource pack. Their loudness is balanced so
+the engine hum, which plays constantly, sits under the one-shot effects.
 
 ### Tuning
 
@@ -268,7 +291,7 @@ python3 master-cycle/tools/package.py
 | Script | Does |
 |---|---|
 | `tools/build_resourcepack.py` | Builds the model geometry, draws the textures, synthesizes the sounds (numpy + ffmpeg/libvorbis), and writes the item definition and `pack.mcmeta`. |
-| `tools/validate.py` | Parses all 424 commands against the real **26.3 command tree** (from [misode/mcmeta](https://github.com/misode/mcmeta)). Checks SNBT, text components, selectors, item components, and particle/sound/attribute/entity/item ids against the 26.3 registries. Also checks function, predicate and macro references, scoreboard objectives, predicate JSON (26.3 format), model bounds, texture paths, and z-fighting. |
+| `tools/validate.py` | Parses all 499 commands against the real **26.3 command tree** (from [misode/mcmeta](https://github.com/misode/mcmeta)). Checks SNBT, text components, selectors, item components, and particle/sound/attribute/entity/item ids against the 26.3 registries. Also checks function, predicate and macro references, scoreboard objectives, predicate JSON (26.3 format), model bounds, texture paths, and z-fighting. |
 | `tools/sim_test.py` | Runs the driving functions in a small mcfunction interpreter and asserts the behavior: top speed, boost, braking, reverse, coasting, steering wrap, direction vector, wall crashes, hop cooldown, fuel burn, the fuel-empty cutoff and the HUD gauge. |
 | `tools/rider_fit.py` | Puts a player in the vanilla riding pose on the bike, at the height the game seats them. Fails if their body, head or legs go through the model, and renders `docs/rider-preview.png`. |
 | `tools/render_preview.py` | Software-renders the model JSON to `docs/model-preview.png`. |

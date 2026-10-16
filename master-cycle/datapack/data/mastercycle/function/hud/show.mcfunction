@@ -7,6 +7,7 @@ scoreboard players operation #pct mc.tmp *= #100 mc.const
 scoreboard players operation #pct mc.tmp += #cfg.max_fuel mc.const
 scoreboard players remove #pct mc.tmp 1
 scoreboard players operation #pct mc.tmp /= #cfg.max_fuel mc.const
+execute if score #pct mc.tmp matches 101.. run scoreboard players set #pct mc.tmp 100
 scoreboard players operation #kmh mc.tmp = #hud_speed mc.tmp
 execute if score #kmh mc.tmp matches ..-1 run scoreboard players operation #kmh mc.tmp *= #-1 mc.const
 scoreboard players operation #kmh mc.tmp *= #72 mc.const

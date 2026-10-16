@@ -567,6 +567,26 @@ def snd_dismiss():
     return s
 
 
+def snd_engine_stop():
+    """Power-down: the hum's harmonics gliding down and fading."""
+    dur = 1.1
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    glide = 1 - 0.55 * (1 - np.exp(-t * 2.5))
+    s = 0.55 * tone(62 * glide, dur) + 0.35 * tone(124 * glide, dur) + 0.15 * tone(186.5 * glide, dur)
+    s = np.tanh(1.4 * s) * np.exp(-t * 2.2) * env(n, 0.02, 0.3)
+    place(s, 0.18 * bell(987.8, 0.5, 6), 0.0)
+    return s
+
+
+def snd_fuel_low():
+    """Two falling Sheikah tones: a gentle warning, not an alarm."""
+    s = np.zeros(int(0.9 * SR))
+    place(s, 0.5 * bell(1318.5, 0.45, 7), 0.0)
+    place(s, 0.5 * bell(987.8, 0.5, 6), 0.2)
+    return s
+
+
 SOUNDS = {
     "engine_hum": snd_engine_hum,
     "start": snd_start,
@@ -575,7 +595,27 @@ SOUNDS = {
     "empty": snd_empty,
     "summon": snd_summon,
     "dismiss": snd_dismiss,
+    "stop": snd_engine_stop,
+    "fuel_low": snd_fuel_low,
 }
+
+# Target loudness (RMS) per sound. The hum plays the whole time you ride, so it
+# sits well under the one-shot effects; nothing is allowed to peak above 0.89.
+LOUDNESS = {"engine_hum": 0.13, "empty": 0.2, "boost": 0.2, "start": 0.2,
+            "summon": 0.17, "dismiss": 0.16, "refuel": 0.17, "stop": 0.16, "fuel_low": 0.15}
+
+
+def finish(sig, rms_target):
+    """Remove DC offset, add click-free 3 ms / 8 ms fades, set loudness, limit peaks."""
+    sig = sig - np.mean(sig)
+    n_in, n_out = int(0.003 * SR), int(0.008 * SR)
+    sig[:n_in] *= np.linspace(0, 1, n_in)
+    sig[-n_out:] *= np.linspace(1, 0, n_out)
+    sig = sig * (rms_target / max(1e-9, np.sqrt(np.mean(sig ** 2))))
+    peak = np.max(np.abs(sig))
+    if peak > 0.89:
+        sig = np.tanh(sig / peak * 1.2) / np.tanh(1.2) * 0.89  # soft-limit instead of clipping
+    return sig
 
 # event name -> (file, volume, attenuation distance)
 SOUND_EVENTS = {
@@ -586,6 +626,8 @@ SOUND_EVENTS = {
     "fuel.empty": ("empty", 1.0, 16),
     "cycle.summon": ("summon", 1.0, 24),
     "cycle.dismiss": ("dismiss", 1.0, 16),
+    "engine.stop": ("stop", 1.0, 16),
+    "fuel.low": ("fuel_low", 1.0, 16),
 }
 
 
@@ -596,8 +638,7 @@ def build_sounds():
         raise SystemExit("ffmpeg (with libvorbis) is required to encode the .ogg sounds")
     with tempfile.TemporaryDirectory() as tmp:
         for name, fn in SOUNDS.items():
-            sig = fn()
-            sig = sig / max(1e-9, np.max(np.abs(sig))) * 0.89
+            sig = finish(fn(), LOUDNESS[name])
             wav_path = Path(tmp) / f"{name}.wav"
             with wave.open(str(wav_path), "wb") as w:
                 w.setnchannels(1)  # mono, so Minecraft plays it positionally
@@ -625,6 +666,8 @@ def build_sounds():
         "subtitles.mastercycle.fuel.empty": "Master Cycle sputters out",
         "subtitles.mastercycle.cycle.summon": "Master Cycle materializes",
         "subtitles.mastercycle.cycle.dismiss": "Master Cycle dematerializes",
+        "subtitles.mastercycle.engine.stop": "Master Cycle powers down",
+        "subtitles.mastercycle.fuel.low": "Master Cycle low on fuel",
     })
 
 
