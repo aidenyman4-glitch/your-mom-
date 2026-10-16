@@ -6,8 +6,9 @@
 1. regenerates the resource pack (model, textures, sounds)
 2. validates every command / JSON file against Minecraft 26.3
 3. runs the driving-logic simulation tests
-4. renders docs/model-preview.png
-5. writes dist/MasterCycle-datapack.zip and dist/MasterCycle-resourcepack.zip
+4. checks a player in the riding pose fits on the bike (docs/rider-preview.png)
+5. renders docs/model-preview.png
+6. writes dist/MasterCycle-datapack.zip and dist/MasterCycle-resourcepack.zip
 """
 
 import subprocess
@@ -41,6 +42,7 @@ def main():
     run("build_resourcepack.py")
     run("validate.py")
     run("sim_test.py")
+    run("rider_fit.py")
     run("render_preview.py")
     print("== zip")
     zip_dir(ROOT / "datapack", DIST / "MasterCycle-datapack.zip")

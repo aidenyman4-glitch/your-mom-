@@ -10,6 +10,10 @@ stars.
 
 *Previews rendered from the actual model JSON by `tools/render_preview.py`.*
 
+![A player in Minecraft's riding pose on the Master Cycle](docs/rider-preview.png)
+
+*A vanilla-sized player in the game's riding pose, placed exactly where the game seats them (`tools/rider_fit.py`).*
+
 > **Target version: Minecraft Java 26.3** (data pack format 121, resource pack
 > format 97). 26.2/26.3 changed predicate, loot-condition and item-slot formats,
 > so this pack won't load on 1.21.x.
@@ -214,6 +218,12 @@ Things to know when building or replacing the model:
   `tools/model_check.py` finds coplanar overlapping faces, including on rotated
   elements. Both the build and `validate.py` fail if any are found, so keep
   that in mind if you edit the model.
+- **Shaped around the rider.** Minecraft always draws a mounted player in the
+  same pose: thighs forward and splayed 18°, arms reaching forward 36°. A data
+  pack can't change that pose, so the tank stays below the thighs, a narrow
+  spine rises between the knees, the handlebar sits where the hands end up, and
+  the footrests sit under the feet. `tools/rider_fit.py` fails if the rider's
+  body, head or legs pass through the bike.
 - **`display.head` math.** The armor stand is scaled to 0.5 and the head slot
   renders items at 0.625, so one model unit is `1/16 × 0.625 × 0.5 × 2.75 ≈ 0.054`
   blocks, which makes the bike about 2.5 blocks long. The translation (applied
@@ -260,6 +270,7 @@ python3 master-cycle/tools/package.py
 | `tools/build_resourcepack.py` | Builds the model geometry, draws the textures, synthesizes the sounds (numpy + ffmpeg/libvorbis), and writes the item definition and `pack.mcmeta`. |
 | `tools/validate.py` | Parses all 424 commands against the real **26.3 command tree** (from [misode/mcmeta](https://github.com/misode/mcmeta)). Checks SNBT, text components, selectors, item components, and particle/sound/attribute/entity/item ids against the 26.3 registries. Also checks function, predicate and macro references, scoreboard objectives, predicate JSON (26.3 format), model bounds, texture paths, and z-fighting. |
 | `tools/sim_test.py` | Runs the driving functions in a small mcfunction interpreter and asserts the behavior: top speed, boost, braking, reverse, coasting, steering wrap, direction vector, wall crashes, hop cooldown, fuel burn, the fuel-empty cutoff and the HUD gauge. |
+| `tools/rider_fit.py` | Puts a player in the vanilla riding pose on the bike, at the height the game seats them. Fails if their body, head or legs go through the model, and renders `docs/rider-preview.png`. |
 | `tools/render_preview.py` | Software-renders the model JSON to `docs/model-preview.png`. |
 | `tools/package.py` | Runs all of the above and writes the zips in `dist/`. |
 
