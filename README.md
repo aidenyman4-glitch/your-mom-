@@ -1,5 +1,8 @@
 # 67 Jumpscare
 
+> Also in this repo: **[Master Cycle](master-cycle/)**, a drivable Zelda-style
+> motorcycle for Minecraft Java 26.3 (data pack + resource pack).
+
 A Chrome extension. Type `67` anywhere — any input, any textarea, any page — and
 the 67 kid comes screaming out of the screen at you.
 

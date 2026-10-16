@@ -1,0 +1,2 @@
+# Gives the executing player a Sheikah Slate.   Usage: /function mastercycle:give_slate
+give @s minecraft:warped_fungus_on_a_stick[minecraft:custom_model_data={floats:[7702f]},minecraft:item_name={text:"Sheikah Slate",color:"aqua"},minecraft:lore=[{text:"Right-click (or drop) to summon",color:"gray",italic:false},{text:"your Master Cycle",color:"gray",italic:false}],minecraft:custom_data={mastercycle_slate:1b},minecraft:unbreakable={},minecraft:rarity="rare",minecraft:tooltip_display={hidden_components:["minecraft:unbreakable"]}] 1

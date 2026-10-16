@@ -1,0 +1,72 @@
+{
+  "engine.hum": {
+    "subtitle": "subtitles.mastercycle.engine.hum",
+    "sounds": [
+      {
+        "name": "mastercycle:engine_hum",
+        "volume": 0.8,
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "engine.start": {
+    "subtitle": "subtitles.mastercycle.engine.start",
+    "sounds": [
+      {
+        "name": "mastercycle:start",
+        "volume": 1.0,
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "engine.boost": {
+    "subtitle": "subtitles.mastercycle.engine.boost",
+    "sounds": [
+      {
+        "name": "mastercycle:boost",
+        "volume": 1.0,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "fuel.add": {
+    "subtitle": "subtitles.mastercycle.fuel.add",
+    "sounds": [
+      {
+        "name": "mastercycle:refuel",
+        "volume": 0.9,
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "fuel.empty": {
+    "subtitle": "subtitles.mastercycle.fuel.empty",
+    "sounds": [
+      {
+        "name": "mastercycle:empty",
+        "volume": 1.0,
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "cycle.summon": {
+    "subtitle": "subtitles.mastercycle.cycle.summon",
+    "sounds": [
+      {
+        "name": "mastercycle:summon",
+        "volume": 1.0,
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "cycle.dismiss": {
+    "subtitle": "subtitles.mastercycle.cycle.dismiss",
+    "sounds": [
+      {
+        "name": "mastercycle:dismiss",
+        "volume": 1.0,
+        "attenuation_distance": 16
+      }
+    ]
+  }
+}

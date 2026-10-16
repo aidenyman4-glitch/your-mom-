@@ -1,0 +1,16 @@
+{
+  "pack": {
+    "description": [
+      {
+        "text": "Master Cycle ",
+        "color": "aqua"
+      },
+      {
+        "text": "model, textures & sounds",
+        "color": "gray"
+      }
+    ],
+    "min_format": 97,
+    "max_format": 97
+  }
+}

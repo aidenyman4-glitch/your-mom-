@@ -1,0 +1,17 @@
+{
+  "pack": {
+    "description": [
+      {
+        "text": "Master Cycle ",
+        "color": "aqua"
+      },
+      {
+        "text": "drivable Sheikah motorcycle",
+        "color": "gray"
+      }
+    ],
+    "pack_format": 121,
+    "min_format": 121,
+    "max_format": 121
+  }
+}

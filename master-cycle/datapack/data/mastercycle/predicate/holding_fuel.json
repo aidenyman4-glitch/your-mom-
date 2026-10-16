@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:entity_properties",
+  "entity": "this",
+  "predicate": {
+    "minecraft:equipment": {
+      "mainhand": {
+        "items": [
+          "minecraft:coal",
+          "minecraft:charcoal",
+          "minecraft:coal_block",
+          "minecraft:redstone",
+          "minecraft:redstone_block",
+          "minecraft:blaze_powder",
+          "minecraft:blaze_rod",
+          "minecraft:nether_star"
+        ]
+      }
+    }
+  }
+}
