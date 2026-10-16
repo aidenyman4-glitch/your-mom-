@@ -226,6 +226,11 @@ The data pack puts exactly that item on the armor stand's head:
 
 Things to know when building or replacing the model:
 
+- **What's in it (153 elements).** A horse-like prow with ears, cyan eyes,
+  a glowing muzzle light and a unicorn horn. A gold mane down the neck. A
+  tank and seat shaped around the rider. A gold ribcage and a banded cyan
+  core between the wheels. Curved gold fenders over both tyres. Fork
+  springs. A tail of gold plumes sweeping up and back.
 - **Front = north (−Z).** For an item worn in the head slot, the model's north
   side faces forward. The bike's horn points to −Z.
 - **Bounds.** Every `from`/`to` coordinate must be within −16…32 (3 blocks), so

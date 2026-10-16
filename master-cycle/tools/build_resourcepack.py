@@ -315,6 +315,31 @@ def wheel(cz, cy, R, x0, x1, name):
     disc(cz, cy, R * 0.14, x0, x1, 2, "glow_cyan", "glow_cyan", f"{name}_core", off=o + STEP, light=15)
 
 
+def fender(cz, cy, r, x0, x1, angles, name):
+    """A curved mudguard: overlapping slabs tangent to a circle around the
+    wheel axle. Like the discs, each slab is STEP wider than the last so the
+    overlapping side faces never share a plane."""
+    for k, ang in enumerate(angles):
+        o = k * STEP
+        box((x0 - o, cy + r, cz - 1.75), (x1 + o, cy + r + 0.75, cz + 1.75), "trim",
+            rot=("x", ang, (8, cy, cz)), name=f"{name}{k}")
+
+
+def plume(z, y, x0, x1, segments, name):
+    """A chain of thin gold segments rising backwards, each starting where the
+    previous one ends. segments = (length, elevation in degrees, thickness);
+    every segment narrows by 0.1 per side so joints never share a face plane."""
+    for k, (length, elev, thick) in enumerate(segments):
+        n = k * 0.1
+        box((x0 + n, y, z - thick / 2), (x1 - n, y + length, z + thick / 2),
+            "gold" if k == len(segments) - 1 else "trim",
+            rot=("x", 90 - elev, (8, y, z)), name=f"{name}{k}")
+        a = math.radians(elev)
+        back = min(0.3, length * 0.1)  # overlap the next segment slightly
+        z += (length - back) * math.cos(a)
+        y += (length - back) * math.sin(a)
+
+
 def mirror_x(frm, to):
     """Return the box mirrored across the centre line x=8."""
     return (16 - to[0], frm[1], frm[2]), (16 - frm[0], to[1], to[2])
@@ -332,15 +357,27 @@ def build_cycle_model():
     wheel(cz=-4, cy=2.5, R=7.5, x0=5.25, x1=10.75, name="front")
     wheel(cz=21, cy=2.5, R=7.5, x0=4.75, x1=11.25, name="rear")
 
-    # --- front fork (raked struts from front hub up to the head) ----------
-    pair((4.4, 2.0, -2.1), (5.15, 14.5, -0.9), "trim", rot=("x", 23.5, (8, 8.25, -1.5)))
+    # --- front fork: raked gold struts with coil springs ------------------
+    FORK = ("x", 23.5, (8, 8.25, -1.5))
+    pair((4.4, 2.0, -2.1), (5.15, 14.5, -0.9), "trim", rot=FORK, name="fork")
+    for i in range(4):
+        y = 6.0 + i * 1.1
+        pair((4.22, y, -2.42), (5.2, y + 0.5, -0.58), "gold", rot=FORK, name=f"fork_coil{i}")
+    # front fender: gold arc hugging the top-front of the front tyre
+    fender(cz=-4, cy=2.5, r=7.9, x0=6.12, x1=9.88, angles=(-5, -24, -43, -62), name="front_fender")
 
-    # --- engine / core ----------------------------------------------------
+    # --- engine: glowing Sheikah core wrapped in gold bands ----------------
     box((6, -0.5, 4), (10, 7.5, 15), "metal", name="engine")
     box((5.6, 1.5, 5.5), (10.4, 3.2, 13.5), "glow_cyan", light=15, name="engine_core")
     box((6.4, 4.2, 6), (9.6, 5.2, 13), "glow_orange", light=12, name="engine_coil")
+    for i, z in enumerate((6.6, 9.2, 11.8)):
+        box((5.45, 1.35, z), (10.55, 3.35, z + 0.5), "gold", name=f"core_band{i}")
     # down tube from head to engine
     box((7, 1.5, -0.5), (9, 12.5, 1.5), "trim", rot=("x", 22.5, (8, 7, 0.5)), name="down_tube")
+    # gold "ribcage" between the wheels, like the reference's skeletal frame
+    for i, zc in enumerate((4.0, 6.6, 9.2, 11.8)):
+        pair((4.2, 0.6, zc - 0.4), (4.5, 7.6, zc + 0.4), "trim", rot=("x", -12, (8, 4, zc)), name=f"rib{i}")
+    pair((4.15, 0.35, 3.2), (4.45, 0.95, 12.6), "trim", name="belly_bar")
 
     # --- torso / tank -----------------------------------------------------
     # The rider sits in Minecraft's fixed riding pose: thighs forward, splayed
@@ -354,38 +391,50 @@ def build_cycle_model():
     for z, y in ((3.5, 10.5), (8.5, 9.5), (13.0, 11.0)):
         pair((4.3, y, z), (4.6, y + 0.9, z + 0.9), "glow_cyan", light=15)
 
-    # --- head / prow (horse-like, leaning forward) ------------------------
-    box((5.1, 11, -5), (10.9, 18, 1.5), "body", rot=("x", -20, (8, 14, -2)), name="head")
-    box((6, 12.5, -10), (10, 16.5, -4), "body", rot=("x", -28, (8, 14.5, -7)), name="snout")
-    box((6.6, 13.2, -10.6), (9.4, 14.4, -9.6), "glow_cyan", light=15,
-        rot=("x", -28, (8, 14.5, -7)), name="headlight")
-    pair((4.7, 15, -3.6), (5.1, 16.1, -2.4), "glow_cyan", light=15, name="eye")
-    # horn / prong
-    box((7.3, 14.6, -16), (8.7, 15.9, -6), "trim", rot=("x", 10, (8, 15.25, -6)), name="horn")
-    box((7.65, 13.3, -12.5), (8.35, 14.3, -7), "trim", rot=("x", 4, (8, 13.8, -7)), name="horn_lower")
-    # crest fins along the neck (lean back)
-    for i, (z, h) in enumerate(((-4.0, 4.2), (-1.0, 3.6), (2.0, 2.8))):
-        box((7.4, 16.8, z), (8.6, 16.8 + h, z + 1.6), "trim",
-            rot=("x", 25, (8, 16.8, z + 0.8)), name=f"crest_{i}")
-    # handlebars
+    # --- head: a horse-like prow with a unicorn horn ------------------------
+    # Narrow (|x - 8| <= 2.3) so the rider's feet pass either side of it.
+    box((6.0, 11.0, -4.0), (10.0, 17.0, 1.8), "body", rot=("x", -22, (8, 14, -1)), name="neck")
+    HEAD = ("x", -10, (8, 17.2, -5.5))
+    box((5.7, 15.2, -8.6), (10.3, 19.2, -2.4), "body", rot=HEAD, name="head")
+    pair((5.45, 16.8, -7.2), (5.75, 17.7, -6.0), "glow_cyan", light=15, rot=HEAD, name="eye")
+    pair((6.1, 19.0, -4.2), (7.0, 21.4, -3.2), "trim", rot=("x", -15, (6.5, 19, -3.7)), name="ear")
+    MUZZLE = ("x", 18, (8, 15.4, -9.9))
+    box((6.4, 13.8, -12.2), (9.6, 17.0, -7.6), "body", rot=MUZZLE, name="muzzle")
+    box((6.3, 13.6, -12.0), (9.7, 14.2, -7.8), "trim", rot=MUZZLE, name="jaw")
+    box((6.9, 14.6, -12.5), (9.1, 15.8, -12.15), "glow_cyan", light=15, rot=MUZZLE, name="headlight")
+    HORN = ("x", 12, (8, 19, -7.6))
+    box((7.0, 18.0, -8.2), (9.0, 20.0, -7.4), "gold", rot=HORN, name="horn_base")
+    box((7.35, 18.4, -14.5), (8.65, 19.6, -7.6), "trim", rot=HORN, name="horn")
+    box((7.6, 18.65, -16.0), (8.4, 19.35, -14.3), "gold", rot=HORN, name="horn_tip")
+    # gold mane down the back of the neck (leans back)
+    for i, (z, y, h) in enumerate(((-5.0, 19.0, 3.0), (-3.0, 18.3, 3.4), (-1.0, 17.4, 3.0), (1.0, 16.4, 2.5), (3.0, 15.4, 2.0))):
+        box((7.4, y, z), (8.6, y + h, z + 1.3), "trim", rot=("x", 30, (8, y, z + 0.65)), name=f"mane{i}")
     # handlebar right where the riding pose puts the rider's hands, on a
     # steering stem that comes up between the knees
     box((7.35, 12.2, 7.25), (8.65, 18.75, 8.45), "trim", rot=("x", -8, (8, 12.2, 7.85)), name="stem")
     box((1.5, 18.6, 7.4), (14.5, 19.55, 8.35), "gold", name="handlebar")
+    # steering column joining the stem to the neck, so the cockpit reads as one piece
+    box((7.5, 17.55, 1.6), (8.5, 18.35, 7.55), "gold", rot=("x", -6, (8, 17.95, 4.6)), name="steering_column")
     pair((0.4, 18.25, 6.95), (2.4, 19.9, 8.8), "seat", name="grip")
 
     # --- seat & rear body -------------------------------------------------
     box((5.5, 12.5, 10), (10.5, 13.65, 17.5), "seat", name="seat")
     box((5, 10.3, 16), (11, 15.5, 26), "body", name="rear_cowl")
+    box((5.4, 14.5, 18), (10.6, 16.6, 27.5), "body", rot=("x", 14, (8, 15.5, 22)), name="rear_cowl_top")
+    pair((4.78, 10.1, 16.15), (5.08, 10.7, 26.3), "trim", name="cowl_trim")
     box((6, 14, 16.5), (10, 16, 19.5), "body", name="seat_back")
-    box((4.5, 10, 14), (11.5, 11, 29.5), "trim", name="rear_fender")
-    box((7.5, 14, 23.5), (8.5, 18.5, 30), "trim", rot=("x", 32, (8, 14, 24)), name="tail_fin")
     pair((4.4, 12.5, 24.5), (5.0, 13.6, 25.6), "glow_orange", light=15, name="tail_light")
+    # rear fender: gold arc over the top-back of the rear tyre
+    fender(cz=21, cy=2.5, r=7.9, x0=4.6, x1=11.4, angles=(6, 25, 44, 63, 82), name="rear_fender")
+    # flowing tail: connected plumes sweeping up and back from the rear cowl
+    plume(z=24.0, y=15.6, x0=7.4, x1=8.6, segments=((4.2, 18, 1.3), (3.6, 38, 1.1), (2.8, 62, 0.8)), name="tail")
+    plume(z=25.0, y=15.2, x0=6.2, x1=6.9, segments=((3.5, 24, 0.9), (2.8, 48, 0.7)), name="tail_l")
+    plume(z=25.0, y=15.2, x0=9.1, x1=9.8, segments=((3.5, 24, 0.9), (2.8, 48, 0.7)), name="tail_r")
 
-    # --- swingarm & footpegs ---------------------------------------------
+    # --- swingarm & footrests ---------------------------------------------
     pair((4.12, 1.5, 12.5), (4.93, 3.5, 16.6), "trim", name="swingarm")
     # footrests under the rider's feet, either side of the prow
-    pair((2.4, 10.55, -1.2), (5.05, 11.35, 2.3), "metal", name="footrest")
+    pair((2.4, 10.55, -1.2), (6.05, 11.35, 2.3), "metal", name="footrest")
 
     model = {
         "credit": "Master Cycle - generated by master-cycle/tools/build_resourcepack.py",
