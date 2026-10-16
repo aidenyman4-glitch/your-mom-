@@ -1,0 +1,29 @@
+MASTER CYCLE - for Minecraft Java Edition 26.3
+==============================================
+
+This zip contains two files. Do NOT unzip them - Minecraft reads them as .zip.
+
+  MasterCycle-resourcepack.zip  -> the 3D bike, textures and sounds
+  MasterCycle-datapack.zip      -> riding, fuel, Sheikah Slate
+
+1. RESOURCE PACK
+   Minecraft main menu -> Options -> Resource Packs -> Open Pack Folder.
+   Drag MasterCycle-resourcepack.zip into that folder.
+   Back in Minecraft, move "Master Cycle" from Available to Selected -> Done.
+
+2. DATA PACK
+   New world:  Create New World -> Game tab: Allow Commands ON
+               -> More tab -> Data Packs -> drag MasterCycle-datapack.zip
+               onto the window -> move it to Selected -> Done -> Create.
+   Old world:  Singleplayer -> select world -> Edit -> Open World Folder
+               -> open "datapacks" -> drop MasterCycle-datapack.zip in.
+
+3. PLAY
+   Type in chat:   /function mastercycle:give_slate
+   Right-click with the Sheikah Slate to summon the bike, right-click the
+   bike to ride.  W/S throttle & brake, A/D steer, Ctrl+W boost,
+   Space hop, Shift get off.  Refuel: right-click the bike holding coal,
+   redstone, blaze powder or a nether star.  Shift+punch puts it away.
+
+If a pack says "made for a newer/older version", you are not on 26.3:
+press F3 in game and check the version on the top-left line.

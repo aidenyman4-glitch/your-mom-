@@ -8,7 +8,8 @@
 3. runs the driving-logic simulation tests
 4. checks a player in the riding pose fits on the bike (docs/rider-preview.png)
 5. renders docs/model-preview.png
-6. writes dist/MasterCycle-datapack.zip and dist/MasterCycle-resourcepack.zip
+6. writes dist/MasterCycle-datapack.zip and dist/MasterCycle-resourcepack.zip,
+   plus dist/MasterCycle-all.zip (both packs + INSTALL.txt in one download)
 """
 
 import subprocess
@@ -47,6 +48,19 @@ def main():
     print("== zip")
     zip_dir(ROOT / "datapack", DIST / "MasterCycle-datapack.zip")
     zip_dir(ROOT / "resourcepack", DIST / "MasterCycle-resourcepack.zip")
+    bundle()
+
+
+def bundle():
+    """One download with both packs and the install steps."""
+    dest = DIST / "MasterCycle-all.zip"
+    with zipfile.ZipFile(dest, "w", zipfile.ZIP_DEFLATED) as z:
+        for name in ("INSTALL.txt", "MasterCycle-datapack.zip", "MasterCycle-resourcepack.zip"):
+            info = zipfile.ZipInfo(f"MasterCycle/{name}", date_time=(2026, 1, 1, 0, 0, 0))
+            info.compress_type = zipfile.ZIP_DEFLATED
+            info.external_attr = 0o644 << 16
+            z.writestr(info, (DIST / name).read_bytes())
+    print(f"   wrote {dest.relative_to(ROOT.parent)} ({dest.stat().st_size // 1024} KiB)")
 
 
 if __name__ == "__main__":
