@@ -13,6 +13,7 @@ cross-checks ids against the game's registries:
   * function / predicate references, scoreboard objectives, macro arguments
   * JSON files: predicate & item-model types, entity sub-predicate keys,
     model element bounds, textures/models referenced by the resource pack
+  * models: no z-fighting (same-facing faces that are coplanar and overlap)
 
     python3 master-cycle/tools/validate.py [--version 26.3]
 
@@ -25,6 +26,9 @@ import re
 import sys
 import urllib.request
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from model_check import zfight_pairs  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 DP = ROOT / "datapack"
@@ -631,6 +635,8 @@ def validate_resourcepack(reg):
             for face, spec in el["faces"].items():
                 if spec["texture"].lstrip("#") not in model["textures"]:
                     err(where, f"face uses undefined texture {spec['texture']}")
+        for a, fa, b, fb, area in zfight_pairs(model, plane_eps=0.02):
+            err(where, f"z-fighting: {a}.{fa} and {b}.{fb} are coplanar and overlap ({area:.2f} sq units)")
         for ctx_name, tr in model.get("display", {}).items():
             if any(not -80 <= v <= 80 for v in tr.get("translation", [])):
                 err(where, f"display.{ctx_name}.translation outside [-80, 80]")

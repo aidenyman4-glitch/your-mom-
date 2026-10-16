@@ -206,8 +206,14 @@ Things to know when building or replacing the model:
   (max 4).
 - **Round wheels.** Each tyre is 8 overlapping slabs rotated in 22.5° steps
   around the axle, which gives a 16-sided wheel. The hub is stacked rings
-  (gold rim, dark recess with spokes, glowing orange ring, gold hub, cyan core),
-  each sticking out a little further.
+  (gold rim, dark recess with spokes, glowing orange ring, gold hub, cyan core).
+- **No z-fighting.** Two faces that point the same way, lie in the same plane
+  and overlap will flicker. Overlapping slabs would all put their side faces on
+  one plane, so each slab sticks out 0.05 units (about 0.003 blocks) further
+  than the one before, and every hub layer gets its own depth band.
+  `tools/model_check.py` finds coplanar overlapping faces, including on rotated
+  elements. Both the build and `validate.py` fail if any are found, so keep
+  that in mind if you edit the model.
 - **`display.head` math.** The armor stand is scaled to 0.5 and the head slot
   renders items at 0.625, so one model unit is `1/16 × 0.625 × 0.5 × 2.75 ≈ 0.054`
   blocks, which makes the bike about 2.5 blocks long. The translation (applied
@@ -252,7 +258,7 @@ python3 master-cycle/tools/package.py
 | Script | Does |
 |---|---|
 | `tools/build_resourcepack.py` | Builds the model geometry, draws the textures, synthesizes the sounds (numpy + ffmpeg/libvorbis), and writes the item definition and `pack.mcmeta`. |
-| `tools/validate.py` | Parses all 424 commands against the real **26.3 command tree** (from [misode/mcmeta](https://github.com/misode/mcmeta)). Checks SNBT, text components, selectors, item components, and particle/sound/attribute/entity/item ids against the 26.3 registries. Also checks function, predicate and macro references, scoreboard objectives, predicate JSON (26.3 format), model bounds and texture paths. |
+| `tools/validate.py` | Parses all 424 commands against the real **26.3 command tree** (from [misode/mcmeta](https://github.com/misode/mcmeta)). Checks SNBT, text components, selectors, item components, and particle/sound/attribute/entity/item ids against the 26.3 registries. Also checks function, predicate and macro references, scoreboard objectives, predicate JSON (26.3 format), model bounds, texture paths, and z-fighting. |
 | `tools/sim_test.py` | Runs the driving functions in a small mcfunction interpreter and asserts the behavior: top speed, boost, braking, reverse, coasting, steering wrap, direction vector, wall crashes, hop cooldown, fuel burn, the fuel-empty cutoff and the HUD gauge. |
 | `tools/render_preview.py` | Software-renders the model JSON to `docs/model-preview.png`. |
 | `tools/package.py` | Runs all of the above and writes the zips in `dist/`. |

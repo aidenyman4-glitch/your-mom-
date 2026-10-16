@@ -22,6 +22,8 @@ from pathlib import Path
 import numpy as np
 from PIL import Image, ImageDraw
 
+from model_check import zfight_pairs
+
 ROOT = Path(__file__).resolve().parent.parent
 RP = ROOT / "resourcepack"
 MC = RP / "assets" / "minecraft"
@@ -267,36 +269,50 @@ def box(frm, to, tex, rot=None, light=None, faces=None, name=None):
     ELEMENTS.append(el)
 
 
-def disc(cz, cy, r, x0, x1, n, tex, side_tex, name, light=None):
+# Faces that point the same way, lie in the same plane and overlap z-fight
+# (flicker). Overlapping slabs of a disc would all put their side faces on one
+# plane, so every slab is pushed out STEP further than the previous one. 0.05
+# model units is ~0.003 blocks in game: invisible, but far more than depth-buffer
+# precision needs to keep the faces apart at normal viewing distances.
+STEP = 0.05
+
+
+def disc(cz, cy, r, x0, x1, n, tex, side_tex, name, off, light=None):
     """A polygonal disc around the X axis made of n overlapping rotated slabs
-    (gives a 2n-sided wheel silhouette)."""
+    (gives a 2n-sided wheel silhouette). Slab k sticks out `off + k*STEP`
+    beyond x0/x1 on each side; returns the offset of the outermost slab."""
     edge = 2 * r * math.tan(math.pi / (2 * n)) * 1.04
     for k in range(n):
         ang = k * 180.0 / n
         if ang > 90:
             ang -= 180
+        o = off + k * STEP
         box(
-            (x0, cy - r, cz - edge / 2), (x1, cy + r, cz + edge / 2), tex,
+            (x0 - o, cy - r, cz - edge / 2), (x1 + o, cy + r, cz + edge / 2), tex,
             rot=("x", ang, (8, cy, cz)), light=light,
             faces={"east": side_tex, "west": side_tex}, name=f"{name}_{k}",
         )
+    return off + (n - 1) * STEP
 
 
 def wheel(cz, cy, R, x0, x1, name):
     # Tyre: 16-sided, treaded rim, flat rubber sidewall.
-    disc(cz, cy, R, x0, x1, 8, "tread", "tire_side", f"{name}_tyre")
-    # Concentric hub layers, each protruding a little further from the tyre
-    # wall: gold rim band, dark recess with ornate spokes, glowing orange
+    o = disc(cz, cy, R, x0, x1, 8, "tread", "tire_side", f"{name}_tyre", off=0)
+    # Concentric hub layers, each in its own depth band further out from the
+    # tyre wall: gold rim band, dark recess with ornate spokes, glowing orange
     # ring, gold hub and a cyan Sheikah core.
-    disc(cz, cy, R * 0.68, x0 - 0.2, x1 + 0.2, 4, "gold", "gold", f"{name}_rim")
-    disc(cz, cy, R * 0.55, x0 - 0.3, x1 + 0.3, 4, "tire_side", "tire_side", f"{name}_recess")
-    for side, (sx0, sx1) in (("l", (x0 - 0.5, x0 - 0.3)), ("r", (x1 + 0.3, x1 + 0.5))):
-        for i, ang in enumerate((0, 60, -60)):
+    o = disc(cz, cy, R * 0.68, x0, x1, 4, "gold", "gold", f"{name}_rim", off=o + STEP)
+    o = disc(cz, cy, R * 0.55, x0, x1, 4, "tire_side", "tire_side", f"{name}_recess", off=o + STEP)
+    spoke_off = o + STEP
+    for i, ang in enumerate((0, 60, -60)):
+        so = spoke_off + i * STEP
+        for side, (sx0, sx1) in (("l", (x0 - so - 0.15, x0 - so)), ("r", (x1 + so, x1 + so + 0.15))):
             box((sx0, cy - R * 0.6, cz - 0.6), (sx1, cy + R * 0.6, cz + 0.6), "gold",
                 rot=("x", ang, (8, cy, cz)), name=f"{name}_spoke_{side}{i}")
-    disc(cz, cy, R * 0.36, x0 - 0.6, x1 + 0.6, 4, "glow_orange", "glow_orange", f"{name}_ring", light=15)
-    disc(cz, cy, R * 0.27, x0 - 0.75, x1 + 0.75, 4, "gold", "gold", f"{name}_hub")
-    disc(cz, cy, R * 0.15, x0 - 0.95, x1 + 0.95, 2, "glow_cyan", "glow_cyan", f"{name}_core", light=15)
+    o = spoke_off + 2 * STEP + 0.15
+    o = disc(cz, cy, R * 0.36, x0, x1, 4, "glow_orange", "glow_orange", f"{name}_ring", off=o + STEP, light=15)
+    o = disc(cz, cy, R * 0.27, x0, x1, 4, "gold", "gold", f"{name}_hub", off=o + STEP)
+    disc(cz, cy, R * 0.14, x0, x1, 2, "glow_cyan", "glow_cyan", f"{name}_core", off=o + STEP, light=15)
 
 
 def mirror_x(frm, to):
@@ -318,7 +334,6 @@ def build_cycle_model():
 
     # --- front fork (raked struts from front hub up to the head) ----------
     pair((4.4, 2.0, -2.1), (5.15, 14.5, -0.9), "trim", rot=("x", 23.5, (8, 8.25, -1.5)))
-    pair((4.0, 1.6, -4.7), (4.6, 3.4, -3.3), "metal")  # axle caps
 
     # --- engine / core ----------------------------------------------------
     box((6, -0.5, 4), (10, 7.5, 15), "metal", name="engine")
@@ -337,7 +352,7 @@ def build_cycle_model():
         pair((4.3, y, z), (4.6, y + 0.9, z + 0.9), "glow_cyan", light=15)
 
     # --- head / prow (horse-like, leaning forward) ------------------------
-    box((5, 11, -5), (11, 18, 1.5), "body", rot=("x", -20, (8, 14, -2)), name="head")
+    box((5.1, 11, -5), (10.9, 18, 1.5), "body", rot=("x", -20, (8, 14, -2)), name="head")
     box((6, 12.5, -10), (10, 16.5, -4), "body", rot=("x", -28, (8, 14.5, -7)), name="snout")
     box((6.6, 13.2, -10.6), (9.4, 14.4, -9.6), "glow_cyan", light=15,
         rot=("x", -28, (8, 14.5, -7)), name="headlight")
@@ -355,14 +370,14 @@ def build_cycle_model():
 
     # --- seat & rear body -------------------------------------------------
     box((5.5, 13, 10), (10.5, 14.2, 17.5), "seat", name="seat")
-    box((5, 10, 16), (11, 15.5, 26), "body", name="rear_cowl")
+    box((5, 10.3, 16), (11, 15.5, 26), "body", name="rear_cowl")
     box((6, 14, 16.5), (10, 16, 19.5), "body", name="seat_back")
-    box((4.6, 10, 14), (11.4, 11, 29.5), "trim", name="rear_fender")
+    box((4.5, 10, 14), (11.5, 11, 29.5), "trim", name="rear_fender")
     box((7.5, 14, 23.5), (8.5, 18.5, 30), "trim", rot=("x", 32, (8, 14, 24)), name="tail_fin")
     pair((4.4, 12.5, 24.5), (5.0, 13.6, 25.6), "glow_orange", light=15, name="tail_light")
 
     # --- swingarm & footpegs ---------------------------------------------
-    pair((4.2, 1.5, 13), (5.0, 3.5, 21.5), "trim", name="swingarm")
+    pair((4.12, 1.5, 12.5), (4.93, 3.5, 16.6), "trim", name="swingarm")
     pair((3.0, 4.0, 11.0), (5.0, 4.8, 12.5), "metal", name="footpeg")
 
     model = {
@@ -398,6 +413,9 @@ def build_cycle_model():
     for el in model["elements"]:
         for v in el["from"] + el["to"]:
             assert -16 <= v <= 32, (el.get("name"), v)
+    # 0.02 also catches near-coplanar faces, not just exact matches
+    fights = zfight_pairs(model, plane_eps=0.02)
+    assert not fights, f"z-fighting faces: {fights[:5]}"
     write_json(MC / "models" / "item" / "custom_master_cycle.json", model)
     return model
 
