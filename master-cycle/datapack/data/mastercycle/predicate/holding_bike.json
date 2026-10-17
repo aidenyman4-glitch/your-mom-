@@ -1,0 +1,33 @@
+{
+  "type": "minecraft:any_of",
+  "terms": [
+    {
+      "type": "minecraft:entity_properties",
+      "entity": "this",
+      "predicate": {
+        "minecraft:equipment": {
+          "mainhand": {
+            "items": "minecraft:warped_fungus_on_a_stick",
+            "predicates": {
+              "minecraft:custom_data": "{mastercycle_bike:1b}"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "minecraft:entity_properties",
+      "entity": "this",
+      "predicate": {
+        "minecraft:equipment": {
+          "offhand": {
+            "items": "minecraft:warped_fungus_on_a_stick",
+            "predicates": {
+              "minecraft:custom_data": "{mastercycle_bike:1b}"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

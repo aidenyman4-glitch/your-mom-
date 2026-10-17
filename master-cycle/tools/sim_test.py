@@ -34,6 +34,19 @@ class Sim:
         self.executor = None
         self.motion = [0.0, 0.0, 0.0]  # the cycle's Motion as the game left it
         self.wall = False
+        self.pos = [0.0, 0.0]  # cycle x, z (ground level is y = 0)
+        self.rider_yaw = 0.0  # where the rider is looking, degrees
+        self.solid = set()  # (x, y, z) of blocks in #minecraft:blocks_motion
+
+    def local_block(self, coords):
+        """Block under a ^left ^up ^forward offset from the cycle, using its yaw."""
+        lx, ly, lz = (float(c[1:] or 0) for c in coords)
+        yaw = math.radians((self.get("cycle", "mc.yaw") or 0) / 100)
+        fx, fz = -math.sin(yaw), math.cos(yaw)  # forward
+        rx, rz = math.cos(yaw), math.sin(yaw)  # left
+        x = self.pos[0] + fx * lz + rx * lx
+        z = self.pos[1] + fz * lz + rz * lx
+        return (math.floor(x), math.floor(ly), math.floor(z))
 
     def get(self, holder, obj):
         return self.scores.get((self.resolve(holder), obj))
@@ -116,6 +129,8 @@ class Sim:
             if self.wall:
                 self.motion = [0.0, 0.0, 0.0]
             return
+        if cmd == "data get entity @s Rotation[0] 100" and self.executor == "rider":
+            return int(self.rider_yaw * 100)
         m = re.match(r"data get storage mastercycle:tmp m\[(\d)\] (\S+)", cmd)
         if m:
             return int(self.motion[int(m.group(1))] * float(m.group(2)))
@@ -158,6 +173,10 @@ class Sim:
                 elif kind == "data":
                     ok = False
                     i += 4
+                elif kind == "block":
+                    ok = self.local_block(t[i + 2:i + 5]) in self.solid
+                    assert t[i + 5] == "#minecraft:blocks_motion", cmd
+                    i += 6
                 else:
                     raise NotImplementedError(kind)
                 if ok != (k == "if"):
@@ -216,6 +235,8 @@ def tick(s, keys=(), on_ground=True):
     s.executor = "cycle"
     s.stored.clear()
     s.run_function("mastercycle:drive/physics")
+    s.pos[0] += s.stored.get("m[0]", 0)
+    s.pos[1] += s.stored.get("m[2]", 0)
     return s
 
 
@@ -292,26 +313,54 @@ def main():
 
     print("motion vector:")
     s.set("cycle", "mc.yaw", 0)
+    s.rider_yaw = 0
     tick(s, ["forward"])
     mx, mz = s.stored.get("m[0]"), s.stored.get("m[2]")
     check(abs(mx) < 0.01 and abs(mz - 0.6) < 0.01, f"yaw 0 drives south (+Z): motion ({mx:.3f}, {mz:.3f})")
     s.set("cycle", "mc.yaw", 9000)
+    s.rider_yaw = 90
     tick(s, ["forward"])
     mx, mz = s.stored.get("m[0]"), s.stored.get("m[2]")
     check(abs(mx + 0.6) < 0.01 and abs(mz) < 0.01, f"yaw 90 drives west (-X): motion ({mx:.3f}, {mz:.3f})")
     s.set("cycle", "mc.yaw", 22500)
+    s.rider_yaw = 225
     tick(s, ["forward"])
     mx, mz = s.stored.get("m[0]"), s.stored.get("m[2]")
     check(mx > 0.4 and mz < -0.4, f"yaw 225 drives north-east (+X, -Z): motion ({mx:.3f}, {mz:.3f})")
 
-    print("steering:")
-    s.set("cycle", "mc.yaw", 100)
-    tick(s, ["forward", "left"])
-    check(s.get("cycle", "mc.yaw") == 36000 + 100 - 450, f"A turns left and wraps below 0 ({s.get('cycle', 'mc.yaw')})")
-    tick(s, ["forward", "right"])
-    tick(s, ["forward", "right"])
-    check(s.get("cycle", "mc.yaw") == 100 + 450, f"D turns right and wraps past 360 ({s.get('cycle', 'mc.yaw')})")
-    check(abs(s.stored.get("turn.d", 0) - 4.5) < 1e-9, "rider camera is turned by the same 4.5 degrees")
+    print("steering (follows the rider's view):")
+    s.set("cycle", "mc.yaw", 0)
+    s.rider_yaw = 90
+    tick(s, ["forward"])
+    check(s.get("cycle", "mc.yaw") == 600, f"turns toward the view at 6 deg/tick ({s.get('cycle', 'mc.yaw')})")
+    for _ in range(20):
+        tick(s, ["forward"])
+    check(s.get("cycle", "mc.yaw") == 9000, f"settles exactly on the view, no overshoot ({s.get('cycle', 'mc.yaw')})")
+    s.rider_yaw = -170  # shortest way from 90 is through 180, i.e. turning right
+    for _ in range(3):
+        tick(s, ["forward"])
+    check(s.get("cycle", "mc.yaw") == 9000 + 1800, f"takes the short way round past 180 ({s.get('cycle', 'mc.yaw')})")
+    for _ in range(30):
+        tick(s, ["forward"])
+    check(s.get("cycle", "mc.yaw") == 19000, f"and wraps cleanly to 190 = -170 ({s.get('cycle', 'mc.yaw')})")
+    s.rider_yaw = 190 + 720  # players' yaw can wind up past 360
+    tick(s, ["forward"])
+    check(s.get("cycle", "mc.yaw") == 19000, "a wound-up camera yaw (910 = 190) doesn't make it spin")
+    for _ in range(20):
+        tick(s, ["forward", "right"])
+    check(s.get("cycle", "mc.yaw") == 23500, f"D carves 45 deg right of the view ({s.get('cycle', 'mc.yaw')})")
+    s.rider_yaw = 190
+    for _ in range(100):
+        tick(s, [])
+        if speed(s) == 0:
+            break
+    parked = s.get("cycle", "mc.yaw")
+    s.rider_yaw = 0
+    for _ in range(10):
+        tick(s, [])
+    check(speed(s) == 0 and s.get("cycle", "mc.yaw") == parked, "parked: looking around doesn't swing the bike")
+    s.rider_yaw = 0
+    s.set("cycle", "mc.yaw", 0)
 
     print("braking & reverse:")
     n = 0
@@ -348,6 +397,45 @@ def main():
     for _ in range(40):
         tick(s, ["forward", "left"])
     check(not any("item.shield.block" in line for line in s.log), "no false crashes while cornering at speed")
+
+    print("walls & steps:")
+    s = make_sim()
+    s.rider_yaw = 0  # heading south (+z)
+    s.solid = {(x, y, 6) for x in range(-3, 4) for y in range(0, 4)}  # a wall, face at z = 6
+    for _ in range(80):
+        tick(s, ["forward"])
+    nose = s.pos[1] + 1.37
+    check(speed(s) == 0 and nose <= 6.0, f"drives up to a wall and stops with the nose outside it (nose z {nose:.2f}, wall at 6)")
+    check(any("item.shield.block" in line for line in s.log), "hitting the wall at speed clunks")
+    for _ in range(10):
+        tick(s, ["forward", "sprint"])
+    check(s.pos[1] + 1.37 <= 6.0, "holding throttle or boost doesn't push it through")
+    for _ in range(20):
+        tick(s, ["backward"])
+    check(speed(s) < 0, "it can still reverse away from the wall")
+    s = make_sim()
+    s.rider_yaw = 0
+    s.solid = {(x, y, 30) for x in range(-3, 4) for y in range(0, 4)}
+    for _ in range(40):
+        tick(s, ["forward", "sprint"])
+    for _ in range(40):
+        tick(s, ["forward", "sprint"])
+    check(s.pos[1] + 1.37 <= 30.0, f"even at full boost the nose never enters the wall (nose z {s.pos[1] + 1.37:.2f}, wall at 30)")
+    s = make_sim()
+    s.rider_yaw = 0
+    s.solid = {(x, 0, z) for x in range(-3, 4) for z in range(6, 12)}  # a knee-high step
+    hopped = False
+    for _ in range(30):
+        tick(s, ["forward"])
+        hopped |= s.get("#hop", "mc.tmp") == 1
+    check(hopped and speed(s) > 0, "a one-block step ahead: the front hops up onto it instead of stopping")
+    check(s.get("cycle", "mc.fuel") > 6000 - 40, "auto-hopping a step costs no fuel")
+    s = make_sim()
+    s.rider_yaw = 0
+    s.solid = {(x, y, z) for x in range(-3, 4) for y in (0, 1) for z in range(-6, -2)}  # wall behind
+    for _ in range(60):
+        tick(s, ["backward"])
+    check(s.pos[1] - 0.78 >= -2.0 and speed(s) == 0, f"reversing stops before the tail enters a wall (tail z {s.pos[1] - 0.78:.2f})")
 
     print("hop:")
     s2 = make_sim()

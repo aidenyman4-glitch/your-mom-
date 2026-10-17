@@ -34,6 +34,7 @@ scoreboard players set #85 mc.const 85
 scoreboard players set #100 mc.const 100
 scoreboard players set #1000 mc.const 1000
 scoreboard players set #4000 mc.const 4000
+scoreboard players set #36000 mc.const 36000
 
 # ---- tuning: edit these, then /reload --------------------------------------
 # Speeds are in thousandths of a block per tick (600 = 0.6 blocks/tick = 12 blocks/s).
@@ -45,10 +46,11 @@ scoreboard players set #cfg.boost_accel mc.const 40
 scoreboard players set #cfg.brake mc.const 45
 scoreboard players set #cfg.coast mc.const 10
 scoreboard players set #cfg.coast_empty mc.const 30
-# Steering, in hundredths of a degree per tick.
-scoreboard players set #cfg.turn mc.const 450
-scoreboard players set #cfg.turn_slow mc.const 250
-scoreboard players set #cfg.turn_boost mc.const 320
+# Steering: the bike turns toward where the rider looks, at most this many
+# hundredths of a degree per tick.
+scoreboard players set #cfg.turn mc.const 600
+scoreboard players set #cfg.turn_slow mc.const 300
+scoreboard players set #cfg.turn_boost mc.const 420
 # Fuel: one unit burns per tick of throttle, so 20 units = 1 second of riding.
 scoreboard players set #cfg.max_fuel mc.const 6000
 scoreboard players set #cfg.starter_fuel mc.const 1200

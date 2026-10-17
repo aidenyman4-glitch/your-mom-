@@ -1,6 +1,12 @@
 # as a cycle: turn speed + heading into the armor stand's Motion.
 # The game then moves it with real collision, gravity and step-up.
 
+# Sense walls past the nose (or the tail when reversing) BEFORE moving. The
+# armor stand's own collision box is tiny and sits mid-bike, so without this
+# the model's nose would slide ~1.5 blocks into a wall before anything stops it.
+execute if score @s mc.speed matches 1.. run function mastercycle:drive/sense_front
+execute if score @s mc.speed matches ..-1 run function mastercycle:drive/sense_rear
+
 # heading in whole degrees -> sin / cos (x1000)
 scoreboard players operation #a mc.tmp = @s mc.yaw
 scoreboard players operation #a mc.tmp /= #100 mc.const

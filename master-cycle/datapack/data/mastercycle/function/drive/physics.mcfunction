@@ -15,11 +15,9 @@ execute if score #mode mc.tmp matches 0 run function mastercycle:drive/coast
 execute if score #mode mc.tmp matches 1 run function mastercycle:drive/accelerate
 execute if score #mode mc.tmp matches 2 run function mastercycle:drive/brake
 
-# ---- steering ---------------------------------------------------------------
-scoreboard players set #turn mc.tmp 0
-execute if score #left mc.tmp matches 1 unless score #right mc.tmp matches 1 run scoreboard players set #turn mc.tmp -1
-execute if score #right mc.tmp matches 1 unless score #left mc.tmp matches 1 run scoreboard players set #turn mc.tmp 1
-execute unless score #turn mc.tmp matches 0 run function mastercycle:drive/steer
+# ---- steering: the bike carves toward where the rider is looking ------------
+# (the camera stays entirely under the mouse, so the view is perfectly smooth)
+function mastercycle:drive/steer
 
 # ---- hop --------------------------------------------------------------------
 scoreboard players set #hop mc.tmp 0

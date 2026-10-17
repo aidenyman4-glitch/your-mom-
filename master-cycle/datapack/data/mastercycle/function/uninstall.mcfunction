@@ -23,7 +23,6 @@ scoreboard objectives remove mc.use
 scoreboard objectives remove mc.tmp
 scoreboard objectives remove mc.const
 data remove storage mastercycle:tmp m
-data remove storage mastercycle:tmp turn
 data remove storage mastercycle:tmp hum
 data remove storage mastercycle:hud bar
 tellraw @s {"text":"Master Cycle uninstalled. Now disable the data pack with /datapack disable.","color":"aqua"}

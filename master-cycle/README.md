@@ -32,15 +32,17 @@ resource pack in one, so the **same zip goes in two places**. Don't unzip it.
      the world.
    - **Existing world:** Edit → **Open World Folder** → `datapacks`. Drop the
      zip in, open the world, and run `/reload` if the world was already open.
-3. **Join the world.** Each player gets a **Sheikah Slate** automatically the
-   first time, along with the controls in chat. No commands or cheats needed.
+3. **Join the world.** Each player gets a **Master Cycle** item and a
+   **Sheikah Slate** automatically the first time, along with the controls in
+   chat. No commands or cheats needed.
 
 Servers: put `MasterCycle.zip` in `world/datapacks/`. Players add the same
 file as a resource pack, or you can serve it with `resource-pack=` in
 `server.properties`. Separate `MasterCycle-datapack.zip` and
 `MasterCycle-resourcepack.zip` files are also in `dist/`.
 
-To get another slate: `/function mastercycle:give_slate`, or craft one:
+To get another bike item: `/function mastercycle:give_bike`. Another slate:
+`/function mastercycle:give_slate`, or craft one:
 
 |   |   |   |
 |---|---|---|
@@ -52,16 +54,21 @@ To get another slate: `/function mastercycle:give_slate`, or craft one:
 
 | Action | How |
 |---|---|
-| Summon your cycle | Right-click with the **Sheikah Slate**, or **drop** it (Q). The slate goes straight back into your inventory. |
+| Place your bike | Hold the **Master Cycle** item and right-click |
+| Call it from anywhere | Right-click (or drop) the **Sheikah Slate** |
 | Get on | Right-click the cycle |
+| Steer | **Mouse.** The bike carves toward where you look, so your view stays perfectly smooth |
 | Throttle / brake & reverse | **W** / **S** |
-| Steer | **A** / **D** (your camera turns with the bike, like a boat) |
+| Carve without the mouse | Hold **A** / **D** to aim 45° left / right of your view |
 | Boost | Hold **Sprint** (Ctrl) with W. Uses 3× fuel. |
-| Hop | **Space** |
+| Hop | **Space**. Knee-high steps are hopped automatically. |
 | Get off | **Sneak** (Shift) |
 | Refuel | Right-click the cycle while holding fuel. This also works while riding if you look down at it. |
 | Check the fuel gauge | Sneak + right-click the cycle |
-| Put it away | Sneak + **punch** the cycle (owner only). Its fuel is saved in your slate. |
+| Pick it up | Sneak + **punch** the cycle (owner only). You get the Master Cycle item back, and its fuel is saved. |
+
+The bike stops at walls instead of sliding into them. Sensors past the nose
+(and the tail, when reversing) look one tick ahead at the current speed.
 
 While you ride, the action bar shows a fuel gauge and your speed:
 `◈ ▮▮▮▮▮▮▯▯▯▯ 58%   43 km/h`. When the tank runs dry the engine sputters,
@@ -304,7 +311,7 @@ python3 master-cycle/tools/package.py
 | Script | Does |
 |---|---|
 | `tools/build_resourcepack.py` | Builds the model geometry, draws the textures, synthesizes the sounds (numpy + ffmpeg/libvorbis), and writes the item definition and `pack.mcmeta`. |
-| `tools/validate.py` | Parses all 499 commands against the real **26.3 command tree** (from [misode/mcmeta](https://github.com/misode/mcmeta)). Checks SNBT, text components, selectors, item components, and particle/sound/attribute/entity/item ids against the 26.3 registries. Also checks function, predicate and macro references, scoreboard objectives, predicate JSON (26.3 format), model bounds, texture paths, and z-fighting. |
+| `tools/validate.py` | Parses all 542 commands against the real **26.3 command tree** (from [misode/mcmeta](https://github.com/misode/mcmeta)). Checks SNBT, text components, selectors, item components, and particle/sound/attribute/entity/item ids against the 26.3 registries. Also checks function, predicate and macro references, scoreboard objectives, predicate JSON (26.3 format), model bounds, texture paths, and z-fighting. |
 | `tools/sim_test.py` | Runs the driving functions in a small mcfunction interpreter and asserts the behavior: top speed, boost, braking, reverse, coasting, steering wrap, direction vector, wall crashes, hop cooldown, fuel burn, the fuel-empty cutoff and the HUD gauge. |
 | `tools/rider_fit.py` | Puts a player in the vanilla riding pose on the bike, at the height the game seats them. Fails if their body, head or legs go through the model, and renders `docs/rider-preview.png`. |
 | `tools/render_preview.py` | Software-renders the model JSON to `docs/model-preview.png`. |

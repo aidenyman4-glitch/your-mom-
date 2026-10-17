@@ -347,7 +347,10 @@ def parse_argument(ctx, parser, props, s, i):
                     if p.peek() == ":":  # namespaced key
                         p.i += 1
                         k = k + ":" + p.key()
-                    p.expect("=")
+                    if parser == "minecraft:item_predicate" and p.peek() == "~":
+                        p.i += 1  # partial match: key~{...}
+                    else:
+                        p.expect("=")
                     p.value()
                     check_id(ctx, "data_component_type", k, "item component")
                     if p.peek() == ",":
