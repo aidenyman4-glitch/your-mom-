@@ -1,0 +1,52 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "G": "minecraft:gold_ingot",
+    "E": "minecraft:ender_eye",
+    "R": "minecraft:redstone_block",
+    "D": "minecraft:diamond",
+    "S": "minecraft:polished_blackstone"
+  },
+  "pattern": [
+    "GDG",
+    "SES",
+    "GRG"
+  ],
+  "result": {
+    "id": "minecraft:warped_fungus_on_a_stick",
+    "components": {
+      "minecraft:custom_model_data": {
+        "floats": [
+          7702.0
+        ]
+      },
+      "minecraft:item_name": {
+        "text": "Sheikah Slate",
+        "color": "aqua"
+      },
+      "minecraft:lore": [
+        {
+          "text": "Right-click (or drop) to summon",
+          "color": "gray",
+          "italic": false
+        },
+        {
+          "text": "your Master Cycle",
+          "color": "gray",
+          "italic": false
+        }
+      ],
+      "minecraft:custom_data": {
+        "mastercycle_slate": true
+      },
+      "minecraft:unbreakable": {},
+      "minecraft:rarity": "rare",
+      "minecraft:tooltip_display": {
+        "hidden_components": [
+          "minecraft:unbreakable"
+        ]
+      }
+    }
+  }
+}

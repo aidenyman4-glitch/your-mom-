@@ -1,0 +1,17 @@
+{
+  "subtitles.mastercycle.engine.hum": "Master Cycle hums",
+  "subtitles.mastercycle.engine.roll": "Master Cycle rolls",
+  "subtitles.mastercycle.engine.start": "Master Cycle powers up",
+  "subtitles.mastercycle.engine.stop": "Master Cycle powers down",
+  "subtitles.mastercycle.engine.boost": "Master Cycle boosts",
+  "subtitles.mastercycle.fuel.add": "Master Cycle refuels",
+  "subtitles.mastercycle.fuel.low": "Master Cycle low on fuel",
+  "subtitles.mastercycle.fuel.empty": "Master Cycle sputters out",
+  "subtitles.mastercycle.cycle.summon": "Master Cycle materializes",
+  "subtitles.mastercycle.cycle.dismiss": "Master Cycle dematerializes",
+  "subtitles.mastercycle.impact.ram": "Master Cycle rams",
+  "subtitles.mastercycle.impact.wall": "Master Cycle crashes",
+  "subtitles.mastercycle.impact.land": "Master Cycle lands",
+  "subtitles.mastercycle.liquid.splash": "Master Cycle splashes",
+  "subtitles.mastercycle.liquid.sizzle": "Master Cycle sizzles"
+}
