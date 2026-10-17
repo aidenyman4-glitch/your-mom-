@@ -29,8 +29,12 @@ RP = ROOT / "resourcepack"
 MC = RP / "assets" / "minecraft"
 NS = RP / "assets" / "mastercycle"
 
-# Target: Minecraft Java 26.3 (resource pack format 97).
+# Target: Minecraft Java 26.3 (resource pack format 97.1). Formats have a
+# minor number since 1.21.9; a bare integer means "<major>.0", which would
+# exclude 26.3's 97.1, so the range is written out as [major, minor] pairs.
 RESOURCE_FORMAT = 97
+RESOURCE_MIN = [97, 0]
+RESOURCE_MAX = [97, 1]
 
 # CustomModelData values (component: custom_model_data={floats:[...]})
 CMD_CYCLE = 7701
@@ -727,8 +731,9 @@ def build_pack_meta():
                 {"text": "Master Cycle ", "color": "aqua"},
                 {"text": "model, textures & sounds", "color": "gray"},
             ],
-            "min_format": RESOURCE_FORMAT,
-            "max_format": RESOURCE_FORMAT,
+            "pack_format": RESOURCE_FORMAT,
+            "min_format": RESOURCE_MIN,
+            "max_format": RESOURCE_MAX,
         }
     })
 

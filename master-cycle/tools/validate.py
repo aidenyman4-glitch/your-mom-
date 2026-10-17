@@ -651,12 +651,38 @@ def validate_resourcepack(reg):
     return set(sounds)
 
 
+def fmt(v):
+    """pack.mcmeta format -> (major, minor); a bare int means minor 0."""
+    if isinstance(v, int):
+        return (v, 0)
+    return (v[0], v[1] if len(v) > 1 else 0)
+
+
+def validate_pack_meta(version_info):
+    for kind, root, major_key, minor_key in (
+            ("data pack", DP, "data_pack_version", "data_pack_version_minor"),
+            ("resource pack", RP, "resource_pack_version", "resource_pack_version_minor")):
+        where = str((root / "pack.mcmeta").relative_to(ROOT))
+        pack = json.loads((root / "pack.mcmeta").read_text())["pack"]
+        game = (version_info[major_key], version_info.get(minor_key, 0))
+        if "min_format" not in pack or "max_format" not in pack:
+            err(where, "needs min_format and max_format")
+            continue
+        lo, hi = fmt(pack["min_format"]), fmt(pack["max_format"])
+        if not lo <= game <= hi:
+            err(where, f"{kind} supports formats {lo}..{hi}, but Minecraft "
+                       f"{version_info['id']} is {game[0]}.{game[1]} - the game would mark it incompatible")
+        if "pack_format" in pack and pack["pack_format"] != game[0]:
+            err(where, f"pack_format {pack['pack_format']} should be the major format {game[0]}")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--version", default="26.3")
     args = ap.parse_args()
     tree = fetch(args.version, "commands/data.json")
     reg = fetch(args.version, "registries/data.json")
+    validate_pack_meta(fetch(args.version, "version.json"))
     reg = {k: set(v) for k, v in reg.items()}
     for f in list(DP.rglob("*.json")) + list(RP.rglob("*.json")) + [DP / "pack.mcmeta", RP / "pack.mcmeta"]:
         try:
