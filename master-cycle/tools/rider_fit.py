@@ -21,7 +21,8 @@ sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parent))
 import render_preview as rp
 
 # model display.head transform (from the model) -> world blocks, rider frame
-m = json.loads(rp.MODEL.read_text())
+NAMED = rp.ROOT / "tools" / ".cache" / "custom_master_cycle.named.json"
+m = json.loads((NAMED if NAMED.exists() else rp.MODEL).read_text())
 d = m["display"]["head"]; S = d["scale"][0]; T = d["translation"]
 K = 0.625 * 0.5 / 16                 # head-slot 0.625, armor stand scale 0.5, 1/16
 HEAD_CENTER = (1.501 - 1 / 16) * 0.5 + 0.25 * 0.5
@@ -93,7 +94,7 @@ def render(out, views):
 
 def clipping(model=None, margin=0.15):
     """Sample each rider part's volume and report how much of it is inside the bike."""
-    model = model or json.loads(rp.MODEL.read_text())
+    model = model or m
     els = []
     for el in model["elements"]:
         R, o = np.eye(3), np.zeros(3)
