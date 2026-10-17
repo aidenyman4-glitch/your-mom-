@@ -20,25 +20,33 @@ stars.
 
 ## Install
 
-1. Download both zips from [`dist/`](dist):
-   - `MasterCycle-datapack.zip` → put it in your world's `datapacks/` folder
-     (`.minecraft/saves/<world>/datapacks/`, or `world/datapacks/` on a server).
-   - `MasterCycle-resourcepack.zip` → put it in `.minecraft/resourcepacks/` and
-     turn it on under *Options → Resource Packs*. On a server you can also set
-     it as the `resource-pack` in `server.properties`.
-2. Run `/reload` (or reopen the world).
-3. Get a Sheikah Slate:
-   - **Creative / op:** `/function mastercycle:give_slate`
-   - **Survival:** craft one:
+You need **Minecraft Java Edition 26.3** and one file:
+[`dist/MasterCycle.zip`](dist/MasterCycle.zip). It's the data pack and the
+resource pack in one, so the **same zip goes in two places**. Don't unzip it.
 
-     |   |   |   |
-     |---|---|---|
-     | Gold Ingot | Diamond | Gold Ingot |
-     | Polished Blackstone | Eye of Ender | Polished Blackstone |
-     | Gold Ingot | Block of Redstone | Gold Ingot |
+1. **Resource pack:** Options → Resource Packs → **Open Pack Folder**. Drop
+   `MasterCycle.zip` in, move it to **Selected**, then click **Done**.
+2. **Data pack:**
+   - **New world:** Create New World → More → **Data Packs**. Drag the same
+     `MasterCycle.zip` onto the window, move it to **Selected**, then create
+     the world.
+   - **Existing world:** Edit → **Open World Folder** → `datapacks`. Drop the
+     zip in, open the world, and run `/reload` if the world was already open.
+3. **Join the world.** Each player gets a **Sheikah Slate** automatically the
+   first time, along with the controls in chat. No commands or cheats needed.
 
-The data pack works without the resource pack. Without it you get an invisible
-bike and no custom sounds, so everyone who plays should install both.
+Servers: put `MasterCycle.zip` in `world/datapacks/`. Players add the same
+file as a resource pack, or you can serve it with `resource-pack=` in
+`server.properties`. Separate `MasterCycle-datapack.zip` and
+`MasterCycle-resourcepack.zip` files are also in `dist/`.
+
+To get another slate: `/function mastercycle:give_slate`, or craft one:
+
+|   |   |   |
+|---|---|---|
+| Gold Ingot | Diamond | Gold Ingot |
+| Polished Blackstone | Eye of Ender | Polished Blackstone |
+| Gold Ingot | Block of Redstone | Gold Ingot |
 
 ## Riding it
 

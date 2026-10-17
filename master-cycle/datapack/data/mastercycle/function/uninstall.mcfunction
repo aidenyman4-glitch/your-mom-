@@ -2,6 +2,7 @@
 # (/datapack disable "file/<pack name>") or it will set itself up again on /reload.
 execute as @e[type=armor_stand,tag=mc.cycle] run function mastercycle:cycle/despawn
 kill @e[type=interaction,tag=mc.hitbox]
+tag @a remove mc.welcomed
 scoreboard objectives remove mc.fuel
 scoreboard objectives remove mc.speed
 scoreboard objectives remove mc.yaw
