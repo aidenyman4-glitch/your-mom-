@@ -34,6 +34,11 @@ execute if score @s mc.jbuf matches 1.. if score @s mc.coyote matches 1.. if sco
 scoreboard players operation @s mc.fuel -= #burn mc.tmp
 execute if score #pow mc.tmp matches 1 if score @s mc.fuel matches ..0 run function mastercycle:drive/ran_out
 
+# ---- liquids: the hull floats, but drags ------------------------------------
+scoreboard players set #inliquid mc.tmp 0
+execute if score @s mc.speed matches 420.. if block ~ ~0.1 ~ minecraft:water run scoreboard players set @s mc.speed 420
+execute if score @s mc.speed matches 380.. if block ~ ~0.1 ~ minecraft:lava run scoreboard players set @s mc.speed 380
+
 # ---- push the armor stand ---------------------------------------------------
 scoreboard players set #move mc.tmp 0
 execute unless score @s mc.speed matches 0 run scoreboard players set #move mc.tmp 1

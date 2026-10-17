@@ -400,7 +400,23 @@ def parse_argument(ctx, parser, props, s, i):
         w, j = read_word(s, i)
         ctx.refs["predicate"].add((w if ":" in w else "minecraft:" + w, ctx.where))
         return j
-    if parser in ("minecraft:nbt_path", "minecraft:slot_source", "minecraft:loot_modifier",
+    if parser == "minecraft:slot_source":
+        tok, j = read_balanced(s, i)
+        if tok.startswith(("{", "[")):  # typed slot source, e.g. {type:"slot_range",...}
+            return j
+        groups = {"container": 54, "inventory": 27, "enderchest": 27, "hotbar": 9,
+                  "horse": 15, "mob.inventory": 8, "player.crafting": 4}
+        named = {"weapon", "weapon.mainhand", "weapon.offhand", "weapon.*", "saddle", "contents",
+                 "player.cursor", "armor.head", "armor.chest", "armor.legs", "armor.feet",
+                 "armor.body", "armor.*", "horse.chest"}
+        if tok in named:
+            return j
+        base, _, idx = tok.rpartition(".")
+        if base in groups and (idx == "*" or (idx.isdigit() and int(idx) < groups[base])):
+            return j
+        err(ctx.where, f"{tok!r} is not a valid item slot")
+        return j
+    if parser in ("minecraft:nbt_path", "minecraft:loot_modifier",
                   "minecraft:block_predicate", "minecraft:block_state", "minecraft:loot_predicate",
                   "minecraft:loot_table"):
         tok, j = read_balanced(s, i)

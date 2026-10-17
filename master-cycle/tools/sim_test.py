@@ -38,6 +38,8 @@ class Sim:
         self.rider_yaw = 0.0  # where the rider is looking, degrees
         self.solid = set()  # (x, y, z) of blocks in #minecraft:blocks_motion
         self.entities = {}  # name -> [x, z] of rammable mobs near the cycle
+        self.fluid = None  # None, "water" or "lava" the cycle is sitting in
+        self.fluid_depth = 0.0  # how far the surface is above the cycle
         self.damaged = []  # (name, amount) from /damage
 
     nose_targets = None
@@ -150,6 +152,10 @@ class Sim:
             return
         if cmd == "data get entity @s Rotation[0] 100" and self.executor == "rider":
             return int(self.rider_yaw * 100)
+        m = re.match(r"data modify storage mastercycle:tmp m\[(\d)\] set value (-?[\d.]+)d$", cmd)
+        if m:
+            self.stored[f"m[{m.group(1)}]"] = float(m.group(2))
+            return
         m = re.match(r"data get storage mastercycle:tmp m\[(\d)\] (\S+)", cmd)
         if m:
             return int(self.motion[int(m.group(1))] * float(m.group(2)))
@@ -202,8 +208,12 @@ class Sim:
                     ok = bool(self.entities)
                     i += 3
                 elif kind == "block":
-                    ok = self.local_block(t[i + 2:i + 5]) in self.solid
-                    assert t[i + 5] == "#minecraft:blocks_motion", cmd
+                    coords, pred = t[i + 2:i + 5], t[i + 5]
+                    if pred == "#minecraft:blocks_motion":
+                        ok = self.local_block(coords) in self.solid
+                    else:  # a named block at ~ ~<height> ~, i.e. water / lava
+                        height = float(coords[1][1:] or 0)
+                        ok = pred == f"minecraft:{self.fluid}" and height <= self.fluid_depth
                     i += 6
                 else:
                     raise NotImplementedError(kind)
@@ -488,6 +498,44 @@ def main():
     tick(s2, ["jump"], on_ground=False)
     check(s2.get("#hop", "mc.tmp") == 0, "can't hop in mid-air")
     _ = log_before
+
+    print("water & lava:")
+    s = make_sim()
+    s.fluid, s.fluid_depth = "water", 3.0  # fully submerged
+    tick(s, ["forward"])
+    check(s.stored.get("m[1]") == 0.14, f"submerged in water: the hull rises ({s.stored.get('m[1]')})")
+    s.fluid_depth = 0.5  # only the hull is in water now
+    tick(s, ["forward"])
+    check(s.stored.get("m[1]") == 0.0, "at the surface: it hovers instead of sinking")
+    for _ in range(60):
+        tick(s, ["forward", "sprint"])
+    check(speed(s) == 420, f"water drags the top speed down to 420 ({speed(s)})")
+    f0 = s.get("cycle", "mc.fuel")
+    tick(s, ["forward"])
+    check(f0 - s.get("cycle", "mc.fuel") == 1, "floating on water costs no extra fuel")
+
+    s = make_sim()
+    s.fluid, s.fluid_depth = "lava", 3.0
+    tick(s, ["forward"])
+    check(s.stored.get("m[1]") == 0.10, f"submerged in lava: it rises ({s.stored.get('m[1]')})")
+    s.fluid_depth = 0.5
+    tick(s, ["forward"])
+    check(s.stored.get("m[1]") == 0.0, "and floats on the lava surface")
+    check(any("fire_resistance" in line for line in s.log), "the hull shields the rider from the heat")
+    f0 = s.get("cycle", "mc.fuel")
+    tick(s, ["forward"])
+    check(f0 - s.get("cycle", "mc.fuel") == 5, f"lava burns extra fuel: {f0 - s.get('cycle', 'mc.fuel')}/tick")
+    for _ in range(60):
+        tick(s, ["forward", "sprint"])
+    check(speed(s) == 380, f"lava is thicker, so slower ({speed(s)})")
+    s.set("cycle", "mc.fuel", 2)
+    tick(s, ["forward"])
+    check(s.get("cycle", "mc.fuel") == 0, "a tank drained by lava stops at 0, never below")
+
+    s = make_sim()
+    s.fluid = None
+    tick(s, ["forward"])
+    check(s.stored.get("m[1]") is None, "on dry land the vertical motion is left alone")
 
     print("jumping:")
     s = make_sim()

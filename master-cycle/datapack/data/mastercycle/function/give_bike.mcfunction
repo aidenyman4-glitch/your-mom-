@@ -1,2 +1,0 @@
-# Gives the executing player a Master Cycle item.   Usage: /function mastercycle:give_bike
-give @s minecraft:warped_fungus_on_a_stick[minecraft:custom_model_data={floats:[7701f]},minecraft:item_name={text:"Master Cycle",color:"aqua"},minecraft:lore=[{text:"Right-click to place your Master Cycle",color:"gray",italic:false},{text:"Sneak + punch it to pick it back up",color:"gray",italic:false}],minecraft:custom_data={mastercycle_bike:1b},minecraft:unbreakable={},minecraft:rarity="epic",minecraft:tooltip_display={hidden_components:["minecraft:unbreakable"]}] 1

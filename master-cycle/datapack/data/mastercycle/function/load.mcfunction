@@ -71,6 +71,8 @@ scoreboard players set #cfg.jump_buffer mc.const 6
 scoreboard players set #cfg.ram_div mc.const 75
 scoreboard players set #cfg.ram_max mc.const 16
 scoreboard players set #cfg.ram_min_speed mc.const 220
+# Fuel burned per tick while floating in lava (the hull shields the rider).
+scoreboard players set #cfg.lava_burn mc.const 4
 
 # Low-fuel warning chime when the tank drops to this (default 20%).
 scoreboard players set #cfg.low_fuel mc.const 1200
