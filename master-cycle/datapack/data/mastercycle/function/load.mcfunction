@@ -14,6 +14,7 @@ scoreboard objectives add mc.ridden dummy
 scoreboard objectives add mc.air dummy
 scoreboard objectives add mc.low dummy
 scoreboard objectives add mc.skid dummy
+scoreboard objectives add mc.wet dummy
 scoreboard objectives add mc.coyote dummy
 scoreboard objectives add mc.jbuf dummy
 # per-player

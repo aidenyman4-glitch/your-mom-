@@ -9,6 +9,16 @@
       }
     ]
   },
+  "engine.roll": {
+    "subtitle": "subtitles.mastercycle.engine.roll",
+    "sounds": [
+      {
+        "name": "mastercycle:tyre_roll",
+        "volume": 0.7,
+        "attenuation_distance": 20
+      }
+    ]
+  },
   "engine.start": {
     "subtitle": "subtitles.mastercycle.engine.start",
     "sounds": [
@@ -16,6 +26,16 @@
         "name": "mastercycle:start",
         "volume": 1.0,
         "attenuation_distance": 24
+      }
+    ]
+  },
+  "engine.stop": {
+    "subtitle": "subtitles.mastercycle.engine.stop",
+    "sounds": [
+      {
+        "name": "mastercycle:stop",
+        "volume": 1.0,
+        "attenuation_distance": 16
       }
     ]
   },
@@ -35,6 +55,16 @@
       {
         "name": "mastercycle:refuel",
         "volume": 0.9,
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "fuel.low": {
+    "subtitle": "subtitles.mastercycle.fuel.low",
+    "sounds": [
+      {
+        "name": "mastercycle:fuel_low",
+        "volume": 1.0,
         "attenuation_distance": 16
       }
     ]
@@ -69,22 +99,82 @@
       }
     ]
   },
-  "engine.stop": {
-    "subtitle": "subtitles.mastercycle.engine.stop",
+  "impact.ram": {
+    "subtitle": "subtitles.mastercycle.impact.ram",
     "sounds": [
       {
-        "name": "mastercycle:stop",
+        "name": "mastercycle:ram1",
         "volume": 1.0,
-        "attenuation_distance": 16
+        "attenuation_distance": 24
+      },
+      {
+        "name": "mastercycle:ram2",
+        "volume": 1.0,
+        "attenuation_distance": 24
+      },
+      {
+        "name": "mastercycle:ram3",
+        "volume": 1.0,
+        "attenuation_distance": 24
       }
     ]
   },
-  "fuel.low": {
-    "subtitle": "subtitles.mastercycle.fuel.low",
+  "impact.wall": {
+    "subtitle": "subtitles.mastercycle.impact.wall",
     "sounds": [
       {
-        "name": "mastercycle:fuel_low",
+        "name": "mastercycle:wall1",
         "volume": 1.0,
+        "attenuation_distance": 24
+      },
+      {
+        "name": "mastercycle:wall2",
+        "volume": 1.0,
+        "attenuation_distance": 24
+      },
+      {
+        "name": "mastercycle:wall3",
+        "volume": 1.0,
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "impact.land": {
+    "subtitle": "subtitles.mastercycle.impact.land",
+    "sounds": [
+      {
+        "name": "mastercycle:land1",
+        "volume": 0.9,
+        "attenuation_distance": 20
+      },
+      {
+        "name": "mastercycle:land2",
+        "volume": 0.9,
+        "attenuation_distance": 20
+      },
+      {
+        "name": "mastercycle:land3",
+        "volume": 0.9,
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "liquid.splash": {
+    "subtitle": "subtitles.mastercycle.liquid.splash",
+    "sounds": [
+      {
+        "name": "mastercycle:splash",
+        "volume": 1.0,
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "liquid.sizzle": {
+    "subtitle": "subtitles.mastercycle.liquid.sizzle",
+    "sounds": [
+      {
+        "name": "mastercycle:sizzle",
+        "volume": 0.8,
         "attenuation_distance": 16
       }
     ]

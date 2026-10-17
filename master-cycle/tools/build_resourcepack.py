@@ -188,6 +188,18 @@ def sheikah_eye(draw, cx, cy, s, color, pupil):
     draw.polygon([(cx, ty), (cx - s * 0.18, ty + s * 0.45), (cx, ty + s * 0.65), (cx + s * 0.18, ty + s * 0.45)], fill=color)
 
 
+def tex_emblem():
+    """The Sheikah eye, lit, for the side panels."""
+    im = Image.new("RGB", (32, 32), CHARCOAL_LO)
+    d = ImageDraw.Draw(im)
+    big = Image.new("RGBA", (128, 128), (0, 0, 0, 0))
+    sheikah_eye(ImageDraw.Draw(big), 64, 56, 38, CYAN + (255,), CYAN_HI + (255,))
+    big = big.resize((30, 30), Image.LANCZOS)
+    im.paste(big, (1, 1), big)
+    d.rectangle((0, 0, 31, 31), outline=GOLD_LO)
+    return im
+
+
 def tex_slate():
     """Hand-held Sheikah Slate item sprite (32x32)."""
     im = Image.new("RGBA", (32, 32), (0, 0, 0, 0))
@@ -232,6 +244,7 @@ def build_textures():
     tex_flat(GOLD).save(tdir / "gold.png")
     tex_flat(CYAN, glow=True).save(tdir / "glow_cyan.png")
     tex_flat(ORANGE, glow=True).save(tdir / "glow_orange.png")
+    tex_emblem().save(tdir / "eye.png")
     tex_slate().save(MC / "textures" / "item" / "sheikah_slate.png")
     pack_icon().save(RP / "pack.png")
 
@@ -248,8 +261,10 @@ def _uv(du, dv):
     return [0, 0, round(min(abs(du), 16), 3), round(min(abs(dv), 16), 3)]
 
 
-def box(frm, to, tex, rot=None, light=None, faces=None, name=None):
-    """Add a cuboid. `faces` may override the texture per face."""
+def box(frm, to, tex, rot=None, light=None, faces=None, name=None, full_uv=()):
+    """Add a cuboid. `faces` may override the texture per face; faces listed in
+    `full_uv` show the whole texture instead of a slice the size of the face,
+    which is what an emblem or a decal wants."""
     (x0, y0, z0), (x1, y1, z1) = frm, to
     dx, dy, dz = x1 - x0, y1 - y0, z1 - z0
     sizes = {
@@ -263,7 +278,8 @@ def box(frm, to, tex, rot=None, light=None, faces=None, name=None):
     el = {
         "from": [round(v, 3) for v in frm],
         "to": [round(v, 3) for v in to],
-        "faces": {f: {"uv": _uv(*sizes[f]), "texture": "#" + face_tex[f]} for f in sizes},
+        "faces": {f: {"uv": [0, 0, 16, 16] if f in full_uv else _uv(*sizes[f]),
+                      "texture": "#" + face_tex[f]} for f in sizes},
     }
     if name:
         el["name"] = name
@@ -304,7 +320,7 @@ def disc(cz, cy, r, x0, x1, n, tex, side_tex, name, off, light=None):
 
 def wheel(cz, cy, R, x0, x1, name):
     # Tyre: 16-sided, treaded rim, flat rubber sidewall.
-    o = disc(cz, cy, R, x0, x1, 8, "tread", "tire_side", f"{name}_tyre", off=0)
+    o = disc(cz, cy, R, x0, x1, 12, "tread", "tire_side", f"{name}_tyre", off=0)
     # Concentric hub layers, each in its own depth band further out from the
     # tyre wall: gold rim band, dark recess with ornate spokes, glowing orange
     # ring, gold hub and a cyan Sheikah core.
@@ -366,10 +382,10 @@ def build_cycle_model():
 
     # --- front fork: raked gold struts with coil springs ------------------
     FORK = ("x", 23.5, (8, 8.25, -1.5))
-    pair((4.4, 2.0, -2.1), (5.15, 14.5, -0.9), "trim", rot=FORK, name="fork")
+    pair((4.475, 2.0, -2.1), (5.125, 14.5, -0.9), "trim", rot=FORK, name="fork")
     for i in range(4):
         y = 6.0 + i * 1.1
-        pair((4.22, y, -2.42), (5.2, y + 0.5, -0.58), "gold", rot=FORK, name=f"fork_coil{i}")
+        pair((4.175, y, -2.42), (5.175, y + 0.5, -0.58), "gold", rot=FORK, name=f"fork_coil{i}")
     # front fender: gold arc hugging the top-front of the front tyre
     fender(cz=-4, cy=2.5, r=7.9, x0=6.12, x1=9.88, angles=(-5, -24, -43, -62), name="front_fender")
 
@@ -395,7 +411,7 @@ def build_cycle_model():
     # ornate side panels with Sheikah nodes
     pair((4.6, 7.8, 0), (5.0, 12.2, 16), "body", name="side_panel")
     pair((4.4, 7.2, -0.5), (4.8, 7.9, 16.5), "trim", name="panel_trim")
-    for z, y in ((3.5, 10.5), (8.5, 9.5), (13.0, 11.0)):
+    for z, y in ((3.5, 10.5), (13.0, 11.0)):
         pair((4.3, y, z), (4.6, y + 0.9, z + 0.9), "glow_cyan", light=15)
 
     # --- head: a horse-like prow with a unicorn horn ------------------------
@@ -438,6 +454,15 @@ def build_cycle_model():
     plume(z=25.0, y=15.2, x0=6.2, x1=6.9, segments=((3.5, 24, 0.9), (2.8, 48, 0.7)), name="tail_l")
     plume(z=25.0, y=15.2, x0=9.1, x1=9.8, segments=((3.5, 24, 0.9), (2.8, 48, 0.7)), name="tail_r")
 
+    # Sheikah eye emblem, lit, on both side panels
+    pair((4.24, 8.6, 5.6), (4.56, 11.6, 10.6), "eye", light=15, name="emblem",
+         full_uv=("east", "west"))
+    # underglow strip along the belly
+    box((6.2, -0.75, 4.5), (9.8, -0.45, 14.5), "glow_cyan", light=15, name="underglow")
+    # rear thruster nozzles
+    pair((5.6, 11.2, 25.6), (7.4, 13.0, 26.9), "metal", name="nozzle")
+    pair((5.85, 11.45, 26.85), (7.15, 12.75, 27.15), "glow_cyan", light=15, name="nozzle_glow")
+
     # --- swingarm & footrests ---------------------------------------------
     pair((4.12, 1.5, 12.5), (4.93, 3.5, 16.6), "trim", name="swingarm")
     # footrests under the rider's feet, either side of the prow
@@ -454,6 +479,7 @@ def build_cycle_model():
             "glow_orange": "minecraft:item/master_cycle/glow_orange",
             "seat": "minecraft:item/master_cycle/seat",
             "metal": "minecraft:item/master_cycle/metal",
+            "eye": "minecraft:item/master_cycle/eye",
             "particle": "minecraft:item/master_cycle/body",
         },
         "elements": ELEMENTS[:],
@@ -518,17 +544,27 @@ def build_item_definition():
 
 
 # ----------------------------------------------------------------- sounds ---
+# A small DSP kit (filters, reverb, saturation) so the sounds have real body
+# instead of bare sine tones.
 SR = 44100
 
 
-def env(n, attack, release):
+def noise(n, seed):
+    return np.random.default_rng(seed).standard_normal(n)
+
+
+def env(n, attack, release, curve=1.0):
     e = np.ones(n)
     a, r = int(attack * SR), int(release * SR)
     if a:
-        e[:a] = np.linspace(0, 1, a)
+        e[:a] = np.linspace(0, 1, a) ** curve
     if r:
-        e[-r:] *= np.linspace(1, 0, r)
+        e[-r:] *= np.linspace(1, 0, r) ** curve
     return e
+
+
+def decay(n, rate):
+    return np.exp(-np.arange(n) / SR * rate)
 
 
 def tone(freq, dur, phase=0.0):
@@ -538,129 +574,364 @@ def tone(freq, dur, phase=0.0):
     return np.sin(2 * np.pi * np.cumsum(f) / SR + phase)
 
 
-def bell(freq, dur, decay=4.0):
+def saw(freq, dur, harmonics=14, phase=0.0):
+    """Band-limited sawtooth: the harmonic stack an electric motor whines with."""
+    out = np.zeros(int(dur * SR))
+    f = np.asarray(freq, dtype=float)
+    for k in range(1, harmonics + 1):
+        if np.max(f) * k > SR * 0.45:
+            break
+        out += tone(f * k, dur, phase * k) / k
+    return out * (2 / np.pi)
+
+
+def svf(sig, cutoff, res=1.0, mode="lp"):
+    """State-variable filter. `cutoff` may be an array, so it can sweep."""
+    n = len(sig)
+    f = np.broadcast_to(np.asarray(cutoff, dtype=float), (n,))
+    f = 2 * np.sin(np.pi * np.clip(f, 20, SR * 0.45) / SR)
+    out = np.empty(n)
+    low = band = 0.0
+    if mode == "lp":
+        for i in range(n):
+            high = sig[i] - low - res * band
+            band += f[i] * high
+            low += f[i] * band
+            out[i] = low
+    elif mode == "bp":
+        for i in range(n):
+            high = sig[i] - low - res * band
+            band += f[i] * high
+            low += f[i] * band
+            out[i] = band
+    else:
+        for i in range(n):
+            high = sig[i] - low - res * band
+            band += f[i] * high
+            low += f[i] * band
+            out[i] = high
+    return out
+
+
+def lowpass2(sig, cutoff, res=0.7):
+    """Two lowpasses in series: a steeper slope, so "low" really is low."""
+    return svf(svf(sig, cutoff, res=res), cutoff, res=res)
+
+
+def comb(x, delay, g):
+    """Feedback comb, computed a delay-block at a time so it stays vectorised."""
+    y = x.copy()
+    for i in range(delay, len(y), delay):
+        seg = min(delay, len(y) - i)
+        y[i:i + seg] += g * y[i - delay:i - delay + seg]
+    return y
+
+
+def reverb(x, size=1.0, mix=0.3):
+    """Schroeder reverb: four combs in parallel, then two allpasses."""
+    wet = np.zeros(len(x))
+    for d, g in ((1557, 0.78), (1617, 0.77), (1491, 0.79), (1422, 0.76)):
+        wet += comb(x, max(1, int(d * size)), g)
+    wet /= 4
+    for d, g in ((225, 0.7), (556, 0.7)):
+        d = max(1, int(d * size))
+        delayed = np.concatenate([np.zeros(d), wet[:-d]])
+        wet = -g * wet + delayed + g * np.concatenate([np.zeros(d), (-g * wet + delayed)[:-d]])
+    return (1 - mix) * x + mix * wet / (np.max(np.abs(wet)) + 1e-9) * (np.max(np.abs(x)) + 1e-9)
+
+
+def mix(*layers):
+    """Mix (gain, signal) layers, each normalised to the same RMS first, so the
+    balance is what the gains say rather than whatever the filters left behind.
+    RMS rather than peak, so noise layers don't swing with the random seed."""
+    n = max(len(sig) for _, sig in layers)
+    out = np.zeros(n)
+    for gain, sig in layers:
+        rms = np.sqrt(np.mean(sig ** 2))
+        if rms > 1e-9:
+            out[:len(sig)] += gain * sig / rms
+    return out
+
+
+def saturate(x, drive=2.0):
+    return np.tanh(drive * x) / np.tanh(drive)
+
+
+def bell(freq, dur, rate=4.0, partials=(1.0, 2.76, 5.4), gains=(1.0, 0.35, 0.12)):
+    """Struck metal: inharmonic partials, each decaying faster than the last."""
     n = int(dur * SR)
-    t = np.arange(n) / SR
-    s = np.sin(2 * np.pi * freq * t) + 0.35 * np.sin(2 * np.pi * freq * 2.76 * t) * np.exp(-t * 6)
-    return s * np.exp(-t * decay)
+    out = np.zeros(n)
+    for p, g in zip(partials, gains):
+        out += g * tone(freq * p, dur) * decay(n, rate * (1 + 0.7 * (p - 1)))
+    return out
 
 
 def place(buf, sig, at):
-    i = int(at * SR)
+    i = max(0, int(at * SR))
     end = min(len(buf), i + len(sig))
-    buf[i:end] += sig[: end - i]
+    if end > i:
+        buf[i:end] += sig[: end - i]
 
 
+# ---- engine --------------------------------------------------------------
 def snd_engine_hum():
-    dur = 0.75
+    """Sheikah motor: a saw stack under a resonant filter, a coil whine on top,
+    and a slow wobble so a looping sample never sounds static."""
+    dur = 0.6
     n = int(dur * SR)
     t = np.arange(n) / SR
-    wob = 1 + 0.08 * np.sin(2 * np.pi * 7 * t)
-    s = (0.55 * tone(62, dur) + 0.35 * tone(124, dur) + 0.22 * tone(186.5, dur)
-         + 0.10 * tone(372, dur) + 0.05 * tone(1488 * (1 + 0.01 * np.sin(2 * np.pi * 3 * t)), dur))
-    s = np.tanh(1.6 * s * wob) * 0.8
-    return s * env(n, 0.12, 0.2)
+    wob = 1 + 0.015 * np.sin(2 * np.pi * 3.3 * t)
+    core = 0.7 * saw(62 * wob, dur) + 0.4 * saw(93 * wob, dur, harmonics=8)
+    core = svf(core, 420 + 120 * np.sin(2 * np.pi * 2.1 * t), res=0.55)
+    sub = 0.5 * tone(31 * wob, dur)
+    whine = 0.055 * tone(2480 * (1 + 0.004 * np.sin(2 * np.pi * 5.5 * t)), dur)
+    whine += 0.03 * tone(3720, dur)
+    air = 0.05 * svf(noise(n, 11), 1800, res=0.9, mode="bp")
+    s = saturate(core + sub, 1.6) * 0.8 + whine + air
+    return s * env(n, 0.03, 0.06)
 
 
 def snd_start():
-    dur = 1.4
+    """Ignition: a clunk, the motor spinning up, and the Sheikah chime."""
+    dur = 1.6
     n = int(dur * SR)
     t = np.arange(n) / SR
-    sweep = 45 + 120 * (1 - np.exp(-t * 3))
-    s = np.tanh(2 * (0.6 * tone(sweep, dur) + 0.3 * tone(sweep * 2, dur))) * 0.55 * env(n, 0.05, 0.4)
+    spin = 1 - np.exp(-t * 2.6)
+    rpm = 28 + 70 * spin
+    s = saturate(0.8 * saw(rpm, dur) + 0.4 * tone(rpm / 2, dur), 2.0) * spin * 0.6
+    s = svf(s, 250 + 900 * spin, res=0.5)
+    s += 0.08 * tone(1200 + 1400 * spin, dur) * spin
+    clunk = svf(noise(int(0.12 * SR), 3), 300, res=0.4) * decay(int(0.12 * SR), 40)
+    place(s, 1.1 * clunk, 0.0)
     for i, f in enumerate((659.3, 987.8, 1318.5)):
-        place(s, 0.28 * bell(f, 0.8), 0.25 + i * 0.12)
-    return s
-
-
-def snd_boost():
-    dur = 1.0
-    n = int(dur * SR)
-    t = np.arange(n) / SR
-    rng = np.random.default_rng(7)
-    noise = rng.standard_normal(n)
-    # crude resonant band-pass sweep via moving average differences
-    lo = np.convolve(noise, np.ones(18) / 18, mode="same")
-    hi = noise - np.convolve(noise, np.ones(4) / 4, mode="same")
-    whoosh = (lo * (1 - t) + hi * t) * np.sin(np.pi * t / dur) ** 1.5
-    rise = tone(220 + 660 * t ** 1.4, dur) * 0.3 * env(n, 0.02, 0.35)
-    return 0.6 * whoosh / np.max(np.abs(whoosh)) + rise
-
-
-def snd_refuel():
-    dur = 1.0
-    s = np.zeros(int(dur * SR))
-    for i, f in enumerate((523.3, 784.0, 1046.5, 1568.0)):
-        place(s, 0.35 * bell(f, 0.6, 5), i * 0.09)
-    hum = tone(110, dur) * 0.2 * env(len(s), 0.05, 0.5)
-    return s + hum
-
-
-def snd_empty():
-    dur = 1.3
-    n = int(dur * SR)
-    t = np.arange(n) / SR
-    sweep = 180 * np.exp(-t * 2.2) + 30
-    sputter = (np.sin(2 * np.pi * 9 * t) > -0.2).astype(float) * 0.7 + 0.3
-    return np.tanh(2 * tone(sweep, dur) + tone(sweep * 1.5, dur)) * 0.5 * sputter * env(n, 0.01, 0.5)
-
-
-def snd_summon():
-    dur = 1.8
-    n = int(dur * SR)
-    t = np.arange(n) / SR
-    shimmer = sum(tone(f * (1 + 0.004 * np.sin(2 * np.pi * 5 * t)), dur) for f in (440, 659.3, 880, 1318.5))
-    s = 0.14 * shimmer * env(n, 0.5, 0.8)
-    for i, f in enumerate((1318.5, 1760.0, 1975.5, 2637.0)):
-        place(s, 0.22 * bell(f, 0.9, 4), 0.35 + i * 0.1)
-    s += 0.25 * tone(55 + 40 * t, dur) * env(n, 0.3, 0.6)
-    return s
-
-
-def snd_dismiss():
-    dur = 1.2
-    s = np.zeros(int(dur * SR))
-    for i, f in enumerate((1975.5, 1318.5, 987.8, 659.3)):
-        place(s, 0.25 * bell(f, 0.7, 5), i * 0.1)
-    return s
+        place(s, 0.3 * bell(f, 0.9, 4.5), 0.42 + i * 0.11)
+    return reverb(s * env(n, 0.002, 0.35), size=0.8, mix=0.2)
 
 
 def snd_engine_stop():
-    """Power-down: the hum's harmonics gliding down and fading."""
+    """Power-down: the motor spinning down, then the core going quiet."""
+    dur = 1.3
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    glide = np.exp(-t * 2.3)
+    s = saturate(0.8 * saw(26 + 76 * glide, dur), 1.8) * glide * 0.7
+    s = svf(s, 180 + 700 * glide, res=0.5)
+    s += 0.05 * tone(2400 * glide + 300, dur) * glide
+    place(s, 0.22 * bell(880, 0.6, 7), 0.0)
+    thunk = svf(noise(int(0.1 * SR), 5), 220, res=0.4) * decay(int(0.1 * SR), 45)
+    place(s, 0.8 * thunk, 0.82)
+    return reverb(s * env(n, 0.004, 0.3), size=0.7, mix=0.18)
+
+
+def snd_boost():
+    """Afterburner: a filtered noise sweep, a rising tone and a spark crackle."""
     dur = 1.1
     n = int(dur * SR)
     t = np.arange(n) / SR
-    glide = 1 - 0.55 * (1 - np.exp(-t * 2.5))
-    s = 0.55 * tone(62 * glide, dur) + 0.35 * tone(124 * glide, dur) + 0.15 * tone(186.5 * glide, dur)
-    s = np.tanh(1.4 * s) * np.exp(-t * 2.2) * env(n, 0.02, 0.3)
-    place(s, 0.18 * bell(987.8, 0.5, 6), 0.0)
-    return s
+    shape = np.sin(np.pi * np.clip(t / dur, 0, 1)) ** 1.3
+    whoosh = svf(noise(n, 7), 300 + 5200 * (t / dur) ** 1.5, res=0.35, mode="bp") * shape
+    whoosh /= np.max(np.abs(whoosh)) + 1e-9
+    rise = 0.35 * saw(190 + 700 * (t / dur) ** 1.4, dur, harmonics=6) * env(n, 0.03, 0.4)
+    crack = svf(noise(n, 9), 4800, res=0.2, mode="hp") * decay(n, 7) * 0.25
+    return reverb(0.75 * whoosh + rise + crack, size=1.1, mix=0.25)
+
+
+# ---- fuel ----------------------------------------------------------------
+def snd_refuel():
+    """Energy pouring in: a rising arpeggio over a charging hum."""
+    dur = 1.1
+    s = np.zeros(int(dur * SR))
+    for i, f in enumerate((523.3, 784.0, 1046.5, 1568.0, 2093.0)):
+        place(s, 0.3 * bell(f, 0.7, 5.5), i * 0.075)
+    t = np.arange(len(s)) / SR
+    s += 0.22 * tone(110 * (1 + 0.6 * t / dur), dur) * env(len(s), 0.05, 0.45)
+    s += 0.07 * svf(noise(len(s), 13), 2600 + 2000 * t / dur, res=0.5, mode="bp") * env(len(s), 0.1, 0.5)
+    return reverb(s, size=0.9, mix=0.22)
 
 
 def snd_fuel_low():
-    """Two falling Sheikah tones: a gentle warning, not an alarm."""
-    s = np.zeros(int(0.9 * SR))
-    place(s, 0.5 * bell(1318.5, 0.45, 7), 0.0)
-    place(s, 0.5 * bell(987.8, 0.5, 6), 0.2)
-    return s
+    """Two soft falling tones: a warning, not an alarm."""
+    s = np.zeros(int(1.0 * SR))
+    place(s, 0.5 * bell(1318.5, 0.5, 6), 0.0)
+    place(s, 0.45 * bell(987.8, 0.6, 5), 0.21)
+    return reverb(s, size=0.7, mix=0.25)
 
 
+def snd_empty():
+    """The core sputtering out: a gated, falling tone collapsing into hiss."""
+    dur = 1.5
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    glide = np.exp(-t * 2.0)
+    body = saturate(0.9 * saw(34 + 150 * glide, dur, harmonics=10), 2.4)
+    gate = (np.sin(2 * np.pi * (7 + 10 * t) * t) > -0.25).astype(float) * 0.75 + 0.25
+    body = svf(body * gate, 160 + 900 * glide, res=0.6) * glide
+    hiss = svf(noise(n, 17), 1400, res=0.8, mode="bp") * decay(n, 2.2) * 0.12
+    place(body, 0.3 * bell(392, 0.7, 6), 0.55)
+    return reverb(body * 0.8 + hiss, size=0.8, mix=0.2) * env(n, 0.005, 0.3)
+
+
+# ---- summon / dismiss ----------------------------------------------------
+def snd_summon():
+    """Materialising: a shimmer swelling under a bell cluster and a sub rise."""
+    dur = 2.0
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    shimmer = sum(tone(f * (1 + 0.003 * np.sin(2 * np.pi * (4 + i) * t)), dur)
+                  for i, f in enumerate((440, 659.3, 880, 1318.5, 1760)))
+    s = 0.11 * shimmer * env(n, 0.55, 0.7, curve=1.5)
+    s += 0.1 * svf(noise(n, 19), 600 + 5000 * t / dur, res=0.4, mode="bp") * env(n, 0.5, 0.6)
+    for i, f in enumerate((1318.5, 1760.0, 1975.5, 2637.0)):
+        place(s, 0.2 * bell(f, 1.0, 3.6), 0.42 + i * 0.1)
+    s += 0.28 * tone(48 + 50 * t, dur) * env(n, 0.3, 0.6)
+    return reverb(s, size=1.4, mix=0.35)
+
+
+def snd_dismiss():
+    """Dematerialising: the same bells falling, with the shimmer running out."""
+    dur = 1.3
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    s = np.zeros(n)
+    for i, f in enumerate((1975.5, 1318.5, 987.8, 659.3)):
+        place(s, 0.24 * bell(f, 0.8, 5), i * 0.095)
+    s += 0.09 * svf(noise(n, 23), 5200 - 4200 * t / dur, res=0.4, mode="bp") * env(n, 0.02, 0.5)
+    s += 0.2 * tone(120 - 70 * t / dur, dur) * env(n, 0.02, 0.6)
+    return reverb(s, size=1.2, mix=0.32)
+
+
+# ---- impacts (several variants each, so repeats don't sound identical) ----
+def _impact(seed, thud_f, ring_f, ring_g, crunch_g, dur=0.55, ring_lp=1800):
+    """Weight on the bottom (body), a short metallic ring, a little grit."""
+    n = int(dur * SR)
+    body = lowpass2(noise(n, seed), thud_f, res=0.35) * decay(n, 26)
+    drop = tone(np.linspace(thud_f * 1.1, thud_f * 0.6, n), dur) * decay(n, 30)
+    ring = bell(ring_f, dur, 11, partials=(1.0, 2.1, 3.4, 5.9), gains=(1.0, 0.6, 0.3, 0.15))
+    ring = svf(ring, ring_lp, res=0.7)  # keep the clang from turning into a ping
+    grit = svf(noise(n, seed + 1), 3200, res=0.5, mode="bp") * decay(n, 34)
+    s = mix((1.0, body), (0.85, drop), (ring_g, ring), (crunch_g, grit))
+    return reverb(s * env(n, 0.001, 0.12), size=0.6, mix=0.16)
+
+
+def snd_ram(seed):
+    """Nose hitting a mob: a heavy thud with a metallic crack."""
+    return _impact(seed, 110, 640, 0.07, 0.03)
+
+
+def snd_wall(seed):
+    """Running into blocks: a duller, grittier crunch."""
+    return _impact(seed, 85, 320, 0.042, 0.018, dur=0.6)
+
+
+def snd_land(seed):
+    """Suspension bottoming out on touchdown: a soft thump and a spring ring."""
+    n = int(0.45 * SR)
+    s = mix((1.0, lowpass2(noise(n, seed), 190, res=0.3) * decay(n, 30)),
+            (0.8, tone(np.linspace(150, 60, n), 0.45) * decay(n, 22)),
+            (0.07, bell(1180, 0.45, 16, partials=(1.0, 2.4), gains=(1.0, 0.4))))
+    return reverb(s * env(n, 0.001, 0.1), size=0.5, mix=0.12)
+
+
+# ---- surfaces & liquids --------------------------------------------------
+def snd_tyre_roll():
+    """Tyres on ground: a loopable low rumble with grit on top."""
+    dur = 0.6
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    rumble = lowpass2(noise(n, 31), 150 + 40 * np.sin(2 * np.pi * 2.7 * t), res=0.6)
+    thrum = lowpass2(noise(n, 33), 380, res=0.5)
+    grit = svf(noise(n, 37), 2100, res=0.7, mode="bp") * (0.5 + 0.5 * np.sin(2 * np.pi * 11 * t))
+    s = mix((1.0, rumble), (0.5, thrum), (0.025, grit))
+    return s * env(n, 0.04, 0.06)
+
+
+def snd_splash():
+    """Hitting water: a burst, then bubbles."""
+    dur = 0.9
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    burst = svf(noise(n, 41), 700 + 2600 * np.exp(-t * 9), res=0.4, mode="bp") * decay(n, 7)
+    burst = svf(burst, 3000, res=0.7)  # water is a thud with spray, not a hiss
+    s = mix((0.9, burst), (1.3, lowpass2(noise(n, 43), 400, res=0.4) * decay(n, 11)))
+    for i in range(7):
+        f = 700 + 900 * ((i * 97) % 11) / 11
+        place(s, 0.1 * tone(np.linspace(f, f * 1.7, int(0.07 * SR)), 0.07)
+              * decay(int(0.07 * SR), 26), 0.14 + i * 0.07)
+    return reverb(s * env(n, 0.001, 0.2), size=0.7, mix=0.2)
+
+
+def snd_sizzle():
+    """Floating on lava: a thick, slow hiss with bubbling underneath."""
+    dur = 1.2
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    hiss = svf(noise(n, 47), 1150 + 350 * np.sin(2 * np.pi * 1.7 * t), res=0.3, mode="bp")
+    hiss = svf(hiss, 2600, res=0.7)  # tame the top so it hisses rather than spits
+    bubble = lowpass2(noise(n, 53), 220, res=0.5) * (0.6 + 0.4 * np.sin(2 * np.pi * 3.1 * t))
+    s = mix((1.0, hiss), (1.1, bubble))
+    for i in range(5):
+        place(s, 0.18 * tone(np.linspace(90, 150, int(0.12 * SR)), 0.12)
+              * decay(int(0.12 * SR), 18), 0.1 + i * 0.22)
+    return reverb(s * env(n, 0.06, 0.25), size=0.9, mix=0.18)
+
+
+# name -> (generator, target loudness). The hum and the tyre roll play
+# constantly, so they sit well under the one-shot effects.
 SOUNDS = {
-    "engine_hum": snd_engine_hum,
-    "start": snd_start,
-    "boost": snd_boost,
-    "refuel": snd_refuel,
-    "empty": snd_empty,
-    "summon": snd_summon,
-    "dismiss": snd_dismiss,
-    "stop": snd_engine_stop,
-    "fuel_low": snd_fuel_low,
+    "engine_hum": (snd_engine_hum, 0.115),
+    "tyre_roll": (snd_tyre_roll, 0.075),
+    "start": (snd_start, 0.20),
+    "stop": (snd_engine_stop, 0.17),
+    "boost": (snd_boost, 0.21),
+    "refuel": (snd_refuel, 0.18),
+    "fuel_low": (snd_fuel_low, 0.16),
+    "empty": (snd_empty, 0.20),
+    "summon": (snd_summon, 0.18),
+    "dismiss": (snd_dismiss, 0.17),
+    "splash": (snd_splash, 0.19),
+    "sizzle": (snd_sizzle, 0.13),
+    **{f"ram{i}": ((lambda i: lambda: snd_ram(60 + i * 7))(i), 0.23) for i in range(1, 4)},
+    **{f"wall{i}": ((lambda i: lambda: snd_wall(80 + i * 7))(i), 0.21) for i in range(1, 4)},
+    **{f"land{i}": ((lambda i: lambda: snd_land(100 + i * 7))(i), 0.19) for i in range(1, 4)},
 }
 
-# Target loudness (RMS) per sound. The hum plays the whole time you ride, so it
-# sits well under the one-shot effects; nothing is allowed to peak above 0.89.
-LOUDNESS = {"engine_hum": 0.13, "empty": 0.2, "boost": 0.2, "start": 0.2,
-            "summon": 0.17, "dismiss": 0.16, "refuel": 0.17, "stop": 0.16, "fuel_low": 0.15}
+# event -> (files, volume, attenuation distance). Several files means
+# Minecraft picks one at random, so repeated impacts never sound identical.
+SOUND_EVENTS = {
+    "engine.hum": (["engine_hum"], 0.8, 24),
+    "engine.roll": (["tyre_roll"], 0.7, 20),
+    "engine.start": (["start"], 1.0, 24),
+    "engine.stop": (["stop"], 1.0, 16),
+    "engine.boost": (["boost"], 1.0, 32),
+    "fuel.add": (["refuel"], 0.9, 16),
+    "fuel.low": (["fuel_low"], 1.0, 16),
+    "fuel.empty": (["empty"], 1.0, 16),
+    "cycle.summon": (["summon"], 1.0, 24),
+    "cycle.dismiss": (["dismiss"], 1.0, 16),
+    "impact.ram": (["ram1", "ram2", "ram3"], 1.0, 24),
+    "impact.wall": (["wall1", "wall2", "wall3"], 1.0, 24),
+    "impact.land": (["land1", "land2", "land3"], 0.9, 20),
+    "liquid.splash": (["splash"], 1.0, 20),
+    "liquid.sizzle": (["sizzle"], 0.8, 16),
+}
+
+SUBTITLES = {
+    "engine.hum": "Master Cycle hums",
+    "engine.roll": "Master Cycle rolls",
+    "engine.start": "Master Cycle powers up",
+    "engine.stop": "Master Cycle powers down",
+    "engine.boost": "Master Cycle boosts",
+    "fuel.add": "Master Cycle refuels",
+    "fuel.low": "Master Cycle low on fuel",
+    "fuel.empty": "Master Cycle sputters out",
+    "cycle.summon": "Master Cycle materializes",
+    "cycle.dismiss": "Master Cycle dematerializes",
+    "impact.ram": "Master Cycle rams",
+    "impact.wall": "Master Cycle crashes",
+    "impact.land": "Master Cycle lands",
+    "liquid.splash": "Master Cycle splashes",
+    "liquid.sizzle": "Master Cycle sizzles",
+}
 
 
 def finish(sig, rms_target):
@@ -675,18 +946,24 @@ def finish(sig, rms_target):
         sig = np.tanh(sig / peak * 1.2) / np.tanh(1.2) * 0.89  # soft-limit instead of clipping
     return sig
 
-# event name -> (file, volume, attenuation distance)
-SOUND_EVENTS = {
-    "engine.hum": ("engine_hum", 0.8, 24),
-    "engine.start": ("start", 1.0, 24),
-    "engine.boost": ("boost", 1.0, 32),
-    "fuel.add": ("refuel", 0.9, 16),
-    "fuel.empty": ("empty", 1.0, 16),
-    "cycle.summon": ("summon", 1.0, 24),
-    "cycle.dismiss": ("dismiss", 1.0, 16),
-    "engine.stop": ("stop", 1.0, 16),
-    "fuel.low": ("fuel_low", 1.0, 16),
+
+# event-file -> (low, high) spectral centroid in Hz. A thud belongs at the
+# bottom, a shimmer up top; this catches layers swamping each other.
+SPECTRUM = {
+    "engine_hum": (200, 2200), "tyre_roll": (150, 1200),
+    "start": (300, 2500), "stop": (150, 1500), "boost": (1500, 7000),
+    "refuel": (1500, 7000), "fuel_low": (800, 3000), "empty": (400, 3000),
+    "summon": (1500, 7000), "dismiss": (1500, 7500),
+    "ram": (250, 1600), "wall": (200, 1400), "land": (150, 900),
+    "splash": (700, 4500), "sizzle": (500, 4000),
 }
+
+
+def centroid(sig):
+    """Brightness: the energy-weighted mean frequency, in Hz."""
+    spec = np.abs(np.fft.rfft(sig * np.hanning(len(sig))))
+    freqs = np.fft.rfftfreq(len(sig), 1 / SR)
+    return float((spec * freqs).sum() / max(spec.sum(), 1e-9))
 
 
 def build_sounds():
@@ -695,8 +972,11 @@ def build_sounds():
     if not shutil.which("ffmpeg"):
         raise SystemExit("ffmpeg (with libvorbis) is required to encode the .ogg sounds")
     with tempfile.TemporaryDirectory() as tmp:
-        for name, fn in SOUNDS.items():
-            sig = finish(fn(), LOUDNESS[name])
+        for name, (fn, loudness) in SOUNDS.items():
+            sig = finish(fn(), loudness)
+            lo, hi = SPECTRUM[name.rstrip("123")]
+            c = centroid(sig)
+            assert lo <= c <= hi, f"{name}: centroid {c:.0f}Hz outside {lo}-{hi}Hz"
             wav_path = Path(tmp) / f"{name}.wav"
             with wave.open(str(wav_path), "wb") as w:
                 w.setnchannels(1)  # mono, so Minecraft plays it positionally
@@ -712,21 +992,13 @@ def build_sounds():
     write_json(NS / "sounds.json", {
         event: {
             "subtitle": f"subtitles.mastercycle.{event}",
-            "sounds": [{"name": f"mastercycle:{file}", "volume": vol, "attenuation_distance": dist}],
+            "sounds": [{"name": f"mastercycle:{f}", "volume": vol, "attenuation_distance": dist}
+                       for f in files],
         }
-        for event, (file, vol, dist) in SOUND_EVENTS.items()
+        for event, (files, vol, dist) in SOUND_EVENTS.items()
     })
-    write_json(NS / "lang" / "en_us.json", {
-        "subtitles.mastercycle.engine.hum": "Master Cycle hums",
-        "subtitles.mastercycle.engine.start": "Master Cycle powers up",
-        "subtitles.mastercycle.engine.boost": "Master Cycle boosts",
-        "subtitles.mastercycle.fuel.add": "Master Cycle refuels",
-        "subtitles.mastercycle.fuel.empty": "Master Cycle sputters out",
-        "subtitles.mastercycle.cycle.summon": "Master Cycle materializes",
-        "subtitles.mastercycle.cycle.dismiss": "Master Cycle dematerializes",
-        "subtitles.mastercycle.engine.stop": "Master Cycle powers down",
-        "subtitles.mastercycle.fuel.low": "Master Cycle low on fuel",
-    })
+    write_json(NS / "lang" / "en_us.json",
+               {f"subtitles.mastercycle.{k}": v for k, v in SUBTITLES.items()})
 
 
 def build_pack_meta():

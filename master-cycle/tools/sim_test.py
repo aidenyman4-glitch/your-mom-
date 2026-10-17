@@ -152,6 +152,10 @@ class Sim:
             return
         if cmd == "data get entity @s Rotation[0] 100" and self.executor == "rider":
             return int(self.rider_yaw * 100)
+        m = re.match(r"data modify entity @s Motion\[1\] set value (-?[\d.]+)d$", cmd)
+        if m:
+            self.stored["motion_y"] = float(m.group(1))
+            return
         m = re.match(r"data modify storage mastercycle:tmp m\[(\d)\] set value (-?[\d.]+)d$", cmd)
         if m:
             self.stored[f"m[{m.group(1)}]"] = float(m.group(2))
@@ -266,7 +270,8 @@ def make_sim():
     s = Sim()
     s.run_function("mastercycle:load")
     s.executor = "cycle"
-    for obj, v in (("mc.fuel", 6000), ("mc.speed", 0), ("mc.yaw", 0), ("mc.jcd", 0), ("mc.hum", 0), ("mc.boost", 0)):
+    for obj, v in (("mc.fuel", 6000), ("mc.speed", 0), ("mc.yaw", 0), ("mc.jcd", 0), ("mc.hum", 0),
+                   ("mc.boost", 0), ("mc.owner", 1), ("mc.gen", 1), ("mc.wet", 0)):
         s.set("cycle", obj, v)
     return s
 
@@ -442,11 +447,11 @@ def main():
     s.wall = False
     tick(s, ["forward"])
     check(speed(s) < 200, f"driving into a wall knocks the speed down ({speed(s)})")
-    check(any("item.shield.block" in line for line in s.log), "with a clunk")
+    check(any("mastercycle:impact.wall" in line for line in s.log), "with a clunk")
     s.log.clear()
     for _ in range(40):
         tick(s, ["forward", "left"])
-    check(not any("item.shield.block" in line for line in s.log), "no false crashes while cornering at speed")
+    check(not any("mastercycle:impact.wall" in line for line in s.log), "no false crashes while cornering at speed")
 
     print("walls & steps:")
     s = make_sim()
@@ -456,7 +461,7 @@ def main():
         tick(s, ["forward"])
     nose = s.pos[1] + 1.37
     check(speed(s) == 0 and nose <= 6.0, f"drives up to a wall and stops with the nose outside it (nose z {nose:.2f}, wall at 6)")
-    check(any("item.shield.block" in line for line in s.log), "hitting the wall at speed clunks")
+    check(any("mastercycle:impact.wall" in line for line in s.log), "hitting the wall at speed clunks")
     for _ in range(10):
         tick(s, ["forward", "sprint"])
     check(s.pos[1] + 1.37 <= 6.0, "holding throttle or boost doesn't push it through")
@@ -501,12 +506,22 @@ def main():
 
     print("water & lava:")
     s = make_sim()
+    s.set("cycle", "mc.cid", 1)
     s.fluid, s.fluid_depth = "water", 3.0  # fully submerged
-    tick(s, ["forward"])
-    check(s.stored.get("m[1]") == 0.14, f"submerged in water: the hull rises ({s.stored.get('m[1]')})")
+    ride_tick(s, ["forward"])
+    check(s.stored.get("motion_y") == 0.14, f"submerged in water: the hull rises ({s.stored.get('motion_y')})")
+    check(any("liquid.splash" in line for line in s.log), "going in makes a splash")
     s.fluid_depth = 0.5  # only the hull is in water now
-    tick(s, ["forward"])
-    check(s.stored.get("m[1]") == 0.0, "at the surface: it hovers instead of sinking")
+    ride_tick(s, ["forward"])
+    check(s.stored.get("motion_y") == 0.0, "at the surface: it hovers instead of sinking")
+    s.log.clear()
+    ride_tick(s, ["forward"])
+    check(not any("liquid.splash" in line for line in s.log), "and doesn't splash again every tick")
+    s2 = make_sim()
+    s2.set("cycle", "mc.cid", 1)
+    s2.fluid, s2.fluid_depth = "water", 3.0
+    ride_tick(s2, [], ridden=False)
+    check(s2.stored.get("motion_y") == 0.14, "a parked bike floats too, not just a ridden one")
     for _ in range(60):
         tick(s, ["forward", "sprint"])
     check(speed(s) == 420, f"water drags the top speed down to 420 ({speed(s)})")
@@ -515,27 +530,68 @@ def main():
     check(f0 - s.get("cycle", "mc.fuel") == 1, "floating on water costs no extra fuel")
 
     s = make_sim()
+    s.set("cycle", "mc.cid", 1)
     s.fluid, s.fluid_depth = "lava", 3.0
-    tick(s, ["forward"])
-    check(s.stored.get("m[1]") == 0.10, f"submerged in lava: it rises ({s.stored.get('m[1]')})")
+    ride_tick(s, ["forward"])
+    check(s.stored.get("motion_y") == 0.10, f"submerged in lava: it rises ({s.stored.get('motion_y')})")
     s.fluid_depth = 0.5
-    tick(s, ["forward"])
-    check(s.stored.get("m[1]") == 0.0, "and floats on the lava surface")
+    ride_tick(s, ["forward"])
+    check(s.stored.get("motion_y") == 0.0, "and floats on the lava surface")
+    s.log.clear()
+    ride_tick(s, ["forward"], t20=0)
+    check(any("liquid.sizzle" in line for line in s.log), "lava keeps hissing while you ride it")
     check(any("fire_resistance" in line for line in s.log), "the hull shields the rider from the heat")
     f0 = s.get("cycle", "mc.fuel")
-    tick(s, ["forward"])
+    ride_tick(s, ["forward"])
     check(f0 - s.get("cycle", "mc.fuel") == 5, f"lava burns extra fuel: {f0 - s.get('cycle', 'mc.fuel')}/tick")
     for _ in range(60):
         tick(s, ["forward", "sprint"])
     check(speed(s) == 380, f"lava is thicker, so slower ({speed(s)})")
     s.set("cycle", "mc.fuel", 2)
-    tick(s, ["forward"])
+    ride_tick(s, ["forward"])
     check(s.get("cycle", "mc.fuel") == 0, "a tank drained by lava stops at 0, never below")
 
     s = make_sim()
+    s.set("cycle", "mc.cid", 1)
     s.fluid = None
-    tick(s, ["forward"])
-    check(s.stored.get("m[1]") is None, "on dry land the vertical motion is left alone")
+    ride_tick(s, ["forward"])
+    check(s.stored.get("motion_y") is None, "on dry land the vertical motion is left alone")
+    s.fluid, s.fluid_depth = "water", 3.0
+    s.set("cycle", "mc.jbuf", 0)
+    s.set("cycle", "mc.jcd", 0)
+    ride_tick(s, ["jump"])
+    check(s.get("#hop", "mc.tmp") == 1 and s.stored.get("m[1]") == 0.56,
+          "a jump beats the buoyancy, so you can launch out of water")
+
+    print("the new impact & surface sounds:")
+    s = make_sim()
+    s.set("cycle", "mc.cid", 1)
+    for _ in range(6):
+        ride_tick(s, [], on_ground=False)
+    ride_tick(s, [])
+    check(any("mastercycle:impact.land" in line for line in s.log), "landing uses the pack's own thump")
+    s = make_sim()
+    s.set("cycle", "mc.speed", 600)
+    s.entities = {"zombie": [0.0, 1.5]}
+    s.executor = "cycle"
+    s.run_function("mastercycle:drive/ram")
+    check(any("mastercycle:impact.ram" in line for line in s.log), "ramming uses the pack's own hit")
+    s = make_sim()
+    s.rider_yaw = 0
+    s.solid = {(x, y, 6) for x in range(-3, 4) for y in range(0, 4)}
+    for _ in range(80):
+        tick(s, ["forward"])
+    check(any("mastercycle:impact.wall" in line for line in s.log), "crashing uses the pack's own crunch")
+    s = make_sim()
+    s.set("cycle", "mc.cid", 1)
+    for _ in range(40):
+        ride_tick(s, ["forward"])
+    check(any("mastercycle:engine.roll" in line for line in s.log), "tyres roll audibly on the ground")
+    s.log.clear()
+    s.fluid, s.fluid_depth = "water", 0.5
+    for _ in range(40):
+        ride_tick(s, ["forward"])
+    check(not any("mastercycle:engine.roll" in line for line in s.log), "but not while floating on water")
 
     print("jumping:")
     s = make_sim()
@@ -590,7 +646,7 @@ def main():
     s.damaged.clear()
     s.run_function("mastercycle:drive/ram")
     check(any(abs(d - 8) < 0.01 for _, d in s.damaged), f"600 (12 blocks/s) deals 8 damage: {s.damaged}")
-    check(any("entity.player.attack.crit" in line for line in s.log), "and it cracks")
+    check(any("mastercycle:impact.ram" in line for line in s.log), "and it cracks")
     s.set("cycle", "mc.speed", 1500)
     s.damaged.clear()
     s.run_function("mastercycle:drive/ram")
@@ -660,9 +716,9 @@ def main():
     for _ in range(6):
         ride_tick(s, [], on_ground=False)
     ride_tick(s, [])
-    check(count(s, "entity.breeze.land") == 1, "landing after 6 airborne ticks: thump + dust")
+    check(count(s, "mastercycle:impact.land") == 1, "landing after 6 airborne ticks: thump + dust")
     ride_tick(s, [], on_ground=False); ride_tick(s, [], on_ground=False); ride_tick(s, [])
-    check(count(s, "entity.breeze.land") == 1, "a 2-tick bump doesn't count as a landing")
+    check(count(s, "mastercycle:impact.land") == 1, "a 2-tick bump doesn't count as a landing")
 
     s = make_sim(); s.set("cycle", "mc.cid", 1)
     for _ in range(5):

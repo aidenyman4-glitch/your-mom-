@@ -16,6 +16,7 @@ scoreboard objectives remove mc.ridden
 scoreboard objectives remove mc.air
 scoreboard objectives remove mc.low
 scoreboard objectives remove mc.skid
+scoreboard objectives remove mc.wet
 scoreboard objectives remove mc.lost
 scoreboard objectives remove mc.death
 scoreboard objectives remove mc.jbuf

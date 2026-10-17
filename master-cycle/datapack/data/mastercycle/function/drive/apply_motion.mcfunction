@@ -29,8 +29,5 @@ scoreboard players operation #mz mc.tmp = #cos mc.tmp
 scoreboard players operation #mz mc.tmp *= @s mc.speed
 execute store result storage mastercycle:tmp m[0] double 0.000001 run scoreboard players get #mx mc.tmp
 execute store result storage mastercycle:tmp m[2] double 0.000001 run scoreboard players get #mz mc.tmp
-# the hull floats: rise while submerged, hover once at the surface
-execute if block ~ ~0.1 ~ minecraft:water run function mastercycle:drive/float_water
-execute if block ~ ~0.1 ~ minecraft:lava run function mastercycle:drive/float_lava
 execute if score #hop mc.tmp matches 1 store result storage mastercycle:tmp m[1] double 0.001 run scoreboard players get #jvel mc.tmp
 data modify entity @s Motion set from storage mastercycle:tmp m

@@ -259,18 +259,20 @@ The data pack puts exactly that item on the armor stand's head:
 
 Things to know when building or replacing the model:
 
-- **What's in it (153 elements).** A horse-like prow with ears, cyan eyes,
+- **What's in it (166 elements).** A horse-like prow with ears, cyan eyes,
   a glowing muzzle light and a unicorn horn. A gold mane down the neck. A
   tank and seat shaped around the rider. A gold ribcage and a banded cyan
   core between the wheels. Curved gold fenders over both tyres. Fork
-  springs. A tail of gold plumes sweeping up and back.
+  springs. A tail of gold plumes sweeping up and back. A lit Sheikah eye on
+  each side panel, an underglow strip along the belly, and rear thruster
+  nozzles.
 - **Front = north (−Z).** For an item worn in the head slot, the model's north
   side faces forward. The bike's horn points to −Z.
 - **Bounds.** Every `from`/`to` coordinate must be within −16…32 (3 blocks), so
   the bike is modelled at a smaller scale and enlarged with `display.head.scale`
   (max 4).
-- **Round wheels.** Each tyre is 8 overlapping slabs rotated in 22.5° steps
-  around the axle, which gives a 16-sided wheel. The hub is stacked rings
+- **Round wheels.** Each tyre is 12 overlapping slabs rotated in 15° steps
+  around the axle, which gives a 24-sided wheel. The hub is stacked rings
   (gold rim, dark recess with spokes, glowing orange ring, gold hub, cyan core).
 - **No z-fighting.** Two faces that point the same way, lie in the same plane
   and overlap will flicker. Overlapping slabs would all put their side faces on
@@ -329,7 +331,7 @@ python3 master-cycle/tools/package.py
 | Script | Does |
 |---|---|
 | `tools/build_resourcepack.py` | Builds the model geometry, draws the textures, synthesizes the sounds (numpy + ffmpeg/libvorbis), and writes the item definition and `pack.mcmeta`. |
-| `tools/validate.py` | Parses all 612 commands against the real **26.3 command tree** (from [misode/mcmeta](https://github.com/misode/mcmeta)). Checks SNBT, text components, selectors, item components, and particle/sound/attribute/entity/item ids against the 26.3 registries. Also checks function, predicate and macro references, scoreboard objectives, predicate JSON (26.3 format), model bounds, texture paths, and z-fighting. |
+| `tools/validate.py` | Parses all 635 commands against the real **26.3 command tree** (from [misode/mcmeta](https://github.com/misode/mcmeta)). Checks SNBT, text components, selectors, item components, and particle/sound/attribute/entity/item ids against the 26.3 registries. Also checks function, predicate and macro references, scoreboard objectives, predicate JSON (26.3 format), model bounds, texture paths, and z-fighting. |
 | `tools/sim_test.py` | Runs the driving functions in a small mcfunction interpreter and asserts the behavior: top speed, boost, braking, reverse, coasting, steering wrap, direction vector, wall crashes, hop cooldown, fuel burn, the fuel-empty cutoff and the HUD gauge. |
 | `tools/rider_fit.py` | Puts a player in the vanilla riding pose on the bike, at the height the game seats them. Fails if their body, head or legs go through the model, and renders `docs/rider-preview.png`. |
 | `tools/render_preview.py` | Software-renders the model JSON to `docs/model-preview.png`. |
