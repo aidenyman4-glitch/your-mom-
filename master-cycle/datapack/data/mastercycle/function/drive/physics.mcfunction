@@ -20,9 +20,15 @@ execute if score #mode mc.tmp matches 2 run function mastercycle:drive/brake
 function mastercycle:drive/steer
 
 # ---- hop --------------------------------------------------------------------
+# Coyote time: for a few ticks after leaving the ground you can still jump.
+# Jump buffer: pressing Space just before landing jumps on touchdown.
 scoreboard players set #hop mc.tmp 0
 execute if score @s mc.jcd matches 1.. run scoreboard players remove @s mc.jcd 1
-execute if score #jump mc.tmp matches 1 if score #pow mc.tmp matches 1 unless score @s mc.jcd matches 1.. if predicate mastercycle:on_ground run function mastercycle:drive/hop
+execute if predicate mastercycle:on_ground run scoreboard players operation @s mc.coyote = #cfg.coyote mc.const
+execute unless predicate mastercycle:on_ground if score @s mc.coyote matches 1.. run scoreboard players remove @s mc.coyote 1
+execute if score #jump mc.tmp matches 1 run scoreboard players operation @s mc.jbuf = #cfg.jump_buffer mc.const
+execute unless score #jump mc.tmp matches 1 if score @s mc.jbuf matches 1.. run scoreboard players remove @s mc.jbuf 1
+execute if score @s mc.jbuf matches 1.. if score @s mc.coyote matches 1.. if score #pow mc.tmp matches 1 unless score @s mc.jcd matches 1.. run function mastercycle:drive/hop
 
 # ---- fuel -------------------------------------------------------------------
 scoreboard players operation @s mc.fuel -= #burn mc.tmp

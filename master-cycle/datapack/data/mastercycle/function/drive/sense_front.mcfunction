@@ -15,5 +15,5 @@ execute if score @s mc.speed matches 680.. if block ^ ^1.2 ^2.20 #minecraft:bloc
 execute if score @s mc.speed matches 830.. if block ^ ^1.2 ^2.35 #minecraft:blocks_motion run return run function mastercycle:drive/wall
 # a knee-high block ahead with room above it: hop the front wheel up onto it
 # now, instead of the nose clipping into it until the centre reaches the step
-execute if block ^ ^0.3 ^1.45 #minecraft:blocks_motion unless block ^ ^1.3 ^1.45 #minecraft:blocks_motion if predicate mastercycle:on_ground run scoreboard players set #hop mc.tmp 1
-execute if score @s mc.speed matches 250.. if block ^ ^0.3 ^1.75 #minecraft:blocks_motion unless block ^ ^1.3 ^1.75 #minecraft:blocks_motion if predicate mastercycle:on_ground run scoreboard players set #hop mc.tmp 1
+execute if block ^ ^0.3 ^1.45 #minecraft:blocks_motion unless block ^ ^1.3 ^1.45 #minecraft:blocks_motion if predicate mastercycle:on_ground run function mastercycle:drive/step_up
+execute if score @s mc.speed matches 250.. if block ^ ^0.3 ^1.75 #minecraft:blocks_motion unless block ^ ^1.3 ^1.75 #minecraft:blocks_motion if predicate mastercycle:on_ground run function mastercycle:drive/step_up

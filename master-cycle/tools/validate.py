@@ -493,7 +493,7 @@ def validate_functions(tree, reg, refs, sounds):
             if line.startswith("$"):
                 macro_args = set(re.findall(r"\$\((\w+)\)", line))
                 refs["macro"].add((f.relative_to(fdir).as_posix(), frozenset(macro_args), where))
-                sample = {"d": "-4.5", "amount": "600", "item": "minecraft:coal"}
+                sample = {"d": "4.5", "amount": "600", "item": "minecraft:coal"}
                 line = re.sub(r"\$\((\w+)\)", lambda m: sample.get(m.group(1), "1"), line[1:])
             m = re.match(r"scoreboard objectives add (\S+)", line)
             if m:

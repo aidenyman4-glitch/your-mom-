@@ -61,7 +61,8 @@ To get another bike item: `/function mastercycle:give_bike`. Another slate:
 | Throttle / brake & reverse | **W** / **S** |
 | Carve without the mouse | Hold **A** / **D** to aim 45° left / right of your view |
 | Boost | Hold **Sprint** (Ctrl) with W. Uses 3× fuel. |
-| Hop | **Space**. Knee-high steps are hopped automatically. |
+| Jump | **Space** (~2.3 blocks; higher while boosting). Knee-high steps are hopped automatically. |
+| Ram a mob | Drive into it above ~4.5 blocks/s |
 | Get off | **Sneak** (Shift) |
 | Refuel | Right-click the cycle while holding fuel. This also works while riding if you look down at it. |
 | Check the fuel gauge | Sneak + right-click the cycle |
@@ -69,6 +70,21 @@ To get another bike item: `/function mastercycle:give_bike`. Another slate:
 
 The bike stops at walls instead of sliding into them. Sensors past the nose
 (and the tail, when reversing) look one tick ahead at the current speed.
+
+**Jumping** is forgiving: you can still jump for 6 ticks after leaving an edge
+(coyote time), and pressing Space up to 6 ticks before you land still jumps on
+touchdown (jump buffer). The suspension absorbs landings, so you take no fall
+damage while riding.
+
+**Ramming:** above ~4.5 blocks/s the nose hurts and flings whatever it hits.
+Damage is speed / 75, capped at 8 hearts, and is credited to you, so drops and
+XP work as usual. Villagers, pets, mounts, boats, minecarts, item frames,
+bosses and dropped items are never rammed (`#mastercycle:ram_immune`).
+
+**Dying:** your Sheikah Slate (and the Master Cycle item, if your bike isn't
+placed somewhere) comes back when you respawn. The copies that dropped on
+death are removed first, so nothing is duplicated. This works in any game mode
+and with keepInventory either way.
 
 While you ride, the action bar shows a fuel gauge and your speed:
 `◈ ▮▮▮▮▮▮▯▯▯▯ 58%   43 km/h`. When the tank runs dry the engine sputters,
@@ -311,7 +327,7 @@ python3 master-cycle/tools/package.py
 | Script | Does |
 |---|---|
 | `tools/build_resourcepack.py` | Builds the model geometry, draws the textures, synthesizes the sounds (numpy + ffmpeg/libvorbis), and writes the item definition and `pack.mcmeta`. |
-| `tools/validate.py` | Parses all 542 commands against the real **26.3 command tree** (from [misode/mcmeta](https://github.com/misode/mcmeta)). Checks SNBT, text components, selectors, item components, and particle/sound/attribute/entity/item ids against the 26.3 registries. Also checks function, predicate and macro references, scoreboard objectives, predicate JSON (26.3 format), model bounds, texture paths, and z-fighting. |
+| `tools/validate.py` | Parses all 610 commands against the real **26.3 command tree** (from [misode/mcmeta](https://github.com/misode/mcmeta)). Checks SNBT, text components, selectors, item components, and particle/sound/attribute/entity/item ids against the 26.3 registries. Also checks function, predicate and macro references, scoreboard objectives, predicate JSON (26.3 format), model bounds, texture paths, and z-fighting. |
 | `tools/sim_test.py` | Runs the driving functions in a small mcfunction interpreter and asserts the behavior: top speed, boost, braking, reverse, coasting, steering wrap, direction vector, wall crashes, hop cooldown, fuel burn, the fuel-empty cutoff and the HUD gauge. |
 | `tools/rider_fit.py` | Puts a player in the vanilla riding pose on the bike, at the height the game seats them. Fails if their body, head or legs go through the model, and renders `docs/rider-preview.png`. |
 | `tools/render_preview.py` | Software-renders the model JSON to `docs/model-preview.png`. |

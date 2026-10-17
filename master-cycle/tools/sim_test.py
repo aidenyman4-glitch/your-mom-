@@ -37,6 +37,18 @@ class Sim:
         self.pos = [0.0, 0.0]  # cycle x, z (ground level is y = 0)
         self.rider_yaw = 0.0  # where the rider is looking, degrees
         self.solid = set()  # (x, y, z) of blocks in #minecraft:blocks_motion
+        self.entities = {}  # name -> [x, z] of rammable mobs near the cycle
+        self.damaged = []  # (name, amount) from /damage
+
+    nose_targets = None
+
+    def nose_point(self, coords):
+        """World (x, z) of a ^left ^up ^forward offset from the cycle."""
+        lx, _ly, lz = (float(c[1:] or 0) for c in coords)
+        yaw = math.radians((self.get("cycle", "mc.yaw") or 0) / 100)
+        fx, fz = -math.sin(yaw), math.cos(yaw)
+        rx, rz = math.cos(yaw), math.sin(yaw)
+        return (self.pos[0] + fx * lz + rx * lx, self.pos[1] + fz * lz + rz * lx)
 
     def local_block(self, coords):
         """Block under a ^left ^up ^forward offset from the cycle, using its yaw."""
@@ -63,11 +75,13 @@ class Sim:
             return "cycle"
         return holder
 
-    def run_function(self, name):
+    def run_function(self, name, macro=None):
         path = FN / (name.split(":", 1)[1] + ".mcfunction")
         try:
             for line in path.read_text().splitlines():
                 line = line.strip()
+                if line.startswith("$"):  # macro line: fill in $(arg) from the call
+                    line = re.sub(r"\$\((\w+)\)", lambda m: str((macro or {})[m.group(1)]), line[1:])
                 if line and not line.startswith("#"):
                     self.run(line)
         except Return:
@@ -76,7 +90,12 @@ class Sim:
     def run(self, cmd):
         t = cmd.split(" ")
         if t[0] == "function":
-            if len(t) > 2:  # macro call: not needed for the physics path
+            m = re.match(r"function (\S+) with storage \S+ (\S+)$", cmd)
+            if m:  # macro call: arguments come from storage, e.g. ram.d -> d
+                prefix = m.group(2) + "."
+                macro = {k[len(prefix):]: v for k, v in self.stored.items() if k.startswith(prefix)}
+                return self.run_function(m.group(1), macro)
+            if len(t) > 2:
                 self.log.append(cmd)
                 return
             return self.run_function(t[1])
@@ -134,6 +153,12 @@ class Sim:
         m = re.match(r"data get storage mastercycle:tmp m\[(\d)\] (\S+)", cmd)
         if m:
             return int(self.motion[int(m.group(1))] * float(m.group(2)))
+        m = re.match(r"damage (\S+) ([\d.]+) ", cmd)
+        if m and self.nose_targets is not None:
+            for name in self.nose_targets:
+                self.damaged.append((name, float(m.group(2))))
+            self.log.append(cmd)
+            return
         self.log.append(cmd)  # side effects we don't simulate
 
     def execute(self, t, cmd):
@@ -173,6 +198,9 @@ class Sim:
                 elif kind == "data":
                     ok = False
                     i += 4
+                elif kind == "entity":
+                    ok = bool(self.entities)
+                    i += 3
                 elif kind == "block":
                     ok = self.local_block(t[i + 2:i + 5]) in self.solid
                     assert t[i + 5] == "#minecraft:blocks_motion", cmd
@@ -191,6 +219,18 @@ class Sim:
                 store = (t[i + 4], float(t[i + 6]))
                 i += 7
                 continue
+            if k == "positioned" and t[i + 1].startswith("^") and "as" in t[i + 4:i + 5]:
+                px, pz = self.nose_point(t[i + 1:i + 4])
+                sel = t[i + 5]
+                rng = float(re.search(r"distance=\.\.([\d.]+)", sel).group(1)) if "distance=.." in sel else 1.6
+                self.nose_targets = [n for n, (ex, ez) in self.entities.items()
+                                     if math.dist((ex, ez), (px, pz)) <= rng]
+                try:
+                    if self.nose_targets:
+                        return self.execute(t[i + 6:], cmd)
+                    return None
+                finally:
+                    self.nose_targets = None
             if k == "on":
                 if t[i + 1] == "passengers":
                     # the rider: run the rest as them, then restore
@@ -448,6 +488,77 @@ def main():
     tick(s2, ["jump"], on_ground=False)
     check(s2.get("#hop", "mc.tmp") == 0, "can't hop in mid-air")
     _ = log_before
+
+    print("jumping:")
+    s = make_sim()
+    s.rider_yaw = 0
+    tick(s, ["jump"])
+    check(s.get("#hop", "mc.tmp") == 1, "Space jumps from standing")
+    check(abs(s.stored.get("m[1]", 0) - 0.56) < 1e-9, f"jump velocity 0.56 (~2.3 blocks up): {s.stored.get('m[1]')}")
+    for _ in range(40):
+        tick(s, ["forward", "sprint"])
+    tick(s, ["jump", "forward", "sprint"])
+    check(abs(s.stored.get("m[1]", 0) - 0.66) < 1e-9, f"boost-jump goes higher (0.66): {s.stored.get('m[1]')}")
+    # coyote time: left the ground, no jump pressed yet
+    s2 = make_sim()
+    tick(s2, [])
+    for n in range(1, 8):
+        tick(s2, [], on_ground=False)
+        got = tick(s2, ["jump"], on_ground=False).get("#hop", "mc.tmp") == 1
+        if got:
+            break
+        s2.set("cycle", "mc.jcd", 0)
+    check(got and n <= 4, f"coyote time: can still jump {n} ticks after leaving an edge")
+    # jump buffer: pressed in mid-air, lands a moment later
+    s3 = make_sim()
+    tick(s3, [], on_ground=False)
+    tick(s3, [], on_ground=False)
+    tick(s3, ["jump"], on_ground=False)
+    tick(s3, [], on_ground=False)
+    tick(s3, [], on_ground=False)
+    check(tick(s3, [], on_ground=True).get("#hop", "mc.tmp") == 1, "jump buffer: pressing just before landing still jumps")
+    s4 = make_sim()
+    s4.set("cycle", "mc.fuel", 0)
+    tick(s4, ["jump"])
+    check(s4.get("#hop", "mc.tmp") == 0, "an empty tank can't jump")
+
+    print("ramming mobs:")
+    s = make_sim()
+    s.rider_yaw = 0
+    s.entities = {"zombie": [0.0, 3.0]}
+    for _ in range(40):
+        tick(s, ["forward"])
+        s.executor = "cycle"
+        if speed(s) >= 220:
+            s.run_function("mastercycle:drive/ram")
+        s.entities["zombie"][1] = s.pos[1] + 1.5  # keep it on the nose
+    hits = [d for d in s.damaged if d[1] > 0]
+    check(hits, f"running into a mob damages it ({len(hits)} hits)")
+    check(all(1 <= d <= 16 for _, d in hits), f"damage stays in range: {sorted({d for _, d in hits})}")
+    s = make_sim()
+    s.set("cycle", "mc.speed", 600)
+    s.entities = {"creeper": [0.0, 1.5]}
+    s.executor = "cycle"
+    s.damaged.clear()
+    s.run_function("mastercycle:drive/ram")
+    check(any(abs(d - 8) < 0.01 for _, d in s.damaged), f"600 (12 blocks/s) deals 8 damage: {s.damaged}")
+    check(any("entity.player.attack.crit" in line for line in s.log), "and it cracks")
+    s.set("cycle", "mc.speed", 1500)
+    s.damaged.clear()
+    s.run_function("mastercycle:drive/ram")
+    check(all(d <= 16 for _, d in s.damaged), f"damage is capped: {s.damaged}")
+    s = make_sim()
+    s.set("cycle", "mc.speed", 150)
+    s.entities = {"cow": [0.0, 1.5]}
+    s.damaged.clear()
+    s.executor = "cycle"
+    s.run_function("mastercycle:drive/tick")
+    check(not s.damaged, "crawling along doesn't hurt anything")
+    s.set("cycle", "mc.speed", 400)
+    s.entities = {"far_away": [0.0, 9.0]}
+    s.damaged.clear()
+    s.run_function("mastercycle:drive/ram")
+    check(not s.damaged, "mobs out of reach are not hit")
 
     print("fuel empty:")
     s = make_sim()

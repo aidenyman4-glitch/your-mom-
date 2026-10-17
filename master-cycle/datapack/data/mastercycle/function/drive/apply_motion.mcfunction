@@ -29,5 +29,5 @@ scoreboard players operation #mz mc.tmp = #cos mc.tmp
 scoreboard players operation #mz mc.tmp *= @s mc.speed
 execute store result storage mastercycle:tmp m[0] double 0.000001 run scoreboard players get #mx mc.tmp
 execute store result storage mastercycle:tmp m[2] double 0.000001 run scoreboard players get #mz mc.tmp
-execute if score #hop mc.tmp matches 1 run data modify storage mastercycle:tmp m[1] set value 0.48d
+execute if score #hop mc.tmp matches 1 store result storage mastercycle:tmp m[1] double 0.001 run scoreboard players get #jvel mc.tmp
 data modify entity @s Motion set from storage mastercycle:tmp m

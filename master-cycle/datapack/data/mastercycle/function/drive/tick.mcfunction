@@ -9,11 +9,15 @@ execute on passengers if entity @s[type=player] run function mastercycle:drive/r
 
 scoreboard players set @s mc.ridden 1
 function mastercycle:drive/physics
+# ram anything in front once we're moving with purpose
+execute if score @s mc.speed matches 220.. run function mastercycle:drive/ram
 function mastercycle:drive/fx
 
 # landing after a hop or a drop (4+ ticks airborne)
 execute unless predicate mastercycle:on_ground run scoreboard players add @s mc.air 1
 execute if predicate mastercycle:on_ground if score @s mc.air matches 4.. run function mastercycle:fx/land
+# the suspension soaks up the landing: no fall damage while riding
+execute if predicate mastercycle:on_ground if score @s mc.air matches 4.. on passengers if entity @s[type=player] run function mastercycle:drive/soft_landing
 execute if predicate mastercycle:on_ground run scoreboard players set @s mc.air 0
 
 # one warning chime when the tank drops to the low-fuel line

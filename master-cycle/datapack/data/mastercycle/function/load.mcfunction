@@ -14,6 +14,11 @@ scoreboard objectives add mc.ridden dummy
 scoreboard objectives add mc.air dummy
 scoreboard objectives add mc.low dummy
 scoreboard objectives add mc.skid dummy
+scoreboard objectives add mc.coyote dummy
+scoreboard objectives add mc.jbuf dummy
+# per-player
+scoreboard objectives add mc.death deathCount
+scoreboard objectives add mc.lost dummy
 # ---- per-player state ------------------------------------------------------
 scoreboard objectives add mc.id dummy
 scoreboard objectives add mc.stored dummy
@@ -56,6 +61,16 @@ scoreboard players set #cfg.max_fuel mc.const 6000
 scoreboard players set #cfg.starter_fuel mc.const 1200
 scoreboard players set #cfg.boost_burn mc.const 3
 scoreboard players set #cfg.jump_burn mc.const 25
+# Hop: upward motion x1000 (560 ~ 2.3 blocks), and how many ticks of grace
+# you get either side of touching the ground.
+scoreboard players set #cfg.jump mc.const 560
+scoreboard players set #cfg.jump_boost mc.const 660
+scoreboard players set #cfg.coyote mc.const 6
+scoreboard players set #cfg.jump_buffer mc.const 6
+# Ramming: damage = speed / this (600 -> 6 hearts-ish), capped.
+scoreboard players set #cfg.ram_div mc.const 75
+scoreboard players set #cfg.ram_max mc.const 16
+scoreboard players set #cfg.ram_min_speed mc.const 220
 
 # Low-fuel warning chime when the tank drops to this (default 20%).
 scoreboard players set #cfg.low_fuel mc.const 1200
