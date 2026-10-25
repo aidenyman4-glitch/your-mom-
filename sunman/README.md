@@ -11,6 +11,19 @@ Open any `.bbmodel` in [`blockbench/`](blockbench) and press play in the Animate
 | **Birthday Person** (crown) | 18 | 195 | idle · walk · turn · reach · grab · dangle · death | 6.4 blocks to the crown |
 | **Birthday Person** (tree) | 18 | 274 | idle · walk · turn · reach · grab · dangle · death | 7.6 blocks to the twigs |
 
+### The Abandoned Village
+
+`/function sunman:world/decay_village` (and automatically, when a player nears a village):
+the light out, walls clawed open, roofs fallen in, the villagers replaced by their bodies,
+blood everywhere, Locusts frozen inside. **Destructive and permanent**: read
+[`docs/VILLAGE.md`](docs/VILLAGE.md) first.
+
+| before | after |
+|---|---|
+| ![](docs/village_before.png) | ![](docs/village_after.png) |
+
+![](docs/dead_villagers.png)
+
 | Birthday Person · crown | Birthday Person · tree |
 |---|---|
 | ![](docs/birthday_crown_turntable.gif) | ![](docs/birthday_tree_turntable.gif) |
@@ -34,6 +47,7 @@ itself. What each clip is for, and the movement speed each walk is tuned to, is 
 
 - `blockbench/` — the projects (Bedrock Entity format, texture embedded, clips included)
 - `bedrock/` — `.geo.json` + `.animation.json` for each, for GeckoLib or Bedrock
+- `datapack/` — the generated datapack (26.3, format 121): the Abandoned Village, a frozen Locust
 - `resourcepack/` — the per-bone item models, the atlas the datapack rig uses, and the Birthday
   People's own texture
 - `rig/` — each skeleton as JSON: pivots in blocks, rest rotations, clip index

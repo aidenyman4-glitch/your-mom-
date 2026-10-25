@@ -12,8 +12,9 @@ spectrum of are easier to make frightening on purpose than filters you tune by e
 Positional sounds are MONO: Minecraft will not attenuate a stereo file with distance, so a
 stereo footstep is as loud across the valley as it is underfoot. Only the music is stereo.
 
-    python3 tools/audio.py            # writes resourcepack/assets/sunman/sounds/**.ogg
+    python3 tools/audio.py            # writes resourcepack/assets/sunman/sounds/**.ogg + sounds.json
 """
+import json
 import math
 from pathlib import Path
 
@@ -107,9 +108,11 @@ def soft(x, drive=1.4):
 def write(rel, x, stereo=False):
     p = OUT / (rel + ".ogg")
     p.parent.mkdir(parents=True, exist_ok=True)
-    data = x.T if stereo else x
-    sf.write(p, np.clip(data, -1, 1).astype(np.float32), SR,
-             format="OGG", subtype="VORBIS")
+    data = np.clip(x.T if stereo else x, -1, 1).astype(np.float32)
+    # written in blocks: libsndfile's Vorbis encoder crashes on one long stereo write
+    with sf.SoundFile(p, "w", SR, 2 if stereo else 1, format="OGG", subtype="VORBIS") as out:
+        for i in range(0, len(data), SR * 4):
+            out.write(data[i:i + SR * 4])
     frames = len(x[0]) if stereo else len(x)
     print(f"  {rel + '.ogg':30} {frames / SR:5.1f}s  {p.stat().st_size // 1024:4d} KB"
           f"  {'stereo' if stereo else 'mono'}")
@@ -418,6 +421,55 @@ def dread_music(rng):
     return st
 
 
+# ====================================================================== THE VILLAGE
+
+def _formants(*peaks):
+    """A vowel: noise shaped by a few resonant peaks (frequency, width, gain)."""
+    def curve(f):
+        out = np.zeros_like(f)
+        for fc, bw, g in peaks:
+            out += g / (1.0 + ((f - fc) / bw) ** 2)
+        return out
+    return curve
+
+
+def village_whisper(rng):
+    """What a decayed village sounds like when you stand in it. Voices with no breath behind
+    them: several people whispering at once from different rooms, never a word you can
+    catch, the syllables spoken in the rhythm of speech and then gone. Whispering is the
+    one kind of voice that is pure noise — no pitch at all — so it is built that way:
+    breath shaped into vowels, hissed consonants between them."""
+    dur = 6.5
+    n = int(SR * dur)
+    x = np.zeros(n)
+    vowels = [((700, 120, 1.0), (1220, 160, 0.6), (2600, 260, 0.2)),     # a
+              ((300, 90, 1.0), (2300, 220, 0.5), (3000, 260, 0.25)),      # i
+              ((450, 100, 1.0), (800, 120, 0.6), (2830, 240, 0.15)),      # o
+              ((520, 110, 1.0), (1700, 180, 0.5), (2500, 240, 0.2))]      # e
+    for voice in range(4):
+        at = 0.25 + voice * 0.9 + rng.uniform(-0.2, 0.3)
+        gain = (1.0, 0.55, 0.38, 0.26)[voice]           # nearer, and further off
+        shift = rng.uniform(0.85, 1.2)                   # every throat a different size
+        for _ in range(int(rng.integers(5, 10))):
+            if at > dur - 0.6:
+                break
+            ln = rng.uniform(0.09, 0.24)
+            m = int(SR * ln)
+            v = vowels[int(rng.integers(len(vowels)))]
+            syl = shaped_noise(m, _formants(*[(f * shift, w, g) for f, w, g in v]), rng)
+            env = np.sin(np.pi * np.linspace(0, 1, m)) ** 1.5
+            i = int(SR * at)
+            x[i:i + m] += syl[:n - i] * env[:n - i] * gain
+            if rng.random() < 0.45:                       # a hissed consonant after it
+                cm = int(SR * rng.uniform(0.05, 0.13))
+                c = shaped_noise(cm, band(3800.0, 9000.0, 3.0), rng) * np.hanning(cm) * 0.7 * gain
+                j = i + m
+                x[j:j + cm] += c[:max(0, n - j)]
+            at += ln + rng.uniform(0.03, 0.22) + (0.5 if rng.random() < 0.15 else 0.0)
+    x = wobble(x, depth=0.003, rate=0.31, rng=rng)
+    return norm(fade(reverb(x, dur=2.4, mix=0.55, tone=4200.0, rng=rng), inn=0.05, out=1.2), 0.7)
+
+
 SOUNDS = {
     "sun_man/heartbeat": heartbeat,
     "sun_man/drone": drone,
@@ -433,7 +485,20 @@ SOUNDS = {
     "dark_walker/drift": walker_drift,
     "dark_walker/notice": walker_notice,
     "dark_walker/reach": walker_reach,
+    "village/whisper": village_whisper,
 }
+
+
+def sounds_json():
+    """`sounds.json`: one event per file, named `<folder>.<name>` (`sunman:village.whisper`),
+    the music streamed."""
+    events = {}
+    for rel in list(SOUNDS) + ["music/dread"]:
+        events[rel.replace("/", ".")] = {
+            "sounds": [{"name": f"sunman:{rel}", "stream": rel.startswith("music/")}]}
+    p = OUT.parent / "sounds.json"
+    p.write_text(json.dumps(events, indent=2) + "\n")
+    return p
 
 
 if __name__ == "__main__":
@@ -441,3 +506,4 @@ if __name__ == "__main__":
     for i, (name, fn) in enumerate(SOUNDS.items()):
         write(name, fn(np.random.default_rng(1000 + i * 7)))
     write("music/dread", dread_music(np.random.default_rng(4242)), stereo=True)
+    print(f"  {sounds_json().name}")

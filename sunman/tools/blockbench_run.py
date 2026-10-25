@@ -245,11 +245,37 @@ def previews(url, names=NAMES):
                 print(f"  {path.relative_to(ROOT)}  {len(ims)} frames  {path.stat().st_size // 1024} KB")
 
 
+def props(url):
+    """Stills of the dead villagers (blockbench/dead_villagers.bbmodel) on grass green."""
+    from PIL import Image
+    out = ROOT / "docs" / "dead_villagers.png"
+    with tempfile.TemporaryDirectory() as tmp:
+        shots = []
+        for i, x in enumerate((-88, -44, 0)):
+            shots.append({"name": f"p{i}_a", "position": [x + 26, 30, 34], "target": [x, 2, 2], "background": "#6a9a3c"})
+            shots.append({"name": f"p{i}_b", "position": [x - 30, 26, -30], "target": [x, 2, 0], "background": "#6a9a3c"})
+        shots.append({"name": "head", "position": [62, 18, 22], "target": [44, 2, 0], "background": "#6a9a3c"})
+        shots.append({"name": "arm", "position": [104, 16, 20], "target": [88, 1, 0], "background": "#6a9a3c"})
+        run_job({"url": url, "model": str(BB / "dead_villagers.bbmodel"), "out_dir": tmp, "clips": [], "shots": shots})
+        ims = []
+        for name in [s["name"] for s in shots]:
+            im = _centre(Image.open(f"{tmp}/{name}.png").convert("RGB"), 1.2)
+            ims.append(im.resize((420, int(im.height * 420 / im.width)), Image.LANCZOS))
+        h = ims[0].height
+        sheet = Image.new("RGB", (420 * 3, h * 3), (106, 154, 60))
+        for k, idx in enumerate([0, 2, 4, 1, 3, 5]):          # each body from two sides
+            sheet.paste(ims[idx], ((k % 3) * 420, (k // 3) * h))
+        sheet.paste(ims[6], (210, 2 * h))                     # the loose pieces
+        sheet.paste(ims[7], (630, 2 * h))
+        sheet.save(out, optimize=True)
+    print(f"  {out.relative_to(ROOT)}")
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--blockbench", required=True, help="Blockbench web build directory (has index.html)")
     ap.add_argument("--only", nargs="+", choices=NAMES, default=list(NAMES), help="creatures to process")
-    ap.add_argument("what", nargs="+", choices=("verify", "bedrock", "previews", "all"))
+    ap.add_argument("what", nargs="+", choices=("verify", "bedrock", "previews", "props", "all"))
     args = ap.parse_args()
     what = set(args.what)
     if "all" in what:
@@ -266,6 +292,9 @@ def main():
         if "previews" in what:
             print("previews")
             previews(srv.url, args.only)
+        if "props" in what or "all" in what:
+            print("props")
+            props(srv.url)
     finally:
         srv.close()
     sys.exit(0 if ok else 1)

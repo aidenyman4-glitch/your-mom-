@@ -1,0 +1,21 @@
+{
+  "sources": [
+    {
+      "type": "minecraft:directory",
+      "source": "decal",
+      "prefix": "decal/"
+    },
+    {
+      "type": "minecraft:single",
+      "resource": "sunman:entity/sun_man"
+    },
+    {
+      "type": "minecraft:single",
+      "resource": "sunman:entity/birthday_people"
+    },
+    {
+      "type": "minecraft:single",
+      "resource": "sunman:entity/dead_villagers"
+    }
+  ]
+}
