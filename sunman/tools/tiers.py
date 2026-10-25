@@ -1,8 +1,9 @@
 """Tier 1 and Tier 2 creatures, rebuilt as Blockbench mod-style models.
 
 LOCUST — "It doesn't see you... but it knows you're there."
-    2.4 blocks. Oversized TILTED head, blank black eyes and mouth, segmented insect limbs with
-    proud blocky joints, a knuckled spine, long bony fingers. Greyscale, four tones.
+    2.7 blocks. A puppet: a small pale mask of a face in a mass of long black hair, on a neck far
+    too long, over a body that is all ribs; pale jointed limbs bound at every joint with black
+    string, needles for fingers, and legs that taper to points instead of feet.
 
 DARK WALKER — "It does not hurry, because it does not need to."
     7.3 blocks. A wide flat brim over a low crown, a small narrow head pushed forward on a long
@@ -29,8 +30,8 @@ and GeckoLib both do — so `solve` here does the same.
 
 Axes match the Sun Man rig: +X = the creature's LEFT, +Y = up, +Z = FORWARD.
 """
-from rig import (quat_from_euler_xyz, quat_mul, quat_norm, quat_rotate,  # noqa: E402
-                 vsub)
+from rig import (fk_matrices, mat_vec, quat_from_euler_xyz, quat_mul,  # noqa: E402
+                 quat_norm, quat_rotate, vsub)
 
 PX = 1.0 / 16.0                 # one Blockbench pixel at true scale, in blocks
 
@@ -193,14 +194,18 @@ class Creature:
                    for p in pts]
         return pts
 
+    def solve_m(self, pose):
+        """World (position, 3x3 matrix) per bone — rest, rotation, position AND scale keys."""
+        return fk_matrices(self.BONE_ORDER, self.parents, self.J, pose, self.REST)
+
     def extents(self, pose, axis=1):
-        sol = self.solve(pose)
+        sol = self.solve_m(pose)
         lo, hi = 1e9, -1e9
         for bone, cubes in self.GEOMETRY.items():
-            pos, q = sol[bone]
+            pos, m = sol[bone]
             for c in cubes:
                 for p in self._cube_corners(c):
-                    v = pos[axis] + quat_rotate(q, p)[axis]
+                    v = pos[axis] + mat_vec(m, p)[axis]
                     lo, hi = min(lo, v), max(hi, v)
         return lo, hi
 
@@ -208,6 +213,11 @@ class Creature:
         dy = -self.extents(pose)[0]
         return {b: ((p[0], p[1] + dy, p[2]), q)
                 for b, (p, q) in self.solve(pose).items()}
+
+    def solve_grounded_m(self, pose):
+        dy = -self.extents(pose)[0]
+        return {b: ((p[0], p[1] + dy, p[2]), m)
+                for b, (p, m) in self.solve_m(pose).items()}
 
     def model_height(self, pose=None):
         lo, hi = self.extents(pose if pose is not None else {})
@@ -218,92 +228,127 @@ class Creature:
 
 
 # ====================================================================== LOCUST
-# 2.4 blocks, 16 px to the block. Door height: it fits where you fit.
+# Rebuilt to Aiden's second set of references: a full-body sheet of something like a puppet —
+# pale jointed limbs bound at every joint with black string, a pale caved chest, black ragged
+# hips, legs that do not end in feet but taper to points, and two needles hanging from each hand
+# — and two frames of it standing in the corner of a papered room: a small pale MASK of a face
+# in a mass of long black hair, on a neck far too long, over a body that is all ribs.
+#
+# It keeps everything the old character sheet asked for (tall and thin, blank black eyes and
+# mouth, segmented limbs with proud joints, a knuckled spine, long fingers for climbing and
+# grabbing) and it keeps the budget of 11 bones: the neck rides the HEAD bone, pivoting at its
+# base on the shoulders, so the whole stalk cranes, droops and snaps round as one.
+
+def hang(base, length, rot, mat="lc_hair", paint="strand", width=0.5, depth=0.5):
+    """A strand hanging from `base`, swung about its root by `rot` (degrees)."""
+    return C((base[0] - width / 2, base[1] - length, base[2] - depth / 2), (width, length, depth),
+             mat, paint, rot=rot, origin=base)
+
 
 def _locust():
-    P = {}                       # pivots, absolute px
-    G = {}                       # cubes, absolute px
+    P, G = {}, {}
     par = {"torso": "pelvis", "head": "torso",
            "arm_l": "torso", "fore_l": "arm_l", "arm_r": "torso", "fore_r": "arm_r",
            "leg_l": "pelvis", "shin_l": "leg_l", "leg_r": "pelvis", "shin_r": "leg_r"}
+    HIP, KNEE, SHOULDER = 20.0, 10.0, 30.0
 
-    P["pelvis"] = (0, 17, 0)
+    P["pelvis"] = (0, HIP + 0.5, 0)
     G["pelvis"] = [
-        C((-3, 15, -2), (6, 4, 4), "lc_mid", "plate"),
-        C((-4, 16, -1.5), (8, 2, 3), "lc_joint", "joint"),          # hip sockets
+        C((-2.25, HIP - 1.5, -1.5), (4.5, 3, 3), "lc_rag", "rag"),         # black ragged hips
+        C((-0.5, HIP - 3.5, 1.0), (1, 2.5, 0.5), "lc_rag", "rag"),         # a flap, front and back
+        C((-0.5, HIP - 3.0, -1.5), (1, 2, 0.5), "lc_rag", "rag"),
     ]
-    P["torso"] = (0, 18, 0)
-    G["torso"] = [
-        C((-2.5, 18, -2), (5, 4, 4), "lc_mid", "segment"),          # waist, pinched
-        C((-3.5, 22, -2.5), (7, 4, 5), "lc_light", "ribs"),         # thorax
-        C((-3, 26, -2), (6, 3, 4), "lc_mid", "plate"),              # collar
-        C((-5, 26, -1.5), (2, 3, 3), "lc_joint", "joint"),          # shoulder sockets
-        C((3, 26, -1.5), (2, 3, 3), "lc_joint", "joint"),
-        C((-1, 29, -1), (2, 2, 2), "lc_dark", "neck"),              # thin neck
-    ]
-    for y in (18.5, 21, 23.5, 26):                                  # knuckled spine
-        G["torso"].append(C((-1, y, -3), (2, 1.5, 1), "lc_joint", "knob"))
 
-    # The oversized head. Its tilt — the single most recognisable thing about it — is now the
-    # head bone's rest rotation instead of a rotation baked into every cube, so animation
-    # turns the head about its own neck instead of about a skewed box.
-    P["head"] = (0, 30.5, 0.5)
-    G["head"] = [
-        C((-5, 30.5, -4), (10, 9, 9), "lc_light", "skull"),
-        C((-4, 39.5, -3), (8, 1, 7), "lc_mid", "plate"),            # cranial plate
-        C((-4, 34.5, 5), (3, 2, 0.5), "lc_void", "void"),           # eyes: holes, not features
-        C((1, 34.5, 5), (3, 2, 0.5), "lc_void", "void"),
-        C((-2, 31.5, 5), (4, 1, 0.5), "lc_void", "void"),           # mouth
+    T = HIP + 1.5
+    P["torso"] = (0, T, 0)
+    G["torso"] = [
+        C((-1.0, T, -1.0), (2, 3, 2), "lc_skin", "waist"),                 # a waist you could snap
+        C((-2.25, T + 3, -1.5), (4.5, 4.5, 3), "lc_skin", "ribcage"),
+        C((-2.5, T + 3.5, -1.75), (5, 1, 3.5), "lc_wrap", "wrap"),         # the binding under the ribs
+        C((-1.75, T + 4.5, 1.5), (3.5, 3, 0.5), "lc_flesh", "chest"),      # the caved pale chest
+        C((-3.0, T + 7.5, -1.0), (6, 1, 2), "lc_skin", "yoke"),
+        C((-0.5, T + 8.5, -0.5), (1, 0.5, 1), "lc_skin", "neck"),
     ]
+    for y, z in ((T + 0.5, -1.5), (T + 2.0, -1.5), (T + 3.5, -2.0), (T + 5.0, -2.0), (T + 6.5, -2.0)):
+        G["torso"].append(C((-0.5, y, z), (1, 1, 0.5), "lc_bone", "knob"))   # the knuckled spine
+
+    # head: the neck, the skull, the mask, and the hair, all on one bone at the neck's base
+    NB = T + 9.0
+    P["head"] = (0, NB, 0)
+    H = NB + 6.0                                                           # the top of the neck
+    G["head"] = [
+        C((-0.5, NB - 0.5, -0.5), (1, 6.5, 1), "lc_skin", "neck"),         # far too long
+        C((-2, H, -2), (4, 5, 4), "lc_skin", "skull"),
+        C((-1.5, H - 0.5, 2), (3, 5, 0.5), "lc_mask", "mask"),             # the face is a mask
+        C((-2.5, H + 3.5, -2.5), (5, 2, 4.5), "lc_hair", "hair"),          # crown
+        C((-2.5, H - 3.0, -3.0), (5, 8.5, 0.5), "lc_hair", "hair"),        # down the back
+        C((2.0, H - 2.0, -2.5), (0.5, 6.5, 4), "lc_hair", "hair"),         # framing the face
+        C((-2.5, H - 2.5, -2.5), (0.5, 7, 4), "lc_hair", "hair"),
+    ]
+    # strands: long ones falling over the shoulders, uneven on purpose, and the wild ones the
+    # full-body sheet shows standing off the top of the head
+    for base, length, rot in (
+            ((2.3, H + 1.5, 1.2), 8.0, (8, 0, 10)), ((2.2, H + 3.0, -1.0), 10.0, (-6, 0, 6)),
+            ((1.0, H + 0.5, -2.8), 9.5, (-12, 0, 2)), ((-2.3, H + 1.0, 1.0), 9.0, (4, 0, -7)),
+            ((-2.2, H + 2.5, -1.4), 11.5, (-8, 0, -4)), ((-1.2, H + 0.0, -2.9), 7.5, (-14, 0, -3)),
+            ((0.4, H + 5.2, 0.6), 2.5, (158, 0, 26)), ((-1.4, H + 5.2, -0.6), 3.0, (164, 0, -32)),
+            ((1.6, H + 5.0, -1.8), 2.5, (-148, 0, 40)), ((-0.6, H + 5.4, 1.6), 2.0, (140, 0, -12))):
+        G["head"].append(hang(base, length, rot))
 
     for side, sg in (("l", 1), ("r", -1)):
-        sx = 4.0 * sg
-        P[f"arm_{side}"] = (sx, 27.5, 0)
-        P[f"fore_{side}"] = (sx, 20.5, 0)
-        P[f"leg_{side}"] = (2.0 * sg, 16.5, 0)
-        P[f"shin_{side}"] = (2.0 * sg, 9, 0)
-        arm = [C((-1, 20.5, -1), (2, 6.5, 2), "lc_mid", "segment")]
+        sx, lx = 4.0, 1.5
+        P[f"arm_{side}"] = (sg * sx, SHOULDER, 0)
+        P[f"fore_{side}"] = (sg * sx, SHOULDER - 7, 0)
+        P[f"leg_{side}"] = (sg * lx, HIP, 0)
+        P[f"shin_{side}"] = (sg * lx, KNEE, 0)
+        E = SHOULDER - 7
+        arm = [
+            C((-1, SHOULDER - 1, -1), (2, 2, 2), "lc_wrap", "wrap"),           # bound shoulder
+            C((-0.75, E + 0.5, -0.75), (1.5, 5.5, 1.5), "lc_bone", "bone"),
+        ]
         fore = [
-            C((-1.5, 19.5, -1.5), (3, 2, 3), "lc_joint", "joint"),  # elbow
-            C((-1, 13, -1), (2, 6.5, 2), "lc_mid", "segment"),
-            C((-1.5, 11, -1.5), (3, 2, 3), "lc_dark", "knuckle"),   # hand
+            C((-1, E - 1, -1), (2, 1.5, 2), "lc_wrap", "wrap"),                 # bound elbow
+            C((-0.75, E - 6, -0.75), (1.5, 5, 1.5), "lc_bone", "bone"),
+            C((-1, E - 6.5, -1), (2, 0.5, 2), "lc_wrap", "wrap"),               # bound wrist
+            C((-0.75, E - 8, -0.5), (1.5, 1.5, 1), "lc_skin", "palm"),
         ]
-        # long bony fingers, built for climbing and grabbing
-        for i, fan in enumerate((-16.0, -5.0, 5.0, 16.0)):
-            fore += finger((-1.0 + i * 0.67, 11.0, 0.0), fan, 9.0, (3.0, 3.5),
-                           "lc_light", "lc_dark", width=0.75, depth=0.75)
-        fore += finger((0.0, 11.5, 1.0), 0.0, -14.0, (2.0, 2.0), "lc_light", "lc_dark",
-                       width=0.75, depth=0.75, splay=-30.0)                 # thumb
-        leg = [C((-1, 9.5, -1), (2, 7, 2), "lc_mid", "segment")]
+        # four needles to each hand, long enough to reach the knee
+        for i, fan in enumerate((-9.0, -3.0, 3.0, 9.0)):
+            fore += finger((-0.6 + i * 0.4, E - 7.9, 0.0), fan, -4.0, (4.5, 4.5),
+                           "lc_needle", "lc_needle", width=0.5, depth=0.5)
+        fore += finger((0.0, E - 7.5, 0.5), 0.0, -6.0, (2.5, 2.0), "lc_needle", "lc_needle",
+                       width=0.5, depth=0.5, splay=-28.0)
+        leg = [
+            C((-1.25, HIP - 2, -1.25), (2.5, 2, 2.5), "lc_wrap", "wrap"),        # bound hip
+            C((-1, KNEE + 1, -1), (2, HIP - 2 - KNEE - 1, 2), "lc_bone", "bone"),
+        ]
         shin = [
-            C((-1.5, 8, -1.5), (3, 2, 3), "lc_joint", "joint"),     # knee
-            C((-1, 2, -1), (2, 6, 2), "lc_mid", "segment"),
-            C((-1.5, 0, -1.5), (3, 2, 3), "lc_dark", "knuckle"),    # ankle
-            C((-1.5, 0, 1.5), (1, 1, 3), "lc_light", "claw"),       # toes
-            C((0.5, 0, 1.5), (1, 1, 3), "lc_light", "claw"),
-            C((-0.5, 0, -3), (1, 1, 1.5), "lc_light", "claw"),      # heel spur
+            C((-1.25, KNEE - 1, -1.25), (2.5, 2, 2.5), "lc_wrap", "wrap"),       # bound knee
+            C((-1, 4.5, -1), (2, KNEE - 5.5, 2), "lc_bone", "bone"),
+            C((-1, 3.5, -1), (2, 1, 2), "lc_wrap", "wrap"),
+            C((-0.5, 1.0, -0.5), (1, 2.5, 1), "lc_bone", "bone"),
+            C((-0.25, 0.0, -0.25), (0.5, 1.0, 0.5), "lc_needle", "point"),      # no foot: a point
         ]
-        for key, cubes in ((f"arm_{side}", arm), (f"fore_{side}", fore),
-                           (f"leg_{side}", leg), (f"shin_{side}", shin)):
-            px, py, pz = P[key]
+        for key, cubes, ox in ((f"arm_{side}", arm, sx), (f"fore_{side}", fore, sx),
+                               (f"leg_{side}", leg, lx), (f"shin_{side}", shin, lx)):
             moved = []
             for c in cubes:                                         # authored about x = 0
                 m = dict(c)
-                m["from"] = (c["from"][0] + abs(px), c["from"][1], c["from"][2])
+                m["from"] = (c["from"][0] + ox, c["from"][1], c["from"][2])
                 if "rot" in c:
-                    m["origin"] = (c["origin"][0] + abs(px), c["origin"][1], c["origin"][2])
+                    m["origin"] = (c["origin"][0] + ox, c["origin"][1], c["origin"][2])
                 moved.append(m if sg > 0 else mirror_cube(m))
             G[key] = moved
 
     rest = {
-        "torso": (8.0, 0.0, 0.0),                       # it stands hunched
-        "head": (-17.0, 4.0, 11.0),                     # the tilt (and the hunch undone)
-        "arm_l": (-4.0, 0.0, 6.0), "arm_r": (-4.0, 0.0, -6.0),
-        "fore_l": (-14.0, 0.0, -2.0), "fore_r": (-14.0, 0.0, 2.0),
-        "leg_l": (-10.0, 0.0, 3.0), "leg_r": (-10.0, 0.0, -3.0),
-        "shin_l": (16.0, 0.0, -2.0), "shin_r": (16.0, 0.0, 2.0),
+        "torso": (7.0, 0.0, 0.0),                       # it stands hunched
+        "head": (-3.0, 6.0, 13.0),                      # the neck leans and the head lolls over
+        "arm_l": (-3.0, 0.0, 5.0), "arm_r": (-3.0, 0.0, -5.0),
+        "fore_l": (-7.0, 0.0, -2.0), "fore_r": (-7.0, 0.0, 2.0),
+        "leg_l": (-5.0, 0.0, 2.0), "leg_r": (-5.0, 0.0, -2.0),
+        "shin_l": (8.0, 0.0, -1.0), "shin_r": (8.0, 0.0, 1.0),
     }
-    return Creature("locust", P, par, G, rest=rest, height_hint=2.4,
+    return Creature("locust", P, par, G, rest=rest, height_hint=2.7,
                     display_scale=1.0, bb_px_per_block=16.0)
 
 
@@ -353,8 +398,8 @@ def _dark_walker():
         C((-3, HEAD + 4, 3.5), (6, 1, 1), "dw_dark", "brow"),       # the brow that shades them
         # The eyes. Proud of the face and lit, because in three of the five references the
         # eyes are the only thing in the frame that is not a silhouette.
-        C((-2, HEAD + 2.5, 4), (1, 1, 0.5), "dw_eye", "eye", emit=15),
-        C((1, HEAD + 2.5, 4), (1, 1, 0.5), "dw_eye", "eye", emit=15),
+        C((-2, HEAD + 3.0, 4), (1, 0.5, 0.5), "dw_eye", "eye", emit=15),   # narrow, lit slits
+        C((1, HEAD + 3.0, 4), (1, 0.5, 0.5), "dw_eye", "eye", emit=15),
     ]
 
     # The hat. Wide and flat — the brim is twice the shoulder width and the first thing you
@@ -411,9 +456,9 @@ def _dark_walker():
             hy = ey - lower - 3
             for i, fan in enumerate((-15.0, -5.0, 5.0, 15.0)):
                 fore += finger((-1.125 + i * 0.75, hy + 0.3, sz), fan, -7.0 - 2.0 * n,
-                               (5.0, 5.0), "dw_pale", "dw_claw", width=0.75, depth=0.75)
+                               (5.0, 5.0), "dw_pale", "dw_claw", width=0.5, depth=0.5)
             fore += finger((0.0, hy + 1.0, sz + 1.0), 0.0, -10.0, (3.0, 3.5),
-                           "dw_pale", "dw_claw", width=0.75, depth=0.75, splay=-35.0)   # thumb
+                           "dw_pale", "dw_claw", width=0.5, depth=0.5, splay=-35.0)     # thumb
             for key, cubes in ((f"arm_{side}{n}", arm), (f"fore_{side}{n}", fore)):
                 moved = []
                 for c in cubes:

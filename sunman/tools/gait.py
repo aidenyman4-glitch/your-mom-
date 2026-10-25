@@ -73,6 +73,8 @@ class Leg:
 
     def angles(self, s, hip_drop_px, stride, duty, lift):
         """Keyframe DELTAS (thigh_x, shin_x, foot_x) at phase s with the hip lowered."""
+        # a longer stride is a longer stance: the planted foot still moves at the body's speed
+        duty = min(0.9, duty * self.stride_scale)
         fy, fz = foot_path(s + self.phase, stride * self.stride_scale, duty,
                            lift * self.lift_scale)
         dy = self.rest_dy + fy + hip_drop_px          # a lower hip brings the sole up
@@ -136,3 +138,129 @@ def check(clip, creature, legs, ppb=16.0, fps=40):
             pts.append((w[1] * ppb, w[2] * ppb))
         report.append(pts)
     return report
+
+
+# ====================================================================== limbs under any body
+# `key_gait` assumes level hips. A creature that runs bent double, or walks its hands, needs
+# IK that knows where the shoulder actually is: `ik2` solves a two-bone limb against the rig's
+# own forward kinematics (rest rotations, splay, a pitched torso, scale — all of it) by
+# Gauss-Newton on the two hinge angles, starting on the side of the knee you ask for.
+
+def _fk(creature, pose):
+    return creature.solve_m(pose)
+
+
+def end_point(creature, pose, lower, end_local):
+    from rig import mat_vec
+    pos, m = _fk(creature, pose)[lower]
+    return tuple(pos[i] + mat_vec(m, end_local)[i] for i in range(3))
+
+
+def lowest_local(creature, bone):
+    """The lowest corner of a bone's cubes, in the bone's own frame (blocks): the point that
+    touches the ground — a heel, a needle tip."""
+    best = None
+    for cu in creature.GEOMETRY[bone]:
+        for p in creature._cube_corners(cu):
+            if best is None or p[1] < best[1]:
+                best = p
+    return best
+
+
+def ik2(creature, pose, upper, lower, end_local, target, bend=1.0, iters=40, base=None):
+    """X-rotation DELTAS (upper, lower) that put `end_local` of `lower` on `target` (world,
+    blocks). `bend` > 0 bends the joint like a knee or an elbow; < 0 the wrong way. `base`
+    gives the limb's other two axes (y, z) as deltas."""
+    by, bz = (base or {}).get(upper, (0.0, 0.0)), (base or {}).get(lower, (0.0, 0.0))
+
+    def place(a, b):
+        p = dict(pose)
+        p[upper] = {"rotation": (a, by[0], by[1])}
+        p[lower] = {"rotation": (b, bz[0], bz[1])}
+        return p
+
+    def err(a, b):
+        e = end_point(creature, place(a, b), lower, end_local)
+        return (e[1] - target[1], e[2] - target[2], e[0] - target[0])
+
+    best = None
+    for start in (25.0, 50.0, 80.0):
+        a, b = -0.5 * start * bend, start * bend
+        for _ in range(iters):
+            e0 = err(a, b)
+            h = 0.05
+            ea, eb = err(a + h, b), err(a, b + h)
+            ja = [(ea[i] - e0[i]) / h for i in range(3)]
+            jb = [(eb[i] - e0[i]) / h for i in range(3)]
+            # 2x2 normal equations
+            aa = sum(v * v for v in ja); bb = sum(v * v for v in jb); ab = sum(ja[i] * jb[i] for i in range(3))
+            ra = -sum(ja[i] * e0[i] for i in range(3)); rb = -sum(jb[i] * e0[i] for i in range(3))
+            det = aa * bb - ab * ab + 1e-9
+            da, db = (ra * bb - rb * ab) / det, (rb * aa - ra * ab) / det
+            step = max(1.0, math.hypot(da, db) / 15.0)        # never more than 15 degrees a step
+            a, b = a + da / step, b + db / step
+            if math.hypot(*e0[:2]) < 1e-5:
+                break
+        rest_b = getattr(creature, "REST", {}).get(lower, (0.0, 0.0, 0.0))[0]
+        right_side = (b + rest_b) * bend > 0
+        e = math.hypot(*err(a, b)[:2])
+        if right_side and (best is None or e < best[2]):
+            best = (a, b, e)
+        if best and best[2] < 1e-3:
+            break
+    if best is None:
+        raise ValueError(f"no {'forward' if bend > 0 else 'reversed'} solution for {lower}")
+    return best[0], best[1]
+
+
+class Foot:
+    """A limb that plants: which bones, which point touches down, where it stands at rest,
+    its phase in the cycle, which way it bends, and how far it reaches."""
+
+    def __init__(self, creature, upper, lower, phase, bend=1.0, home=(0.0, 0.0, 0.0),
+                 stride_scale=1.0, lift_scale=1.0, base=None):
+        self.c, self.upper, self.lower, self.phase, self.bend = creature, upper, lower, phase, bend
+        self.end = lowest_local(creature, lower)
+        rest = end_point(creature, {}, lower, self.end)
+        self.home = (rest[0] + home[0], home[1] if home[1] else 0.0, rest[2] + home[2])
+        self.stride_scale, self.lift_scale = stride_scale, lift_scale
+        self.base = base or {}
+
+
+def key_feet(clip, creature, feet, stride, duty, lift, n=12, cycles=1, ppb=16.0, ground=None):
+    """Key every foot of `feet` by IK at `n` keys per cycle, against whatever the body is
+    already keyed to do at that moment. Body keys first, then this."""
+    ground = min(f.home[1] for f in feet) if ground is None else ground
+    total = n * cycles
+    keys = {}
+    for i in range(total + 1):
+        t = clip.length * i / total
+        s = (i / total * cycles) % 1.0
+        pose = clip.sample(t)
+        for f in feet:
+            fy, fz = foot_path(s + f.phase, stride * f.stride_scale, min(0.9, duty * f.stride_scale),
+                               lift * f.lift_scale)
+            target = (f.home[0], ground + fy / ppb, f.home[2] + fz / ppb)
+            a, b = ik2(creature, pose, f.upper, f.lower, f.end, target, f.bend, base=f.base)
+            keys.setdefault((f.upper, f.lower), []).append((t, a, b))
+    for f in feet:
+        by = f.base.get(f.upper, (0.0, 0.0))
+        bz = f.base.get(f.lower, (0.0, 0.0))
+        seq = keys[(f.upper, f.lower)]
+        seq[-1] = (seq[-1][0], seq[0][1], seq[0][2])       # the loop closes exactly
+        for t, a, b in seq:
+            clip.key(f.upper, "rotation", t, (a, by[0], by[1]))
+            clip.key(f.lower, "rotation", t, (b, bz[0], bz[1]))
+
+
+def check_feet(clip, creature, feet, ppb=16.0, fps=40):
+    """World path of every foot's contact point over the clip, in pixels: [(y, z), ...]."""
+    out = []
+    n = int(clip.length * fps)
+    for f in feet:
+        pts = []
+        for i in range(n + 1):
+            e = end_point(creature, clip.sample(clip.length * i / n), f.lower, f.end)
+            pts.append((e[1] * ppb, e[2] * ppb))
+        out.append(pts)
+    return out

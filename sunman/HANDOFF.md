@@ -6,8 +6,8 @@ Animate tab as real keyframes.
 
 | file | bones | cubes | clips | height | authored at |
 |---|---|---|---|---|---|
-| `blockbench/sun_man.bbmodel` | 29 | 197 | 7 | 72.89 blocks | 16/12 px per block (display scale 12) |
-| `blockbench/locust.bbmodel` | 11 | 59 | 8 | 2.60 blocks | 16 px per block, true scale |
+| `blockbench/sun_man.bbmodel` | 29 | 197 | 8 | 72.89 blocks | 16/12 px per block (display scale 12) |
+| `blockbench/locust.bbmodel` | 11 | 77 | 10 | 2.74 blocks | 16 px per block, true scale |
 | `blockbench/dark_walker.bbmodel` | 21 | 144 | 7 | 7.28 blocks | 16 px per block, true scale |
 
 `rig/<name>.rig.json` is the same skeleton as data: bone, parent, pivot **in blocks**, rest
@@ -25,11 +25,36 @@ pixel-for-pixel fixed.
 
 Both are machine-checked: `python3 tools/check.py` hashes the Sun Man's elements (from, to,
 origin, rotation, every face UV) against the handoff, checks all 29 pivots and that no rest
-rotation was added, and hashes the face quadrant and his material tiles.
+rotation was added, and hashes the face quadrant. His own thirteen material tiles are surface,
+and have been repainted (see below); every other tile is hashed against the handoff too.
 
 The Locust and Dark Walker are open to reshaping, and have been.
 
-## What changed in this pass
+## Second pass: the Locust redone, more detail, creepier
+
+- **Locust rebuilt** to the second set of references — a puppet: a small porcelain mask of a face
+  in long black hair, a neck far too long (riding the head bone, so the whole stalk cranes and
+  snaps round), a body all ribs with a caved pale chest stitched shut, black ragged hips, pale
+  limb segments of old stained wood bound at every joint with black string, four needles to a
+  hand, and legs that taper to points. Still 11 bones.
+- **Textures at 32 texels/block** for both tier creatures (two per model pixel), right-side limbs
+  mirroring their left twin's texels, MaxRects-packed into 77% of the free quadrant, painted in
+  world space so detail runs across face seams, with the two faces drawn by hand. The Dark
+  Walker's eyes became narrow lit slits; its mouth is sewn shut.
+- **The Sun Man's surface repainted** — his thirteen material tiles, as pixel art (robe folds and
+  old blood, wrappings, the ridged neck, cracked bone, stained fingers, crazed porcelain). His UVs,
+  geometry and face are untouched.
+- **Creepier clips.** Locust: ten clips for the new rig — a marionette walk on reverse-bending
+  knees, a four-legged scuttle on the needles of its hands, the head snap with a neck that then
+  cracks over sideways, a peek round a door frame, a strings-cut death. Sun Man: a ray halo that
+  ticks, spins and flares; a neck that STRETCHES (scale keys) in `stare_down`, `harvest_rise` and
+  the new `peer`; harder head snaps, spasming fingers, a lolling head on the walk.
+- **Scale keys** are new. The solver now carries full matrices (`fk_matrices` / `solve_m`) and a
+  real Blockbench agrees with it on every bone's world position to 0.0001 px.
+- **IK feet under any body** (`gait.key_feet`): the Locust's feet and hands plant even bent double.
+  In a limp the longer stride stays down longer, so every planted foot moves at the body's speed.
+
+## First pass
 
 - **Animations are Blockbench keyframes.** All 22 clips (`animations/CLIPS.md`) are sparse,
   hand-editable keys in the projects, exported to Bedrock JSON, and sampled by the Python
@@ -65,9 +90,13 @@ maths, so every frame of every clip is precomputed and written out as `^` local 
 That means **a bone is an entity**. Bone count is a runtime cost, not just a modelling
 choice. 29 + 11 + 21 is the budget, and it is unchanged.
 
-To bake a clip: `Creature.solve(clip.sample(t))` (or `rig.solve` for the Sun Man) gives every
-bone's world position and quaternion at time `t`, rest rotations and position keys included,
-exactly as Blockbench poses it. Sample at 20 Hz.
+To bake a clip: `Creature.solve_m(clip.sample(t))` (or `rig.solve_m` for the Sun Man) gives
+every bone's world position and 3×3 matrix at time `t` — rest rotations, position and scale keys
+included — exactly as Blockbench poses it. Sample at 20 Hz. Most clips are pure rotation, and
+`solve` (position + quaternion) is enough for them; the ones with SCALE keys need the matrix,
+which an `item_display` takes as its `transformation` (any 3×3 decomposes into its
+left_rotation · scale · right_rotation): the Sun Man's `lurch`, `stare_down`, `harvest_rise` and
+`peer` (the neck and the ray halo).
 
 **If it goes to a mod instead** (GeckoLib, or any Bedrock-format loader): use `bedrock/`. The
 creatures face **+Z** (the datapack's convention); vanilla-style entity renderers expect the
@@ -108,8 +137,9 @@ Minecraft Java **26.3**. Relevant relaxations, all used here:
 | Locust + Dark Walker rigs and geometry | `tools/tiers.py` |
 | clips | `tools/clips_sun_man.py`, `tools/clips_locust.py`, `tools/clips_dark_walker.py` |
 | keyframe model, Blockbench-exact sampler, `.bbmodel` writer | `tools/keyframes.py` |
-| foot-planted walk cycles (IK) | `tools/gait.py` |
+| foot-planted walk cycles (IK), level hips or any body | `tools/gait.py` |
 | tier skins: UV layout + pixel painter | `tools/paint_tiers.py` |
+| the Sun Man's material tiles | `tools/paint_sun_man.py` |
 | material colours, the grade | `tools/palette.py` |
 | model export | `tools/export_tiers.py` (item models), `tools/export_bb.py` (`.bbmodel` + rig JSON) |
 | every contract, checked | `tools/check.py` |
@@ -120,7 +150,8 @@ Minecraft Java **26.3**. Relevant relaxations, all used here:
 
 Rebuild, in order:
 
-    python3 tools/paint_tiers.py      # skins into the free quadrant (face + tiles hash-guarded)
+    python3 tools/paint_tiers.py      # tier skins into the free quadrant (face hash-guarded)
+    python3 tools/paint_sun_man.py    # the Sun Man's own tiles (face + every other tile guarded)
     python3 tools/export_tiers.py     # per-bone item models for the datapack
     python3 tools/export_bb.py        # .bbmodel projects (+ clips) and rig JSON
     python3 tools/check.py            # every contract

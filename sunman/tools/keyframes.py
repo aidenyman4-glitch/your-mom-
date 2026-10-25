@@ -132,8 +132,8 @@ class Clip:
 
     def sample(self, t):
         """Pose at time `t` seconds: {bone: {"rotation": .., "position": .., "scale": ..}}."""
-        if self.loop == "loop" and self.length > 0:
-            t = t % self.length
+        if self.loop == "loop" and self.length > 0 and t > self.length:
+            t = t % self.length          # exactly `length` stays the last key, as in Blockbench
         else:
             t = min(max(t, 0.0), self.length)
         pose = {}

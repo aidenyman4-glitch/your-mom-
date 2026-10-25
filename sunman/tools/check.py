@@ -3,13 +3,15 @@ the first broken one.
 
     python3 tools/check.py
 
-  * the starburst face at atlas (256,256) and the Sun Man's own tiles are pixel-identical
+  * the starburst face at atlas (256,256) is pixel-identical, and so is every tile in the top
+    half that is not one of the Sun Man's own thirteen (the villager prop's, the unused ones)
   * the Sun Man's 197 cubes, 29 pivots, per-cube rotations and UVs are exactly the author's
   * bone budgets: Sun Man 29, Locust 11, Dark Walker 21 (a bone is an entity in the datapack)
   * every .bbmodel is a Bedrock Entity project carrying all of its creature's clips
   * every clip keys only bones that exist, inside its own length, and every looping track
     ends on the value it starts on (Blockbench wraps Catmull-Rom on loops, so that is what
-    makes a loop seamless)
+    makes a loop seamless) — or, for a linear spin, a whole number of turns from it
+  * no clip rotates the Sun Man's head against a stretched neck (it would shear the face)
   * the walk cycles keep their feet planted: through stance the sole stays on the ground
   * every posed bone ships an item model + item definition, inside the [-16, 32] box, and
     nothing ships for a bone that no longer exists
@@ -26,13 +28,16 @@ import clips_dark_walker                  # noqa: E402
 import clips_locust                       # noqa: E402
 import clips_sun_man                      # noqa: E402
 import gait                               # noqa: E402
+import paint_sun_man                      # noqa: E402
 import rig                                # noqa: E402
 import tiers                              # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 PACK = ROOT / "resourcepack" / "assets" / "sunman"
 FACE_HASH = "394858d53b822f85e30a8657ef4310e15fb496916295d27e9463b4f2bad2906c"
-TILES_HASH = "c16093368cdfbed6a26a3c8e425da2c81abc77953109ed39ddf88b80ca30b995"
+# sha256 over every top-half tile that is NOT one of the Sun Man's thirteen, as the handoff
+# shipped them (see untouched_tiles_hash)
+UNTOUCHED_TILES = "6965a50e70d3444c67de00eb12edad93cec2bb11bcdd301d9a204ce0a02ebdac"
 # sha256 over the Sun Man's elements as the handoff shipped them (see sun_man_geometry_hash)
 SUN_MAN_GEOMETRY = "0141eb210bcc6c7aa391847c39f2f6117a41f62de914fd3fa8477959a94312b0"
 BUDGET = {"sun_man": 29, "locust": 11, "dark_walker": 21}
@@ -57,6 +62,15 @@ def sun_man_geometry_hash(doc):
     return hashlib.sha256(blob.encode()).hexdigest()
 
 
+def untouched_tiles_hash(im):
+    h = hashlib.sha256()
+    for ty in range(0, 256, 64):
+        for tx in range(0, 512, 64):
+            if (tx, ty) not in paint_sun_man.TILES:
+                h.update(im.crop((tx, ty, tx + 64, ty + 64)).tobytes())
+    return h.hexdigest()
+
+
 def groups(doc):
     out = {}
 
@@ -75,8 +89,8 @@ def main():
     im = Image.open(PACK / "textures" / "entity" / "sun_man.png").convert("RGBA")
     check(hashlib.sha256(im.crop((256, 256, 512, 512)).tobytes()).hexdigest() == FACE_HASH,
           "starburst face quadrant is pixel-identical")
-    check(hashlib.sha256(im.crop((0, 0, 512, 256)).tobytes()).hexdigest() == TILES_HASH,
-          "Sun Man material tiles are pixel-identical")
+    check(untouched_tiles_hash(im) == UNTOUCHED_TILES,
+          "every tile that is not the Sun Man's own is pixel-identical (villager prop, unused)")
 
     print("blockbench projects")
     for name, budget in BUDGET.items():
@@ -108,10 +122,16 @@ def main():
             seam = True
             if clip.loop == "loop":
                 for (bone, ch), track in clip.tracks.items():
+                    gap = [abs(a - b) for a, b in zip(track[0].value, track[-1].value)]
+                    spin = (ch == "rotation" and all(k.interp == "linear" for k in track)
+                            and all(abs(g / 360.0 - round(g / 360.0)) < 1e-6 for g in gap))
                     if (track[0].time > 1e-6 or abs(track[-1].time - clip.length) > 1e-6
-                            or max(abs(a - b) for a, b in zip(track[0].value, track[-1].value)) > 1e-6):
+                            or (max(gap) > 1e-6 and not spin)):
                         seam = False
                         print(f"        seam: {bone}.{ch}")
+            if ("neck", "scale") in clip.tracks:
+                check(("head", "rotation") not in clip.tracks,
+                      f"{clip.name}: the head never turns against the stretched neck")
             check(inside and seam, f"{clip.name}: keys inside 0..{clip.length}s"
                   + (", seamless loop" if clip.loop == "loop" else ""))
 
@@ -123,9 +143,18 @@ def main():
                            (clips_sun_man, "animation.sun_man.walk", 0.25),
                            (clips_sun_man, "animation.sun_man.sprint", 0.4)):
         ppb = getattr(mod, "PPB", 16.0)
-        rep = gait.check(mod.CLIPS[name], mod.C, mod.LEGS, ppb=ppb, fps=40)
+        clip = mod.CLIPS[name]
+        if hasattr(mod, "FEET"):                         # IK-keyed feet (gait.Foot)
+            feet = list(mod.FEET)
+            if name.endswith("scuttle"):
+                feet += mod._scuttle_feet(clip.sample(0.0))
+            rep = gait.check_feet(clip, mod.C, feet, ppb=ppb, fps=40)
+            legs = [type("L", (), {"foot": None})() for _ in feet]
+        else:
+            rep = gait.check(clip, mod.C, mod.LEGS, ppb=ppb, fps=40)
+            legs = mod.LEGS
         worst = 0.0
-        for leg, pts in zip(mod.LEGS, rep):
+        for leg, pts in zip(legs, rep):
             # a planted foot is the one travelling BACKWARD under the body; measure how far it
             # leaves the ground while it does (trimming the contact frames at each end)
             n = len(pts)

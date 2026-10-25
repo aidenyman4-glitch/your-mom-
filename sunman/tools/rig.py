@@ -202,6 +202,60 @@ def solve(pose):
     return out
 
 
+# ---------------------------------------------------------------- matrices
+# Bone SCALE keys need more than a quaternion: three.js (and so Blockbench and GeckoLib)
+# scales a bone in its own frame and every child inherits it. `solve_m` carries a full 3x3
+# matrix per bone for that; `solve` keeps returning rotations for the callers that only aim.
+
+def mat_from_quat(q):
+    w, x, y, z = q
+    return ((1 - 2 * (y * y + z * z), 2 * (x * y - w * z), 2 * (x * z + w * y)),
+            (2 * (x * y + w * z), 1 - 2 * (x * x + z * z), 2 * (y * z - w * x)),
+            (2 * (x * z - w * y), 2 * (y * z + w * x), 1 - 2 * (x * x + y * y)))
+
+
+def mat_mul(a, b):
+    return tuple(tuple(sum(a[i][k] * b[k][j] for k in range(3)) for j in range(3)) for i in range(3))
+
+
+def mat_vec(m, v):
+    return tuple(m[i][0] * v[0] + m[i][1] * v[1] + m[i][2] * v[2] for i in range(3))
+
+
+def mat_scale(m, s):
+    return tuple(tuple(m[i][j] * s[j] for j in range(3)) for i in range(3))
+
+
+def channels(entry):
+    """(rotation, position, scale) from a pose entry: a rotation triple or a channel dict."""
+    if isinstance(entry, dict):
+        return (entry.get("rotation", (0.0, 0.0, 0.0)), entry.get("position", (0.0, 0.0, 0.0)),
+                entry.get("scale", (1.0, 1.0, 1.0)))
+    return (entry or (0.0, 0.0, 0.0)), (0.0, 0.0, 0.0), (1.0, 1.0, 1.0)
+
+
+def fk_matrices(order, parent_of, joints, pose, rest=None):
+    """World (position, 3x3 matrix) per bone: rest + keyed rotation, position and scale."""
+    out = {}
+    for bone in order:
+        rot, move, scl = channels(pose.get(bone))
+        r0 = (rest or {}).get(bone, (0.0, 0.0, 0.0))
+        local = mat_scale(mat_from_quat(quat_norm(quat_euler(r0[0] + rot[0], r0[1] + rot[1],
+                                                              r0[2] + rot[2]))), scl)
+        parent = parent_of.get(bone)
+        if parent is None or parent not in out:
+            out[bone] = (tuple(joints[bone][i] + move[i] for i in range(3)), local)
+            continue
+        ppos, pm = out[parent]
+        off = tuple(joints[bone][i] - joints[parent][i] + move[i] for i in range(3))
+        out[bone] = (tuple(ppos[i] + mat_vec(pm, off)[i] for i in range(3)), mat_mul(pm, local))
+    return out
+
+
+def solve_m(pose):
+    return fk_matrices(BONE_ORDER, PARENT, J, pose)
+
+
 def cube_corners(cube):
     fx, fy, fz = cube["from"]
     w, h, d = cube["size"]
@@ -217,13 +271,13 @@ def cube_corners(cube):
 
 
 def extents(pose):
-    sol = solve(pose)
+    sol = solve_m(pose)
     lo, hi = 1e9, -1e9
     for bone, cubes in GEOMETRY.items():
-        pos, q = sol[bone]
+        pos, m = sol[bone]
         for c in cubes:
             for p in cube_corners(c):
-                y = pos[1] + quat_rotate(q, p)[1]
+                y = pos[1] + mat_vec(m, p)[1]
                 lo, hi = min(lo, y), max(hi, y)
     return lo, hi
 
@@ -231,6 +285,11 @@ def extents(pose):
 def solve_grounded(pose):
     dy = -extents(pose)[0]
     return {b: ((p[0], p[1] + dy, p[2]), q) for b, (p, q) in solve(pose).items()}
+
+
+def solve_grounded_m(pose):
+    dy = -extents(pose)[0]
+    return {b: ((p[0], p[1] + dy, p[2]), m) for b, (p, m) in solve_m(pose).items()}
 
 
 def model_height(pose=None):

@@ -70,7 +70,7 @@ def sunman_subject():
     import rig
     def colour(cube, face):
         return cube["faces"].get(face)
-    return Subject(rig.solve_grounded, rig.GEOMETRY, rig.BONE_ORDER, rig.cube_corners, colour)
+    return Subject(rig.solve_grounded_m, rig.GEOMETRY, rig.BONE_ORDER, rig.cube_corners, colour)
 
 
 def creature_subject(creature):
@@ -89,7 +89,7 @@ def creature_subject(creature):
 
     def colour(cube, face):
         return table[id(cube)][face]
-    return Subject(creature.solve_grounded, creature.GEOMETRY, creature.BONE_ORDER,
+    return Subject(creature.solve_grounded_m, creature.GEOMETRY, creature.BONE_ORDER,
                    creature._cube_corners, colour)
 
 
@@ -101,10 +101,10 @@ def collect(subject, pose, offset=(0.0, 0.0, 0.0)):
         cubes = subject.geometry.get(bone)
         if not cubes:
             continue
-        pos, q = sol[bone]
+        pos, m = sol[bone]
         import rig
         for cube in cubes:
-            pts = [tuple(pos[i] + rig.quat_rotate(q, p)[i] + offset[i] for i in range(3))
+            pts = [tuple(pos[i] + rig.mat_vec(m, p)[i] + offset[i] for i in range(3))
                    for p in subject.corners(cube)]
             for idx, nrm, name in FACES:
                 col = subject.colour(cube, name)
@@ -113,7 +113,7 @@ def collect(subject, pose, offset=(0.0, 0.0, 0.0)):
                         continue
                     out.append(([pts[i] for i in idx], None, 0))
                     continue
-                n = rig.quat_rotate(q, nrm)
+                n = _norm(rig.mat_vec(m, nrm))
                 lam = max(0.0, sum(n[i] * LIGHT[i] for i in range(3)))
                 shade = 0.38 + 0.62 * lam
                 emit = cube.get("emit", 0)

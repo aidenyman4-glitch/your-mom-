@@ -446,44 +446,50 @@
     "animation.sun_man.idle": {
       "loop": "loop",
       "length": 8.0,
-      "note": "stillness, broken twice by a head snap",
-      "keys": 153
+      "note": "two head snaps; the rays tick round like a clock",
+      "keys": 167
     },
     "animation.sun_man.walk": {
       "loop": "loop",
       "length": 9.6,
       "note": "the legs walk; the body refuses to agree",
-      "keys": 351
+      "keys": 364
     },
     "animation.sun_man.sprint": {
       "loop": "loop",
       "length": 2.6,
       "note": "the head holds still while the body runs",
-      "keys": 295
+      "keys": 297
     },
     "animation.sun_man.lurch": {
       "loop": "hold",
       "length": 3.4,
       "note": "three beats of nothing, then it folds over you",
-      "keys": 121
+      "keys": 126
     },
     "animation.sun_man.stare_down": {
       "loop": "hold",
       "length": 4.0,
-      "note": "the face comes down to you in eight jerks",
-      "keys": 84
+      "note": "eight jerks; with each one the neck is longer",
+      "keys": 104
     },
     "animation.sun_man.harvest_rise": {
       "loop": "hold",
       "length": 5.0,
       "note": "day thirty: the arms open in tiers",
-      "keys": 72
+      "keys": 80
     },
     "animation.sun_man.grab": {
       "loop": "once",
       "length": 3.8,
       "note": "it folds down and the lower arms close on you",
       "keys": 99
+    },
+    "animation.sun_man.peer": {
+      "loop": "hold",
+      "length": 6.0,
+      "note": "the neck goes out over you and keeps going",
+      "keys": 59
     }
   }
 }
