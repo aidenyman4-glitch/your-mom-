@@ -6,7 +6,7 @@ Open any `.bbmodel` in [`blockbench/`](blockbench) and press play in the Animate
 | | bones | cubes | clips | height |
 |---|---|---|---|---|
 | **Sun Man** | 29 | 197 | idle · walk · sprint · lurch · stare_down · harvest_rise · grab · peer | 72.9 blocks |
-| **Locust** | 11 | 77 | frozen · head_snap · twitch · stalk · scuttle · rear · climb · attack · peek · death | 2.7 blocks |
+| **Locust** | 11 | 113 | frozen · head_snap · twitch · stalk · scuttle · rear · climb · attack · peek · death | 3.4 blocks |
 | **Dark Walker** | 21 | 144 | idle · walk · chase · notice · loom · attack · death | 7.3 blocks |
 
 ![Dark Walker](docs/dark_walker_turnaround.png)

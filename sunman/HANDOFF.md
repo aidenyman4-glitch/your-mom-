@@ -7,7 +7,7 @@ Animate tab as real keyframes.
 | file | bones | cubes | clips | height | authored at |
 |---|---|---|---|---|---|
 | `blockbench/sun_man.bbmodel` | 29 | 197 | 8 | 72.89 blocks | 16/12 px per block (display scale 12) |
-| `blockbench/locust.bbmodel` | 11 | 77 | 10 | 2.74 blocks | 16 px per block, true scale |
+| `blockbench/locust.bbmodel` | 11 | 113 | 10 | 3.42 blocks | 16 px per block, true scale |
 | `blockbench/dark_walker.bbmodel` | 21 | 144 | 7 | 7.28 blocks | 16 px per block, true scale |
 
 `rig/<name>.rig.json` is the same skeleton as data: bone, parent, pivot **in blocks**, rest
@@ -30,28 +30,50 @@ and have been repainted (see below); every other tile is hashed against the hand
 
 The Locust and Dark Walker are open to reshaping, and have been.
 
+## Third pass: the Locust matched to its references
+
+The five Locust references now live in `docs/references/locust/`, and the model was reshaped
+to them:
+
+- **Proportions from the ink sheet:** 3.4 blocks tall, legs over half of it, the torso the
+  shortest part, shoulders three quarters of the way up. 113 cubes, still 11 bones.
+- **Blades instead of hands:** each forearm runs on into a long black blade, four tapering
+  segments that bow outward and reach the floor. At rest the arms are splayed, so blades and
+  legs make one tall narrow tent, as in the silhouette reference. The forearm item models are
+  written at `display_scale` 1.5 so the 28 px from elbow to blade tip fits the item-model box.
+- **The head from the room photos:** a pale long-nosed mask (the nose is its own cube) with
+  hollow eyes and a slack open mouth, in a full mass of black hair with wire-stiff curls and long
+  strands falling to the chest, on a black neck.
+- **The body from the sheet and the doll:** doll's ball joints with a bored hole at the
+  shoulders, a sagging pale chest over a black ribbed waist, string binding under the chest,
+  torn black shorts whose hem hangs over the thighs, and shins that taper to stakes.
+- **Clips re-fitted, not rewritten:** the crouches in `twitch`, `rear` and `attack` re-solve the
+  pelvis height so the lower foot stays on the floor (`_plant`). The `death` collapse grounds the
+  body every 0.05 s so the blades never pass through the floor. The `scuttle` plants the blade
+  points as its front feet.
+
 ## Second pass: the Locust redone, more detail, creepier
 
 - **Locust rebuilt** to the second set of references — a puppet: a small porcelain mask of a face
   in long black hair, a neck far too long (riding the head bone, so the whole stalk cranes and
   snaps round), a body all ribs with a caved pale chest stitched shut, black ragged hips, pale
   limb segments of old stained wood bound at every joint with black string, four needles to a
-  hand, and legs that taper to points. Still 11 bones.
+  hand, and legs that taper to points. Still 11 bones. (Reshaped again in the third pass.)
 - **Textures at 32 texels/block** for both tier creatures (two per model pixel), right-side limbs
-  mirroring their left twin's texels, MaxRects-packed into 77% of the free quadrant, painted in
+  mirroring their left twin's texels, MaxRects-packed into 81% of the free quadrant, painted in
   world space so detail runs across face seams, with the two faces drawn by hand. The Dark
   Walker's eyes became narrow lit slits; its mouth is sewn shut.
 - **The Sun Man's surface repainted** — his thirteen material tiles, as pixel art (robe folds and
   old blood, wrappings, the ridged neck, cracked bone, stained fingers, crazed porcelain). His UVs,
   geometry and face are untouched.
 - **Creepier clips.** Locust: ten clips for the new rig — a marionette walk on reverse-bending
-  knees, a four-legged scuttle on the needles of its hands, the head snap with a neck that then
+  knees, a four-legged scuttle on its hands, the head snap with a neck that then
   cracks over sideways, a peek round a door frame, a strings-cut death. Sun Man: a ray halo that
   ticks, spins and flares; a neck that STRETCHES (scale keys) in `stare_down`, `harvest_rise` and
   the new `peer`; harder head snaps, spasming fingers, a lolling head on the walk.
 - **Scale keys** are new. The solver now carries full matrices (`fk_matrices` / `solve_m`) and a
   real Blockbench agrees with it on every bone's world position to 0.0001 px.
-- **IK feet under any body** (`gait.key_feet`): the Locust's feet and hands plant even bent double.
+- **IK feet under any body** (`gait.key_feet`): the Locust's feet and hands plant even hunched over.
   In a limp the longer stride stays down longer, so every planted foot moves at the body's speed.
 
 ## First pass

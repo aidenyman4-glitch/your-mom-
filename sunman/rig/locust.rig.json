@@ -1,16 +1,16 @@
 {
   "name": "locust",
-  "height_blocks": 2.742,
+  "height_blocks": 3.425,
   "bbmodel_px_per_block": 16.0,
-  "item_px_per_block": 16.0,
-  "display_scale": 1.0,
+  "item_px_per_block": 10.666666666666666,
+  "display_scale": 1.5,
   "bones": [
     {
       "name": "pelvis",
       "parent": null,
       "pivot_blocks": [
         0.0,
-        1.2812,
+        1.7188,
         0.0
       ],
       "rest_rotation": [
@@ -18,7 +18,7 @@
         0.0,
         0.0
       ],
-      "cubes": 3,
+      "cubes": 5,
       "materials": [
         "lc_rag"
       ]
@@ -28,15 +28,15 @@
       "parent": "pelvis",
       "pivot_blocks": [
         0.0,
-        1.3438,
+        1.7812,
         0.0
       ],
       "rest_rotation": [
-        7.0,
+        3.0,
         0.0,
         0.0
       ],
-      "cubes": 11,
+      "cubes": 12,
       "materials": [
         "lc_bone",
         "lc_flesh",
@@ -49,15 +49,15 @@
       "parent": "torso",
       "pivot_blocks": [
         0.0,
-        1.9062,
+        2.4688,
         0.0
       ],
       "rest_rotation": [
-        -3.0,
-        6.0,
-        13.0
+        -2.0,
+        4.0,
+        8.0
       ],
-      "cubes": 17,
+      "cubes": 54,
       "materials": [
         "lc_hair",
         "lc_mask",
@@ -69,15 +69,15 @@
       "parent": "torso",
       "pivot_blocks": [
         0.25,
-        1.875,
+        2.4375,
         0.0
       ],
       "rest_rotation": [
-        -3.0,
         0.0,
-        5.0
+        0.0,
+        8.0
       ],
-      "cubes": 2,
+      "cubes": 4,
       "materials": [
         "lc_bone",
         "lc_wrap"
@@ -88,19 +88,18 @@
       "parent": "arm_l",
       "pivot_blocks": [
         0.25,
-        1.4375,
+        1.875,
         0.0
       ],
       "rest_rotation": [
-        -7.0,
+        -3.0,
         0.0,
-        -2.0
+        2.0
       ],
-      "cubes": 14,
+      "cubes": 9,
       "materials": [
         "lc_bone",
         "lc_needle",
-        "lc_skin",
         "lc_wrap"
       ]
     },
@@ -108,38 +107,37 @@
       "name": "leg_l",
       "parent": "pelvis",
       "pivot_blocks": [
-        0.0938,
-        1.25,
+        0.1,
+        1.6875,
         0.0
       ],
       "rest_rotation": [
-        -5.0,
+        -2.0,
         0.0,
-        2.0
+        1.5
       ],
       "cubes": 2,
       "materials": [
         "lc_bone",
-        "lc_wrap"
+        "lc_rag"
       ]
     },
     {
       "name": "shin_l",
       "parent": "leg_l",
       "pivot_blocks": [
-        0.0938,
-        0.625,
+        0.1,
+        0.875,
         0.0
       ],
       "rest_rotation": [
-        8.0,
+        3.0,
         0.0,
         -1.0
       ],
-      "cubes": 5,
+      "cubes": 6,
       "materials": [
         "lc_bone",
-        "lc_needle",
         "lc_wrap"
       ]
     },
@@ -148,15 +146,15 @@
       "parent": "torso",
       "pivot_blocks": [
         -0.25,
-        1.875,
+        2.4375,
         0.0
       ],
       "rest_rotation": [
-        -3.0,
         0.0,
-        -5.0
+        0.0,
+        -8.0
       ],
-      "cubes": 2,
+      "cubes": 4,
       "materials": [
         "lc_bone",
         "lc_wrap"
@@ -167,19 +165,18 @@
       "parent": "arm_r",
       "pivot_blocks": [
         -0.25,
-        1.4375,
+        1.875,
         0.0
       ],
       "rest_rotation": [
-        -7.0,
+        -3.0,
         0.0,
-        2.0
+        -2.0
       ],
-      "cubes": 14,
+      "cubes": 9,
       "materials": [
         "lc_bone",
         "lc_needle",
-        "lc_skin",
         "lc_wrap"
       ]
     },
@@ -187,38 +184,37 @@
       "name": "leg_r",
       "parent": "pelvis",
       "pivot_blocks": [
-        -0.0938,
-        1.25,
+        -0.1,
+        1.6875,
         0.0
       ],
       "rest_rotation": [
-        -5.0,
+        -2.0,
         0.0,
-        -2.0
+        -1.5
       ],
       "cubes": 2,
       "materials": [
         "lc_bone",
-        "lc_wrap"
+        "lc_rag"
       ]
     },
     {
       "name": "shin_r",
       "parent": "leg_r",
       "pivot_blocks": [
-        -0.0938,
-        0.625,
+        -0.1,
+        0.875,
         0.0
       ],
       "rest_rotation": [
-        8.0,
+        3.0,
         0.0,
         1.0
       ],
-      "cubes": 5,
+      "cubes": 6,
       "materials": [
         "lc_bone",
-        "lc_needle",
         "lc_wrap"
       ]
     }
@@ -240,7 +236,7 @@
       "loop": "loop",
       "length": 3.2,
       "note": "a slow weave, broken by spasms on no rhythm",
-      "keys": 51
+      "keys": 52
     },
     "animation.locust.stalk": {
       "loop": "loop",
@@ -251,14 +247,14 @@
     "animation.locust.scuttle": {
       "loop": "loop",
       "length": 0.9,
-      "note": "bent double, running on the needles of its hands",
+      "note": "hunched over, stilting on the blades of its arms",
       "keys": 156
     },
     "animation.locust.rear": {
       "loop": "hold",
       "length": 1.9,
       "note": "it sinks, and then it is already up",
-      "keys": 62
+      "keys": 66
     },
     "animation.locust.climb": {
       "loop": "loop",
@@ -269,8 +265,8 @@
     "animation.locust.attack": {
       "loop": "once",
       "length": 1.1,
-      "note": "drop, lunge, needles in, twist, tear out",
-      "keys": 59
+      "note": "drop, lunge, blades in, twist, tear out",
+      "keys": 63
     },
     "animation.locust.peek": {
       "loop": "hold",
@@ -282,7 +278,7 @@
       "loop": "hold",
       "length": 2.2,
       "note": "the strings are cut; it drops into a heap",
-      "keys": 72
+      "keys": 109
     }
   }
 }

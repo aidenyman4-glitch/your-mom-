@@ -271,20 +271,21 @@ def _shade_side(f, tx, ty, base=2.0, round_=True, ao=True):
 
 # ====================================================================== the hand-drawn faces
 
-# The Locust's mask, 7 x 11 texels. ' highlight  , light  . porcelain  - shade  = dark shade
-# # void (the eye holes run down into black tears)  r the inside of the mouth  x a crack
+# The Locust's mask, 6 x 11 texels: long, pale, a heavy brow over two black holes that run
+# down into tears, the nose its own cube in the middle, and a mouth hanging open.
+# ' highlight  , light  . porcelain  - shade  = dark shade  # void  r inside the mouth  x tear
 LOCUST_MASK = [
-    "=-----=",
-    "-,''',-",
-    ".,,',,.",
-    "-=.,.=-",
-    "=##.##-",
-    "=##,#x=",
-    "-=#.#x-",
-    "-.,'.x-",
-    "=.-#-.=",
-    "-.#r#.-",
-    "==-#-==",
+    "-,'',-",
+    ",'''',",
+    ".,'',.",
+    "=-,,-=",
+    "-#,,#-",
+    "=#..#=",
+    "-x..x-",
+    "=-..-=",
+    "-=##=-",
+    "-.r#.-",
+    "=-..-=",
 ]
 # The Dark Walker's face, 10 x 14 texels. No mouth in any reference — so it has none, only a
 # seam where one was sewn shut. Sockets sunk deep round the lit eyes, hollow cheeks.
@@ -335,6 +336,11 @@ def paint_texel(f, tx, ty, R):
         return _from_map(WALKER_FACE, f, tx, ty, R)
     if st == "eye":
         return R[0] if (tx + ty) % 3 else R[1]
+    if st == "nose":
+        # lit down the ridge, shaded under, a dark nostril at the bottom of the front
+        if f.d == "south":
+            return R[4] if ty == f.H - 1 else R[0 if ty < f.H - 2 else 1]
+        return R[{"up": 0, "down": 5}.get(f.d, 3)]
 
     t = _shade_side(f, tx, ty)
     t += (n - 0.5) * 1.3 + (g - 0.5) * 0.15
@@ -412,6 +418,20 @@ def paint_texel(f, tx, ty, R):
             return R[5]
         if f.side and ty >= f.H - 2 and (tx * 7 + ty) % 3 == 0:
             t = 0.8
+    elif st == "blade":
+        # black and oiled: one cold edge down the front, nicks along it, dull flats
+        t = 3.6 + (streak - 0.5) * 0.8
+        if f.side and tx == 0:
+            t = 1.2 if _rnd(tx, ty, f.index, 61) > 0.12 else 3.4
+        if f.d == "up":
+            t = 2.0
+    elif st == "ball":
+        # a doll's ball joint: pale, a dark hole bored through the middle of each side
+        t += (streak - 0.5) * 0.5
+        if f.side and abs(tx + 0.5 - f.W / 2) < 1 and abs(ty + 0.5 - f.H / 2) < 1:
+            return R[5]
+        if f.side and (ty == 0 or ty == f.H - 1 or tx == 0 or tx == f.W - 1):
+            t += 0.8                                         # rounded off at the edges
     elif st in ("needle", "point"):
         t = 3.0 if tx else 1.0                               # one cold highlight down the edge
         if st == "point" or (f.side and ty >= f.H - 2 and f.cube["mat"] == "lc_needle" and

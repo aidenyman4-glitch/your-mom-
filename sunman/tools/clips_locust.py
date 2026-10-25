@@ -11,7 +11,7 @@ easing turns those into an animal deciding to move.
 
 Its legs bend the WRONG way when it walks: a locust's legs, not a man's. The legs and, when
 it scuttles, the arms are keyed by IK against whatever the body is doing (`gait.key_feet`), so
-the needle points of its feet plant and stay planted.
+the points of its feet plant and stay planted.
 
 Rig reminders (right-handed, +X = its left, +Z = forward). The head bone IS the neck: it
 pivots on the shoulders, so head +X droops the whole stalk forward, +Y twists the face round
@@ -20,7 +20,7 @@ on it, +Z leans it over to its right.
 import math
 
 import tiers
-from gait import Foot, key_feet
+from gait import Foot, end_point, key_feet
 from keyframes import LINEAR, STEP, Clip, periodic, px
 
 C = tiers.LOCUST
@@ -61,7 +61,7 @@ FEET = LEGS
 def frozen():
     """It does not move. It does not breathe. Over seven seconds the head lists over by a few
     degrees, too slowly to see — and then, at the end of the loop, it is upright again with
-    nothing in between. A finger moves once. A shoulder, once."""
+    nothing in between. A blade moves once. A shoulder, once."""
     c = Clip(f"{N}.frozen", 7.0, "loop", "it does not move. then it is upright again")
     c.keys("head", "rotation", [(0.0, (0, 0, 0), LINEAR), (6.9, (1.5, 3, 7), STEP),
                                 (7.0, (0, 0, 0), STEP)])
@@ -100,7 +100,7 @@ def head_snap():
 
 def twitch():
     """The idle inside 22 blocks. A slow weave — and through it, spasms: the neck whips, a
-    shoulder jumps out of its socket and back, the needles splay, a knee gives."""
+    shoulder jumps out of its socket and back, the blades splay, a knee gives."""
     c = Clip(f"{N}.twitch", 3.2, "loop", "a slow weave, broken by spasms on no rhythm")
     periodic(c, "torso", "rotation", lambda p: (1.0 * sin(p), 2.5 * sin(p + 0.2), 1.5 * sin(2 * p)))
     c.keys("head", "rotation", [
@@ -119,6 +119,7 @@ def twitch():
                                   (2.6, (4, 0, 0)), (3.2, (0, 0, 0))])
     c.keys("pelvis", "position", [(0.0, (0, 0, 0)), (2.4, (0, 0, 0), STEP), (2.45, (0, px(-0.7), 0), STEP),
                                   (2.6, (0, px(-0.2), 0)), (3.2, (0, 0, 0))])
+    _plant(c)
     return c
 
 
@@ -154,24 +155,30 @@ def _scuttle_feet(body_pose):
     for side, sg, phase in (("l", 1, 0.5), ("r", -1, 0.0)):
         sh = sol[f"arm_{side}"][0]
         f = Foot(C, f"arm_{side}", f"fore_{side}", phase, bend=-1.0,
-                 base={f"arm_{side}": (0, sg * 12), f"fore_{side}": (0, 0)})
-        f.home = (sh[0] + sg * px(1.5), 0.0, sh[2] + px(3.0))
+                 base={f"arm_{side}": (0, -sg * 4), f"fore_{side}": (0, 0)})
+        # plant each blade where it can reach with the limb swung only fore and aft: as far
+        # out as the splayed arm already puts it, and a little ahead of the shoulder
+        reach = dict(body_pose)
+        reach[f"arm_{side}"] = {"rotation": (-40.0, 0.0, -sg * 4)}
+        out_x = end_point(C, reach, f"fore_{side}", f.end)[0]
+        f.home = (out_x, 0.0, sh[2] + px(3.0))
         feet.append(f)
     return feet
 
 
 def scuttle():
-    """At a run it goes down: bent double, the neck straight up out of its shoulders so the
-    mask stays level and aimed, running on the needles of its hands and the points of its
+    """At a run it goes down: hunched over, the neck straight up out of its shoulders so the
+    mask stays level and aimed, stilting along on the blades of its arms and the points of its
     feet — diagonal pairs, the arms longer than the legs, fast."""
-    c = Clip(f"{N}.scuttle", 0.9, "loop", "bent double, running on the needles of its hands")
+    c = Clip(f"{N}.scuttle", 0.9, "loop", "hunched over, stilting on the blades of its arms")
     periodic(c, "pelvis", "position", lambda p: (0, px(-5.0 - 0.9 * cos(4 * p - 0.1)), 0), n=12)
     periodic(c, "pelvis", "rotation", lambda p: (0, 6 * sin(p), 3 * sin(p - 0.1)), n=12)
     periodic(c, "torso", "rotation", lambda p: (60 + 3 * cos(2 * p), -5 * sin(p), -2 * sin(p)), n=12)
     periodic(c, "head", "rotation", lambda p: (-62 - 3 * cos(2 * p - 0.2), 5 * sin(p), 4 * sin(p - 0.25)), n=12)
     key_feet(c, C, LEGS, stride=14.0, duty=0.45, lift=5.0, n=12)
     # the hands reach further than the feet, so they stay down longer: same ground speed
-    key_feet(c, C, _scuttle_feet(c.sample(0.0)), stride=16.0, duty=0.45 * 16.0 / 14.0, lift=4.0, n=12)
+    key_feet(c, C, _scuttle_feet(c.sample(0.0)), stride=16.0, duty=0.45 * 16.0 / 14.0, lift=4.0, n=12,
+             ground=px(0.6))   # the point, not its corner, on the floor
     return c
 
 
@@ -179,7 +186,7 @@ def scuttle():
 
 def rear():
     """The wake-up. It sinks — and then it is already up, arched back, the arms flung high and
-    the needles splayed, the neck thrown back and over — and it shudders there, and holds."""
+    the blades splayed, the neck thrown back and over — and it shudders there, and holds."""
     c = Clip(f"{N}.rear", 1.9, "hold", "it sinks, and then it is already up")
     c.keys("pelvis", "position", [(0.0, (0, 0, 0)), (0.45, (0, px(-2), 0)), (0.62, (0, px(1.4), 0)),
                                   (0.8, (0, px(0.8), 0)), (1.9, (0, px(1), 0))])
@@ -202,6 +209,7 @@ def rear():
                                            (0.62, (12, 0, 0)), (1.9, (10, 0, 0))])
         c.keys(f"shin_{side}", "rotation", [(0.0, (0, 0, 0)), (0.45, (24, 0, 0)),
                                             (0.62, (-8, 0, 0)), (1.9, (-6, 0, 0))])
+    _plant(c)
     return c
 
 
@@ -233,9 +241,9 @@ def climb():
 # ====================================================================== attack
 
 def attack():
-    """It drops, and lunges, and both hands go in needles-first — then it twists, and tears
+    """It drops, and lunges, and both blades go in point-first — then it twists, and tears
     them out, and is crouched again before you have finished seeing it."""
-    c = Clip(f"{N}.attack", 1.1, "once", "drop, lunge, needles in, twist, tear out")
+    c = Clip(f"{N}.attack", 1.1, "once", "drop, lunge, blades in, twist, tear out")
     c.keys("pelvis", "position", [(0.0, (0, 0, 0)), (0.22, (0, px(-2.5), px(-1))),
                                   (0.36, (0, px(-1.2), px(6))), (0.6, (0, px(-1.2), px(5))),
                                   (1.1, (0, 0, 0))])
@@ -253,6 +261,7 @@ def attack():
                                            (0.36, (sg * -14, 0, 0)), (1.1, (0, 0, 0))])
         c.keys(f"shin_{side}", "rotation", [(0.0, (0, 0, 0)), (0.22, (28, 0, 0)),
                                             (0.36, (12, 0, 0)), (1.1, (0, 0, 0))])
+    _plant(c)
     return c
 
 
@@ -310,15 +319,56 @@ def death():
 
 def _collapse(c, roll_keys):
     """Pelvis roll, with the position solved so the lowest point of the body is on the ground
-    at every key — the drop comes out of the rig, not out of a guess."""
+    at every key and every twentieth of a second between — the drop comes out of the rig, not
+    out of a guess, and the blades never go through the floor on the way down."""
     for t, roll in roll_keys:
         c.key("pelvis", "rotation", t, (0, 0, -roll))
     base_lo = C.extents({})[0]
-    for t, _roll in roll_keys:
+    times = sorted({t for t, _ in roll_keys} |
+                   {round(k * 0.05, 4) for k in range(int(c.length * 20) + 1)})
+    for t in times:
         pose = c.sample(t)
         pose.setdefault("pelvis", {})["position"] = (0.0, 0.0, 0.0)
         lo = C.extents(pose)[0]
         c.key("pelvis", "position", t, (0.0, base_lo - lo, 0.0))
+
+
+def _plant(c):
+    """Re-solve the pelvis height at every key that moves the legs, so the lower foot stays
+    on the floor however the knees are keyed — a crouch sinks the body, never the feet."""
+    legs = ("leg_l", "leg_r", "shin_l", "shin_r")
+    pel = {k.time: k for k in c.tracks.get(("pelvis", "position"), [])}
+    times = set(pel)
+    interp = {}
+    for (bone, ch), track in c.tracks.items():
+        if bone in legs or (bone == "pelvis" and ch == "rotation"):
+            for k in track:
+                times.add(k.time)
+                if k.interp == STEP:
+                    interp[k.time] = STEP
+    ts = sorted(times)                     # and halfway along every eased span
+    times |= {round((t0 + t1) / 2, 4) for t0, t1 in zip(ts, ts[1:])
+              if t1 - t0 > 0.1 and interp.get(t1) != STEP and interp.get(t0) != STEP}
+    rest = C.solve_m({})
+    base = min(_lowest(rest, b) for b in ("shin_l", "shin_r"))
+    keys = []
+    for t in sorted(times):
+        pose = c.sample(t)
+        x, _y, z = pose.get("pelvis", {}).get("position", (0.0, 0.0, 0.0))
+        pose.setdefault("pelvis", {})["position"] = (x, 0.0, z)
+        sol = C.solve_m(pose)
+        lo = min(_lowest(sol, b) for b in ("shin_l", "shin_r"))
+        it = pel[t].interp if t in pel else interp.get(t)
+        keys.append((t, (x, base - lo, z), it))
+    c.tracks.pop(("pelvis", "position"), None)
+    for t, v, it in keys:
+        c.key("pelvis", "position", t, v, *([it] if it else []))
+
+
+def _lowest(sol, bone):
+    from rig import mat_vec
+    pos, m = sol[bone]
+    return min(pos[1] + mat_vec(m, p)[1] for cu in C.GEOMETRY[bone] for p in C._cube_corners(cu))
 
 
 CLIPS = {c.name: c for c in (frozen(), head_snap(), twitch(), stalk(), scuttle(), rear(),

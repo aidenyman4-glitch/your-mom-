@@ -32,7 +32,7 @@ locomotion clip are generated: the FOOT path is designed (locked to the ground a
 at constant speed through stance, then lifted and swung forward), two-bone IK turns it into
 thigh and knee angles, and those are sampled back to 12–16 sparse keys per cycle. The Locust's
 feet — and, when it scuttles, its hands — are solved against the rig's full forward kinematics
-(`gait.key_feet`), so they plant correctly under a body bent double. A longer stride is a
+(`gait.key_feet`), so they plant correctly under a body hunched over. A longer stride is a
 longer stance, so in a limp both feet still move at the body's one speed. `tools/check.py`
 measures how far a planted foot leaves the ground. Set the entity's movement speed to the
 clip's or the feet will slide:
@@ -42,7 +42,7 @@ clip's or the feet will slide:
 | `dark_walker.walk`       | 1.72             | 2.5-block strides, foot down 62% of the cycle |
 | `dark_walker.chase`      | 6.27             | a flight phase in every stride |
 | `locust.stalk`           | 0.62             | high, pulled steps on reverse-bending knees |
-| `locust.scuttle`         | 2.17             | four-legged: hands and feet, diagonal pairs |
+| `locust.scuttle`         | 2.17             | four-legged: blade points and feet, diagonal pairs |
 | `sun_man.walk`           | 4.52             | the left leg reaches 22% further than the right |
 | `sun_man.sprint`         | 15.7             | the left a third again as long as the right |
 
@@ -75,26 +75,28 @@ His geometry is the author's; these only key the 29 bones it already has.
 
 ## Locust — "It doesn't see you... but it knows you're there."
 
-Rebuilt to the second set of references: **2.74 blocks, 11 bones, 77 cubes**. A puppet — a small
-pale porcelain mask of a face (hollow eyes running into black tears, an open mouth) in a mass of
-long black hair; a neck far too long; a body that is all ribs, with a caved pale chest stitched
-shut and a black binding under it; black ragged hips; pale limb segments of old stained wood,
-bound at every joint with black string; four needles for fingers on each hand, long enough to
-reach the knee; and legs that taper to points instead of feet. The neck rides the head bone,
+Built to Aiden's references (`docs/references/locust/`): **3.4 blocks, 11 bones, 113 cubes**. A
+puppet — a pale, long-nosed mask of a face (hollow eyes running into black tears, a slack open
+mouth) in a mass of curling black hair; a black neck far too long; a pale sagging chest over a
+black ribbed waist, bound under the chest with string; black ragged hips like torn shorts; pale
+limb segments of old stained wood with doll's ball joints at the shoulders, bound at every joint
+with black string; no hands — each forearm runs on into a long black blade that bows outward and
+reaches the floor; and legs over half its height that taper to stakes instead of feet. At rest
+the blades and the legs make one tall, narrow tent. The neck rides the head bone,
 pivoting on the shoulders, so the whole stalk cranes, droops and snaps round as one.
 
 Spawns `NoAI`, frozen. Waking is one-way.
 
 | clip        | loop | length | the idea |
 |-------------|------|--------|----------|
-| `frozen`    | loop | 7 s    | it does not move; it does not breathe. Over seven seconds the head lists over too slowly to see — and at the end of the loop it is upright again, with nothing in between. A finger, once. A shoulder, once |
+| `frozen`    | loop | 7 s    | it does not move; it does not breathe. Over seven seconds the head lists over too slowly to see — and at the end of the loop it is upright again, with nothing in between. A blade, once. A shoulder, once |
 | `head_snap` | hold | 2.8 s  | its back to you, and then — between two frames — the mask is looking at you, 171° round on that neck. A breath later the neck cracks over sideways, as far as a neck does not go, and it shivers there |
-| `twitch`    | loop | 3.2 s  | the idle inside 22 blocks: a slow weave, and through it spasms — the neck whips, a shoulder jumps out of its socket and back, the needles splay, a knee gives |
+| `twitch`    | loop | 3.2 s  | the idle inside 22 blocks: a slow weave, and through it spasms — the neck whips, a shoulder jumps out of its socket and back, the blades splay, a knee gives |
 | `stalk`     | loop | 3.2 s  | a puppet nobody is working: high pulled steps on the points of its feet, the knees bending BACKWARD like a locust's, the body bobbing as if it hangs from a string, the arms swinging late and loose, the head lolling and looking about, never in time |
-| `scuttle`   | loop | 0.9 s  | at a run it goes down: bent double, the neck straight up out of its shoulders so the mask stays level and aimed, running on the needles of its hands and the points of its feet |
-| `rear`      | hold | 1.9 s  | the wake-up: it sinks, and then it is already up — arched back, arms flung high and splayed, needles open, the neck thrown back and over, shuddering |
+| `scuttle`   | loop | 0.9 s  | at a run it goes down: hunched over, the neck straight up out of its shoulders so the mask stays level and aimed, stilting along on the blade points of its arms and the points of its feet |
+| `rear`      | hold | 1.9 s  | the wake-up: it sinks, and then it is already up — arched back, arms flung high and splayed, blades open, the neck thrown back and over, shuddering |
 | `climb`     | loop | 1.6 s  | up a wall facing it, diagonal pairs of limbs reaching in turn — with its head turned all the way round on that neck, looking back down at the floor. At you |
-| `attack`    | once | 1.1 s  | it drops, lunges, both hands go in needles-first, it twists, and it tears them out |
+| `attack`    | once | 1.1 s  | it drops, lunges, both blades go in point-first, it twists, and it tears them out |
 | `peek`      | hold | 3.2 s  | round a door frame: one hand takes the jamb, the body leans, and the neck lays itself out sideways until the mask is looking at you on its side. It tips a little further, as if to see you better |
 | `death`     | hold | 2.2 s  | its strings are cut: one last tug up, then everything at once — the knees fold the wrong way, the head swings down and bounces, and it tips over into a heap |
 
@@ -187,7 +189,7 @@ find their texture in-game and that one is known to work.
 **The Locust and the Dark Walker** — `tools/paint_tiers.py` — are painted into the free quadrant
 (x 0..256, y 256..512) at **32 texels to the block**, two per model pixel, so a two-pixel limb has a
 highlight, a body and a shadow across it. Each cube has a box-style unwrap; right-side limbs share
-their left twin's texels, mirrored; MaxRects packs it all into 77% of the quadrant. Painting is
+their left twin's texels, mirrored; MaxRects packs it all into 81% of the quadrant. Painting is
 done in world space — every texel knows the point on the model it lands on — so noise, ribs, string
 bindings and the crease in a hat brim run across the seams between faces. The Locust's mask and
 the Dark Walker's face are drawn by hand, a texel at a time: the Walker's eyes are narrow lit slits
