@@ -1,0 +1,331 @@
+{
+  "name": "sun_man",
+  "height_blocks": 72.892,
+  "px_per_block": 1.3333333333333333,
+  "display_scale": 12.0,
+  "note": "v5 geometry, shipped verbatim. Do not reshape \u2014 surface and animation only.",
+  "bones": [
+    {
+      "name": "root",
+      "parent": null,
+      "pivot_blocks": [
+        0.0,
+        0.042,
+        0.0
+      ],
+      "cubes": 0
+    },
+    {
+      "name": "pelvis",
+      "parent": "root",
+      "pivot_blocks": [
+        0.0,
+        24.822,
+        0.0
+      ],
+      "cubes": 2
+    },
+    {
+      "name": "torso",
+      "parent": "pelvis",
+      "pivot_blocks": [
+        0.0,
+        30.282,
+        0.42
+      ],
+      "cubes": 32
+    },
+    {
+      "name": "upper_torso",
+      "parent": "torso",
+      "pivot_blocks": [
+        0.0,
+        44.142,
+        3.36
+      ],
+      "cubes": 28
+    },
+    {
+      "name": "neck",
+      "parent": "upper_torso",
+      "pivot_blocks": [
+        0.0,
+        54.642,
+        7.98
+      ],
+      "cubes": 13
+    },
+    {
+      "name": "head",
+      "parent": "neck",
+      "pivot_blocks": [
+        0.0,
+        65.142,
+        11.76
+      ],
+      "cubes": 10
+    },
+    {
+      "name": "sun_rays",
+      "parent": "head",
+      "pivot_blocks": [
+        0.0,
+        65.142,
+        11.76
+      ],
+      "cubes": 32
+    },
+    {
+      "name": "left_upper_arm",
+      "parent": "upper_torso",
+      "pivot_blocks": [
+        6.875,
+        42.462,
+        1.68
+      ],
+      "cubes": 2
+    },
+    {
+      "name": "left_forearm",
+      "parent": "left_upper_arm",
+      "pivot_blocks": [
+        7.295,
+        36.162,
+        1.764
+      ],
+      "cubes": 4
+    },
+    {
+      "name": "left_hand",
+      "parent": "left_forearm",
+      "pivot_blocks": [
+        7.463,
+        27.762,
+        1.806
+      ],
+      "cubes": 2
+    },
+    {
+      "name": "left_fingers",
+      "parent": "left_hand",
+      "pivot_blocks": [
+        7.463,
+        26.292,
+        1.89
+      ],
+      "cubes": 6
+    },
+    {
+      "name": "right_upper_arm",
+      "parent": "upper_torso",
+      "pivot_blocks": [
+        -6.875,
+        42.462,
+        1.68
+      ],
+      "cubes": 2
+    },
+    {
+      "name": "right_forearm",
+      "parent": "right_upper_arm",
+      "pivot_blocks": [
+        -7.295,
+        36.162,
+        1.764
+      ],
+      "cubes": 4
+    },
+    {
+      "name": "right_hand",
+      "parent": "right_forearm",
+      "pivot_blocks": [
+        -7.463,
+        27.762,
+        1.806
+      ],
+      "cubes": 2
+    },
+    {
+      "name": "right_fingers",
+      "parent": "right_hand",
+      "pivot_blocks": [
+        -7.463,
+        26.292,
+        1.89
+      ],
+      "cubes": 6
+    },
+    {
+      "name": "left_thigh",
+      "parent": "pelvis",
+      "pivot_blocks": [
+        1.428,
+        23.982,
+        -0.21
+      ],
+      "cubes": 2
+    },
+    {
+      "name": "left_shin",
+      "parent": "left_thigh",
+      "pivot_blocks": [
+        2.184,
+        15.372,
+        -0.252
+      ],
+      "cubes": 4
+    },
+    {
+      "name": "left_foot",
+      "parent": "left_shin",
+      "pivot_blocks": [
+        2.688,
+        1.512,
+        -0.084
+      ],
+      "cubes": 6
+    },
+    {
+      "name": "right_thigh",
+      "parent": "pelvis",
+      "pivot_blocks": [
+        -1.428,
+        23.982,
+        -0.21
+      ],
+      "cubes": 2
+    },
+    {
+      "name": "right_shin",
+      "parent": "right_thigh",
+      "pivot_blocks": [
+        -2.184,
+        15.372,
+        -0.252
+      ],
+      "cubes": 4
+    },
+    {
+      "name": "right_foot",
+      "parent": "right_shin",
+      "pivot_blocks": [
+        -2.688,
+        1.512,
+        -0.084
+      ],
+      "cubes": 6
+    },
+    {
+      "name": "left_lower_upper_arm",
+      "parent": "torso",
+      "pivot_blocks": [
+        6.5625,
+        33.962,
+        3.305
+      ],
+      "cubes": 2
+    },
+    {
+      "name": "left_lower_forearm",
+      "parent": "left_lower_upper_arm",
+      "pivot_blocks": [
+        6.9825,
+        27.662,
+        3.389
+      ],
+      "cubes": 4
+    },
+    {
+      "name": "left_lower_hand",
+      "parent": "left_lower_forearm",
+      "pivot_blocks": [
+        7.1505,
+        19.262,
+        3.431
+      ],
+      "cubes": 2
+    },
+    {
+      "name": "left_lower_fingers",
+      "parent": "left_lower_hand",
+      "pivot_blocks": [
+        7.1505,
+        17.792,
+        3.515
+      ],
+      "cubes": 6
+    },
+    {
+      "name": "right_lower_upper_arm",
+      "parent": "torso",
+      "pivot_blocks": [
+        -6.5625,
+        33.962,
+        3.305
+      ],
+      "cubes": 2
+    },
+    {
+      "name": "right_lower_forearm",
+      "parent": "right_lower_upper_arm",
+      "pivot_blocks": [
+        -6.9825,
+        27.662,
+        3.389
+      ],
+      "cubes": 4
+    },
+    {
+      "name": "right_lower_hand",
+      "parent": "right_lower_forearm",
+      "pivot_blocks": [
+        -7.1505,
+        19.262,
+        3.431
+      ],
+      "cubes": 2
+    },
+    {
+      "name": "right_lower_fingers",
+      "parent": "right_lower_hand",
+      "pivot_blocks": [
+        -7.1505,
+        17.792,
+        3.515
+      ],
+      "cubes": 6
+    }
+  ],
+  "clips": {
+    "dread_idle": {
+      "label": "Dread idle",
+      "note": "stillness, broken twice by a head snap",
+      "fn": "anim.dread_idle"
+    },
+    "wrong_walk": {
+      "label": "Wrong walk",
+      "note": "legs walk, the body refuses to agree",
+      "fn": "anim.wrong_walk"
+    },
+    "lurch": {
+      "label": "Lurch",
+      "note": "three beats of nothing, then one violent frame",
+      "fn": "anim.lurch"
+    },
+    "stare_down": {
+      "label": "Stare down",
+      "note": "the face descends toward you in jerks",
+      "fn": "anim.stare_down"
+    },
+    "harvest_rise": {
+      "label": "Harvest rise",
+      "note": "day thirty, arms opening",
+      "fn": "anim.harvest_rise"
+    },
+    "sprint": {
+      "label": "Sprint",
+      "note": "the head holds still while the body runs",
+      "fn": "anim.sprint"
+    }
+  }
+}

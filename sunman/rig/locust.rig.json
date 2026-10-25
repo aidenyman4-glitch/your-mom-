@@ -1,0 +1,209 @@
+{
+  "name": "locust",
+  "height_blocks": 2.367,
+  "px_per_block": 16.0,
+  "display_scale": 1.0,
+  "bones": [
+    {
+      "name": "pelvis",
+      "parent": null,
+      "pivot_blocks": [
+        0.0,
+        1.02,
+        0.0
+      ],
+      "cubes": 2,
+      "materials": [
+        "lc_joint",
+        "lc_mid"
+      ]
+    },
+    {
+      "name": "torso",
+      "parent": "pelvis",
+      "pivot_blocks": [
+        0.0,
+        1.1,
+        0.0
+      ],
+      "cubes": 11,
+      "materials": [
+        "lc_dark",
+        "lc_joint",
+        "lc_light",
+        "lc_mid"
+      ]
+    },
+    {
+      "name": "head",
+      "parent": "torso",
+      "pivot_blocks": [
+        0.0,
+        1.84,
+        0.02
+      ],
+      "cubes": 5,
+      "materials": [
+        "lc_light",
+        "lc_mid",
+        "lc_void"
+      ]
+    },
+    {
+      "name": "arm_l",
+      "parent": "torso",
+      "pivot_blocks": [
+        0.26,
+        1.58,
+        -0.01
+      ],
+      "cubes": 5,
+      "materials": [
+        "lc_joint",
+        "lc_mid"
+      ]
+    },
+    {
+      "name": "arm_r",
+      "parent": "torso",
+      "pivot_blocks": [
+        -0.26,
+        1.58,
+        -0.01
+      ],
+      "cubes": 5,
+      "materials": [
+        "lc_joint",
+        "lc_mid"
+      ]
+    },
+    {
+      "name": "hand_l",
+      "parent": "arm_l",
+      "pivot_blocks": [
+        0.3,
+        0.74,
+        -0.01
+      ],
+      "cubes": 6,
+      "materials": [
+        "lc_dark",
+        "lc_light"
+      ]
+    },
+    {
+      "name": "hand_r",
+      "parent": "arm_r",
+      "pivot_blocks": [
+        -0.3,
+        0.74,
+        -0.01
+      ],
+      "cubes": 6,
+      "materials": [
+        "lc_dark",
+        "lc_light"
+      ]
+    },
+    {
+      "name": "leg_l",
+      "parent": "pelvis",
+      "pivot_blocks": [
+        0.15,
+        1.02,
+        0.0
+      ],
+      "cubes": 5,
+      "materials": [
+        "lc_joint",
+        "lc_mid"
+      ]
+    },
+    {
+      "name": "leg_r",
+      "parent": "pelvis",
+      "pivot_blocks": [
+        -0.15,
+        1.02,
+        0.0
+      ],
+      "cubes": 5,
+      "materials": [
+        "lc_joint",
+        "lc_mid"
+      ]
+    },
+    {
+      "name": "foot_l",
+      "parent": "leg_l",
+      "pivot_blocks": [
+        0.15,
+        0.1,
+        0.0
+      ],
+      "cubes": 4,
+      "materials": [
+        "lc_dark",
+        "lc_light"
+      ]
+    },
+    {
+      "name": "foot_r",
+      "parent": "leg_r",
+      "pivot_blocks": [
+        -0.15,
+        0.1,
+        0.0
+      ],
+      "cubes": 4,
+      "materials": [
+        "lc_dark",
+        "lc_light"
+      ]
+    }
+  ],
+  "datapack_clips": {
+    "frozen": {
+      "keyframes": 2
+    },
+    "twitch": {
+      "keyframes": 8
+    },
+    "stalk": {
+      "keyframes": 8
+    },
+    "rear": {
+      "keyframes": 2
+    },
+    "climb": {
+      "keyframes": 8
+    }
+  },
+  "render_clips": {
+    "frozen_wrong": {
+      "label": "Frozen",
+      "note": "it does not move. then its head is facing you",
+      "fn": "anim_mobs.frozen_wrong"
+    },
+    "twitch_hard": {
+      "label": "Twitch",
+      "note": "inside 22 blocks",
+      "fn": "anim_mobs.twitch_hard"
+    },
+    "scuttle": {
+      "label": "Scuttle",
+      "note": "door height, and it fits where you fit",
+      "fn": "anim_mobs.scuttle"
+    },
+    "shriek": {
+      "label": "Rear",
+      "note": "waking is one-way",
+      "fn": "anim_mobs.shriek"
+    },
+    "climb_wall": {
+      "label": "Climb",
+      "note": "craned back down at the floor",
+      "fn": "anim_mobs.climb_wall"
+    }
+  }
+}

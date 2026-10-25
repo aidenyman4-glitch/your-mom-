@@ -1,0 +1,340 @@
+{
+  "name": "dark_walker",
+  "height_blocks": 7.382,
+  "px_per_block": 5.333333333333333,
+  "display_scale": 3.0,
+  "bones": [
+    {
+      "name": "pelvis",
+      "parent": null,
+      "pivot_blocks": [
+        0.0,
+        4.39,
+        0.0
+      ],
+      "cubes": 2,
+      "materials": [
+        "dw_dark",
+        "dw_mid"
+      ]
+    },
+    {
+      "name": "torso",
+      "parent": "pelvis",
+      "pivot_blocks": [
+        0.0,
+        4.39,
+        0.0
+      ],
+      "cubes": 10,
+      "materials": [
+        "dw_dark",
+        "dw_mid"
+      ]
+    },
+    {
+      "name": "neck",
+      "parent": "torso",
+      "pivot_blocks": [
+        0.0,
+        5.85,
+        0.02
+      ],
+      "cubes": 1,
+      "materials": [
+        "dw_dark"
+      ]
+    },
+    {
+      "name": "head",
+      "parent": "neck",
+      "pivot_blocks": [
+        0.0,
+        6.19,
+        0.02
+      ],
+      "cubes": 4,
+      "materials": [
+        "dw_dark",
+        "dw_eye"
+      ]
+    },
+    {
+      "name": "hat",
+      "parent": "head",
+      "pivot_blocks": [
+        0.0,
+        6.47,
+        0.0
+      ],
+      "cubes": 6,
+      "materials": [
+        "dw_hat",
+        "dw_mid"
+      ]
+    },
+    {
+      "name": "arm_l1",
+      "parent": "torso",
+      "pivot_blocks": [
+        0.345,
+        5.71,
+        -0.02
+      ],
+      "cubes": 7,
+      "materials": [
+        "dw_dark",
+        "dw_pale"
+      ]
+    },
+    {
+      "name": "tip_l1",
+      "parent": "arm_l1",
+      "pivot_blocks": [
+        0.395,
+        2.85,
+        0.02
+      ],
+      "cubes": 6,
+      "materials": [
+        "dw_dark",
+        "dw_pale"
+      ]
+    },
+    {
+      "name": "arm_r1",
+      "parent": "torso",
+      "pivot_blocks": [
+        -0.345,
+        5.71,
+        -0.02
+      ],
+      "cubes": 7,
+      "materials": [
+        "dw_dark",
+        "dw_pale"
+      ]
+    },
+    {
+      "name": "tip_r1",
+      "parent": "arm_r1",
+      "pivot_blocks": [
+        -0.395,
+        2.85,
+        0.02
+      ],
+      "cubes": 6,
+      "materials": [
+        "dw_dark",
+        "dw_pale"
+      ]
+    },
+    {
+      "name": "arm_l2",
+      "parent": "torso",
+      "pivot_blocks": [
+        0.3,
+        5.48,
+        -0.06
+      ],
+      "cubes": 7,
+      "materials": [
+        "dw_dark",
+        "dw_pale"
+      ]
+    },
+    {
+      "name": "tip_l2",
+      "parent": "arm_l2",
+      "pivot_blocks": [
+        0.35,
+        2.62,
+        -0.02
+      ],
+      "cubes": 6,
+      "materials": [
+        "dw_dark",
+        "dw_pale"
+      ]
+    },
+    {
+      "name": "arm_r2",
+      "parent": "torso",
+      "pivot_blocks": [
+        -0.3,
+        5.48,
+        -0.06
+      ],
+      "cubes": 7,
+      "materials": [
+        "dw_dark",
+        "dw_pale"
+      ]
+    },
+    {
+      "name": "tip_r2",
+      "parent": "arm_r2",
+      "pivot_blocks": [
+        -0.35,
+        2.62,
+        -0.02
+      ],
+      "cubes": 6,
+      "materials": [
+        "dw_dark",
+        "dw_pale"
+      ]
+    },
+    {
+      "name": "arm_l3",
+      "parent": "torso",
+      "pivot_blocks": [
+        0.25,
+        5.25,
+        -0.1
+      ],
+      "cubes": 7,
+      "materials": [
+        "dw_dark",
+        "dw_pale"
+      ]
+    },
+    {
+      "name": "tip_l3",
+      "parent": "arm_l3",
+      "pivot_blocks": [
+        0.3,
+        2.39,
+        -0.06
+      ],
+      "cubes": 6,
+      "materials": [
+        "dw_dark",
+        "dw_pale"
+      ]
+    },
+    {
+      "name": "arm_r3",
+      "parent": "torso",
+      "pivot_blocks": [
+        -0.25,
+        5.25,
+        -0.1
+      ],
+      "cubes": 7,
+      "materials": [
+        "dw_dark",
+        "dw_pale"
+      ]
+    },
+    {
+      "name": "tip_r3",
+      "parent": "arm_r3",
+      "pivot_blocks": [
+        -0.3,
+        2.39,
+        -0.06
+      ],
+      "cubes": 6,
+      "materials": [
+        "dw_dark",
+        "dw_pale"
+      ]
+    },
+    {
+      "name": "leg_l",
+      "parent": "pelvis",
+      "pivot_blocks": [
+        0.19,
+        4.35,
+        0.0
+      ],
+      "cubes": 5,
+      "materials": [
+        "dw_dark",
+        "dw_pale"
+      ]
+    },
+    {
+      "name": "foot_l",
+      "parent": "leg_l",
+      "pivot_blocks": [
+        0.19,
+        0.13,
+        -0.02
+      ],
+      "cubes": 2,
+      "materials": [
+        "dw_dark",
+        "dw_pale"
+      ]
+    },
+    {
+      "name": "leg_r",
+      "parent": "pelvis",
+      "pivot_blocks": [
+        -0.19,
+        4.35,
+        0.0
+      ],
+      "cubes": 5,
+      "materials": [
+        "dw_dark",
+        "dw_pale"
+      ]
+    },
+    {
+      "name": "foot_r",
+      "parent": "leg_r",
+      "pivot_blocks": [
+        -0.19,
+        0.13,
+        -0.02
+      ],
+      "cubes": 2,
+      "materials": [
+        "dw_dark",
+        "dw_pale"
+      ]
+    }
+  ],
+  "datapack_clips": {
+    "still": {
+      "keyframes": 2
+    },
+    "watch": {
+      "keyframes": 8
+    },
+    "walk": {
+      "keyframes": 8
+    },
+    "loom": {
+      "keyframes": 6
+    },
+    "reach": {
+      "keyframes": 6
+    }
+  },
+  "render_clips": {
+    "walker_road": {
+      "label": "Dark Walker",
+      "note": "the brim never tips. the eyes stay on you",
+      "fn": "anim_mobs.walker_road"
+    },
+    "walker_watch": {
+      "label": "Dark Walker \u00b7 watch",
+      "note": "it is not coming. then it turns",
+      "fn": "anim_mobs.walker_watch"
+    },
+    "walker_loom": {
+      "label": "Dark Walker \u00b7 loom",
+      "note": "it hinges at the hips. it does not kneel",
+      "fn": "anim_mobs.walker_loom"
+    },
+    "walker_reach": {
+      "label": "Dark Walker \u00b7 reach",
+      "note": "six arms, each leading the next",
+      "fn": "anim_mobs.walker_reach"
+    }
+  }
+}
