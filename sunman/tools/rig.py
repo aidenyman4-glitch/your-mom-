@@ -178,15 +178,25 @@ def _zero():
 # ---------------------------------------------------------------- forward kinematics
 
 def solve(pose):
+    """World (position, quaternion) per bone. `pose[bone]` is a rotation triple, or a
+    {"rotation", "position"} dict as `keyframes.Clip.sample` returns (position in blocks,
+    in the parent's frame — a Blockbench position keyframe)."""
     out = {}
     for bone in BONE_ORDER:
         parent = PARENT.get(bone)
-        q = quat_euler(*pose.get(bone, (0.0, 0.0, 0.0)))
+        entry = pose.get(bone)
+        if isinstance(entry, dict):
+            rot = entry.get("rotation", (0.0, 0.0, 0.0))
+            move = entry.get("position", (0.0, 0.0, 0.0))
+        else:
+            rot = entry or (0.0, 0.0, 0.0)
+            move = (0.0, 0.0, 0.0)
+        q = quat_euler(*rot)
         if parent is None or parent not in out:
-            out[bone] = (J[bone], quat_norm(q))
+            out[bone] = (tuple(J[bone][i] + move[i] for i in range(3)), quat_norm(q))
             continue
         ppos, pq = out[parent]
-        off = tuple(J[bone][i] - J[parent][i] for i in range(3))
+        off = tuple(J[bone][i] - J[parent][i] + move[i] for i in range(3))
         out[bone] = (tuple(ppos[i] + quat_rotate(pq, off)[i] for i in range(3)),
                      quat_norm(quat_mul(pq, q)))
     return out

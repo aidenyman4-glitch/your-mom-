@@ -1,7 +1,8 @@
 {
   "name": "dark_walker",
-  "height_blocks": 7.382,
-  "px_per_block": 5.333333333333333,
+  "height_blocks": 7.283,
+  "bbmodel_px_per_block": 16.0,
+  "item_px_per_block": 5.333333333333333,
   "display_scale": 3.0,
   "bones": [
     {
@@ -9,13 +10,18 @@
       "parent": null,
       "pivot_blocks": [
         0.0,
-        4.39,
+        4.25,
+        0.0
+      ],
+      "rest_rotation": [
+        0.0,
+        0.0,
         0.0
       ],
       "cubes": 2,
       "materials": [
         "dw_dark",
-        "dw_mid"
+        "dw_pale"
       ]
     },
     {
@@ -23,13 +29,19 @@
       "parent": "pelvis",
       "pivot_blocks": [
         0.0,
-        4.39,
+        4.3125,
+        0.0
+      ],
+      "rest_rotation": [
+        7.0,
+        0.0,
         0.0
       ],
       "cubes": 10,
       "materials": [
         "dw_dark",
-        "dw_mid"
+        "dw_pale",
+        "dw_skin"
       ]
     },
     {
@@ -37,12 +49,17 @@
       "parent": "torso",
       "pivot_blocks": [
         0.0,
-        5.85,
-        0.02
+        6.0,
+        0.0938
+      ],
+      "rest_rotation": [
+        16.0,
+        0.0,
+        0.0
       ],
       "cubes": 1,
       "materials": [
-        "dw_dark"
+        "dw_skin"
       ]
     },
     {
@@ -50,13 +67,19 @@
       "parent": "neck",
       "pivot_blocks": [
         0.0,
-        6.19,
-        0.02
+        6.4375,
+        0.0938
       ],
-      "cubes": 4,
+      "rest_rotation": [
+        -21.0,
+        0.0,
+        0.0
+      ],
+      "cubes": 5,
       "materials": [
         "dw_dark",
-        "dw_eye"
+        "dw_eye",
+        "dw_skin"
       ]
     },
     {
@@ -64,277 +87,381 @@
       "parent": "head",
       "pivot_blocks": [
         0.0,
-        6.47,
-        0.0
+        6.8125,
+        0.0938
       ],
-      "cubes": 6,
+      "rest_rotation": [
+        3.0,
+        0.0,
+        -2.0
+      ],
+      "cubes": 22,
       "materials": [
-        "dw_hat",
-        "dw_mid"
+        "dw_band",
+        "dw_hat"
       ]
     },
     {
       "name": "arm_l1",
       "parent": "torso",
       "pivot_blocks": [
-        0.345,
-        5.71,
-        -0.02
+        0.5,
+        5.875,
+        0.0625
       ],
-      "cubes": 7,
+      "rest_rotation": [
+        -12.0,
+        0.0,
+        30.0
+      ],
+      "cubes": 2,
       "materials": [
-        "dw_dark",
-        "dw_pale"
+        "dw_pale",
+        "dw_skin"
       ]
     },
     {
-      "name": "tip_l1",
+      "name": "fore_l1",
       "parent": "arm_l1",
       "pivot_blocks": [
-        0.395,
-        2.85,
-        0.02
+        0.5,
+        4.25,
+        0.0625
       ],
-      "cubes": 6,
+      "rest_rotation": [
+        -12.0,
+        0.0,
+        -18.0
+      ],
+      "cubes": 13,
       "materials": [
+        "dw_claw",
         "dw_dark",
-        "dw_pale"
+        "dw_pale",
+        "dw_skin"
       ]
     },
     {
       "name": "arm_r1",
       "parent": "torso",
       "pivot_blocks": [
-        -0.345,
-        5.71,
-        -0.02
+        -0.5,
+        5.875,
+        0.0625
       ],
-      "cubes": 7,
+      "rest_rotation": [
+        -12.0,
+        0.0,
+        -30.0
+      ],
+      "cubes": 2,
       "materials": [
-        "dw_dark",
-        "dw_pale"
+        "dw_pale",
+        "dw_skin"
       ]
     },
     {
-      "name": "tip_r1",
+      "name": "fore_r1",
       "parent": "arm_r1",
       "pivot_blocks": [
-        -0.395,
-        2.85,
-        0.02
+        -0.5,
+        4.25,
+        0.0625
       ],
-      "cubes": 6,
+      "rest_rotation": [
+        -12.0,
+        0.0,
+        18.0
+      ],
+      "cubes": 13,
       "materials": [
+        "dw_claw",
         "dw_dark",
-        "dw_pale"
+        "dw_pale",
+        "dw_skin"
       ]
     },
     {
       "name": "arm_l2",
       "parent": "torso",
       "pivot_blocks": [
-        0.3,
-        5.48,
-        -0.06
+        0.4375,
+        5.7188,
+        0.0
       ],
-      "cubes": 7,
+      "rest_rotation": [
+        -6.0,
+        0.0,
+        22.0
+      ],
+      "cubes": 2,
       "materials": [
-        "dw_dark",
-        "dw_pale"
+        "dw_pale",
+        "dw_skin"
       ]
     },
     {
-      "name": "tip_l2",
+      "name": "fore_l2",
       "parent": "arm_l2",
       "pivot_blocks": [
-        0.35,
-        2.62,
-        -0.02
+        0.4375,
+        4.1562,
+        0.0
       ],
-      "cubes": 6,
+      "rest_rotation": [
+        -12.0,
+        0.0,
+        -13.0
+      ],
+      "cubes": 13,
       "materials": [
+        "dw_claw",
         "dw_dark",
-        "dw_pale"
+        "dw_pale",
+        "dw_skin"
       ]
     },
     {
       "name": "arm_r2",
       "parent": "torso",
       "pivot_blocks": [
-        -0.3,
-        5.48,
-        -0.06
+        -0.4375,
+        5.7188,
+        0.0
       ],
-      "cubes": 7,
+      "rest_rotation": [
+        -6.0,
+        0.0,
+        -22.0
+      ],
+      "cubes": 2,
       "materials": [
-        "dw_dark",
-        "dw_pale"
+        "dw_pale",
+        "dw_skin"
       ]
     },
     {
-      "name": "tip_r2",
+      "name": "fore_r2",
       "parent": "arm_r2",
       "pivot_blocks": [
-        -0.35,
-        2.62,
-        -0.02
+        -0.4375,
+        4.1562,
+        0.0
       ],
-      "cubes": 6,
+      "rest_rotation": [
+        -12.0,
+        0.0,
+        13.0
+      ],
+      "cubes": 13,
       "materials": [
+        "dw_claw",
         "dw_dark",
-        "dw_pale"
+        "dw_pale",
+        "dw_skin"
       ]
     },
     {
       "name": "arm_l3",
       "parent": "torso",
       "pivot_blocks": [
-        0.25,
-        5.25,
-        -0.1
+        0.375,
+        5.5625,
+        -0.0625
       ],
-      "cubes": 7,
+      "rest_rotation": [
+        1.0,
+        0.0,
+        15.0
+      ],
+      "cubes": 2,
       "materials": [
-        "dw_dark",
-        "dw_pale"
+        "dw_pale",
+        "dw_skin"
       ]
     },
     {
-      "name": "tip_l3",
+      "name": "fore_l3",
       "parent": "arm_l3",
       "pivot_blocks": [
-        0.3,
-        2.39,
-        -0.06
+        0.375,
+        4.0625,
+        -0.0625
       ],
-      "cubes": 6,
+      "rest_rotation": [
+        -12.0,
+        0.0,
+        -9.0
+      ],
+      "cubes": 13,
       "materials": [
+        "dw_claw",
         "dw_dark",
-        "dw_pale"
+        "dw_pale",
+        "dw_skin"
       ]
     },
     {
       "name": "arm_r3",
       "parent": "torso",
       "pivot_blocks": [
-        -0.25,
-        5.25,
-        -0.1
+        -0.375,
+        5.5625,
+        -0.0625
       ],
-      "cubes": 7,
+      "rest_rotation": [
+        1.0,
+        0.0,
+        -15.0
+      ],
+      "cubes": 2,
       "materials": [
-        "dw_dark",
-        "dw_pale"
+        "dw_pale",
+        "dw_skin"
       ]
     },
     {
-      "name": "tip_r3",
+      "name": "fore_r3",
       "parent": "arm_r3",
       "pivot_blocks": [
-        -0.3,
-        2.39,
-        -0.06
+        -0.375,
+        4.0625,
+        -0.0625
       ],
-      "cubes": 6,
+      "rest_rotation": [
+        -12.0,
+        0.0,
+        9.0
+      ],
+      "cubes": 13,
       "materials": [
+        "dw_claw",
         "dw_dark",
-        "dw_pale"
+        "dw_pale",
+        "dw_skin"
       ]
     },
     {
       "name": "leg_l",
       "parent": "pelvis",
       "pivot_blocks": [
-        0.19,
-        4.35,
+        0.1875,
+        4.1875,
         0.0
       ],
-      "cubes": 5,
-      "materials": [
-        "dw_dark",
-        "dw_pale"
-      ]
-    },
-    {
-      "name": "foot_l",
-      "parent": "leg_l",
-      "pivot_blocks": [
-        0.19,
-        0.13,
-        -0.02
+      "rest_rotation": [
+        -3.0,
+        0.0,
+        2.0
       ],
       "cubes": 2,
       "materials": [
+        "dw_skin"
+      ]
+    },
+    {
+      "name": "shin_l",
+      "parent": "leg_l",
+      "pivot_blocks": [
+        0.1875,
+        2.1875,
+        0.0
+      ],
+      "rest_rotation": [
+        6.0,
+        0.0,
+        -1.0
+      ],
+      "cubes": 5,
+      "materials": [
+        "dw_claw",
         "dw_dark",
-        "dw_pale"
+        "dw_pale",
+        "dw_skin"
       ]
     },
     {
       "name": "leg_r",
       "parent": "pelvis",
       "pivot_blocks": [
-        -0.19,
-        4.35,
+        -0.1875,
+        4.1875,
         0.0
       ],
-      "cubes": 5,
-      "materials": [
-        "dw_dark",
-        "dw_pale"
-      ]
-    },
-    {
-      "name": "foot_r",
-      "parent": "leg_r",
-      "pivot_blocks": [
-        -0.19,
-        0.13,
-        -0.02
+      "rest_rotation": [
+        -3.0,
+        0.0,
+        -2.0
       ],
       "cubes": 2,
       "materials": [
+        "dw_skin"
+      ]
+    },
+    {
+      "name": "shin_r",
+      "parent": "leg_r",
+      "pivot_blocks": [
+        -0.1875,
+        2.1875,
+        0.0
+      ],
+      "rest_rotation": [
+        6.0,
+        0.0,
+        1.0
+      ],
+      "cubes": 5,
+      "materials": [
+        "dw_claw",
         "dw_dark",
-        "dw_pale"
+        "dw_pale",
+        "dw_skin"
       ]
     }
   ],
-  "datapack_clips": {
-    "still": {
-      "keyframes": 2
+  "clips": {
+    "animation.dark_walker.idle": {
+      "loop": "loop",
+      "length": 4.0,
+      "note": "breathing, six arms on six clocks, one head tilt",
+      "keys": 161
     },
-    "watch": {
-      "keyframes": 8
+    "animation.dark_walker.walk": {
+      "loop": "loop",
+      "length": 2.4,
+      "note": "the brim never tips; a wave runs down the arms",
+      "keys": 209
     },
-    "walk": {
-      "keyframes": 8
+    "animation.dark_walker.chase": {
+      "loop": "loop",
+      "length": 1.2,
+      "note": "a long low lope; the head still aimed at you",
+      "keys": 238
     },
-    "loom": {
-      "keyframes": 6
+    "animation.dark_walker.notice": {
+      "loop": "hold",
+      "length": 2.6,
+      "note": "the head comes round; the last degrees all at once",
+      "keys": 69
     },
-    "reach": {
-      "keyframes": 6
-    }
-  },
-  "render_clips": {
-    "walker_road": {
-      "label": "Dark Walker",
-      "note": "the brim never tips. the eyes stay on you",
-      "fn": "anim_mobs.walker_road"
+    "animation.dark_walker.loom": {
+      "loop": "hold",
+      "length": 3.0,
+      "note": "it hinges at the hips; it does not kneel",
+      "keys": 90
     },
-    "walker_watch": {
-      "label": "Dark Walker \u00b7 watch",
-      "note": "it is not coming. then it turns",
-      "fn": "anim_mobs.walker_watch"
+    "animation.dark_walker.attack": {
+      "loop": "once",
+      "length": 1.6,
+      "note": "wind-up, then six arms arriving as a wave",
+      "keys": 105
     },
-    "walker_loom": {
-      "label": "Dark Walker \u00b7 loom",
-      "note": "it hinges at the hips. it does not kneel",
-      "fn": "anim_mobs.walker_loom"
-    },
-    "walker_reach": {
-      "label": "Dark Walker \u00b7 reach",
-      "note": "six arms, each leading the next",
-      "fn": "anim_mobs.walker_reach"
+    "animation.dark_walker.death": {
+      "loop": "hold",
+      "length": 2.6,
+      "note": "thrown back, the knees go, it goes over sideways",
+      "keys": 128
     }
   }
 }

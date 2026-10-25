@@ -10,28 +10,16 @@ These are those tones. They colour the renders here, and `atlas_patch.py` paints
 the atlas's free quadrant so the exported models finally resolve to them in game.
 """
 
-LOCUST = {
-    "lc_light": (178, 188, 193),      # the big head, the finger bones — chalk with a blue cast
-    "lc_mid":   (131, 141, 147),      # thorax and limb segments
-    "lc_dark":  (74, 82, 88),         # neck, feet, the hand knuckle
-    "lc_joint": (102, 111, 117),      # the exposed blocky joints and the spine ridge
-    "lc_void":  (6, 7, 9),            # eye sockets and mouth: holes, not features
-}
+# The tier creatures' materials are five-step ramps in `paint_tiers.RAMPS` (the skins are
+# painted from them); flat renders use each ramp's base tone. The Locust is greyscale with a
+# blue cast, four tones plus the black of its eyes. The Dark Walker is a cold mid grey, not
+# black — backlit against a pale sky it is still a pure silhouette (the hilltop, the ink
+# drawing), but caught in a headlight it is the pale thing in the road, which a black body
+# could never be. The hat stays black in every light; the eyes are the only colour in it.
+from paint_tiers import RAMPS  # noqa: E402
 
-# Tier 2. Built from Aiden's five references: a silhouette in every one of them, so the
-# body is barely lighter than the night it stands in and the only real colour in the
-# creature is the pair of eyes.
-# The body is a cold mid grey, not black, and that is the reading that satisfies all five
-# references at once: backlit against a pale sky it is a pure silhouette (the hilltop and
-# the ink drawing), and caught in a headlight at night it is the pale thing in the road.
-# A black body could never do the second. The hat stays black in every light.
-DARK_WALKER = {
-    "dw_dark":  (84, 87, 95),         # torso, head, the long bones of the limbs
-    "dw_mid":   (104, 107, 116),      # limb segments, so the taper still reads at distance
-    "dw_hat":   (17, 17, 21),         # brim and crown: the one thing that is black in any light
-    "dw_pale":  (146, 149, 158),      # joint knobs and the tips of the tendrils
-    "dw_eye":   (255, 243, 196),      # light_emission 15
-}
+LOCUST = {k: v[2] for k, v in RAMPS.items() if k.startswith("lc_")}
+DARK_WALKER = {k: v[2] for k, v in RAMPS.items() if k.startswith("dw_")}
 
 MATS = {**LOCUST, **DARK_WALKER}
 

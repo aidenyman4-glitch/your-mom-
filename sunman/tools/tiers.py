@@ -1,82 +1,181 @@
-"""Tier 1 and Tier 2 creatures, built to the character sheets.
+"""Tier 1 and Tier 2 creatures, rebuilt as Blockbench mod-style models.
 
 LOCUST — "It doesn't see you... but it knows you're there."
-    Tall and thin, 2.4 blocks. Oversized TILTED head, blank black eyes and mouth, segmented
-    insect-like limbs with exposed blocky joints, a segmented spine, and long bony fingers
-    built for climbing and grabbing. Greyscale, four tones.
+    2.4 blocks. Oversized TILTED head, blank black eyes and mouth, segmented insect limbs with
+    proud blocky joints, a knuckled spine, long bony fingers. Greyscale, four tones.
 
 DARK WALKER — "It does not hurry, because it does not need to."
-    7.4 blocks. Wide-brimmed hat, a small head under it with two lit eyes, six tendril arms
-    hanging in three tiers, and legs that are most of its height. Near-black.
+    7.3 blocks. A wide flat brim over a low crown, a small narrow head pushed forward on a long
+    neck, two lit eyes in the shadow of the brim, a stooped torso with the shoulders wider than
+    the hips, six jointed arms in three tiers that fan out and hang to the knee, each ending in
+    four long two-knuckled fingers, and legs that are more than half of it.
 
-The Locust is authored at 16 px = 1 block (display scale 1.0). The Dark Walker is authored
-at 16/3 px per block (display scale 3.0), because a 4-block leg at 16 px/block would put the
-element 65 px from its pivot — legal in 26.3, which dropped the [-16, 32] bound, but outside
-what Blockbench will open for hand-editing.
+Both are authored on a true pixel grid — 16 px to the block, 1 texel per pixel, every cube a
+whole number of pixels — the way a mob is built in Blockbench for a mod. Geometry is written
+in absolute rest-space pixels (easy to read against the references) and converted to the
+bone-relative blocks the rest of the toolchain uses.
+
+THE RIG. A bone is an entity in the datapack, so the counts stay at the handoff's budget —
+Locust 11, Dark Walker 21 — but the joints moved to where an animator needs them. The old
+rigs split each limb at the wrist and the ankle, which left every arm and leg one rigid stick
+from the shoulder or hip: no knees, no elbows, nothing a walk cycle can bend. Now each limb
+breaks at the ELBOW and the KNEE, and the hand and foot ride on the lower segment.
+
+REST POSE. The limbs are built hanging straight down (so a bone's local axes run along it)
+and posed by the bones' rest rotations: the arms fan out and bend at the elbow, the knees
+soften, the neck pushes the head forward. That is a Blockbench group rotation, it is a bone
+`rotation` in Bedrock geometry, and keyframes ADD to it — Euler angles summed, as Blockbench
+and GeckoLib both do — so `solve` here does the same.
 
 Axes match the Sun Man rig: +X = the creature's LEFT, +Y = up, +Z = FORWARD.
 """
-import math
-
-PX_PER_RU = 16.0
-DISPLAY_SCALE = 16.0 / PX_PER_RU      # = 1.0
-
 from rig import (quat_from_euler_xyz, quat_mul, quat_norm, quat_rotate,  # noqa: E402
                  vsub)
 
+PX = 1.0 / 16.0                 # one Blockbench pixel at true scale, in blocks
 
-def _box(x, y, z, w, h, d, mat, **kw):
-    c = {"from": [x, y, z], "size": [w, h, d], "mat": mat}
-    c.update(kw)
+
+# ---------------------------------------------------------------- authoring helpers
+
+def C(frm, size, mat, paint=None, rot=None, origin=None, emit=0):
+    """A cube in absolute rest-space pixels."""
+    c = {"from": tuple(float(v) for v in frm), "size": tuple(float(v) for v in size),
+         "mat": mat}
+    if paint:
+        c["paint"] = paint
+    if rot and any(rot):
+        c["rot"] = tuple(float(v) for v in rot)
+        c["origin"] = tuple(float(v) for v in origin)
+    if emit:
+        c["emit"] = emit
     return c
 
 
-class Creature:
-    """A small authored rig exposing the interface the exporters use."""
+def _euler_q(x, y, z):
+    return quat_from_euler_xyz(x, y, z)
 
-    def __init__(self, name, joints, parents, geometry, anims,
-                 light=None, billboard=None, height_hint=0.0, display_scale=1.0):
+
+def finger(base, fan, curl, segs, mat, tip_mat, width=1.0, depth=1.0, splay=0.0):
+    """A jointed finger hanging from `base` (absolute px).
+
+    Each segment is its own cube rotated about its own knuckle, so a finger can bow without a
+    bone per knuckle — the knuckles are free, the bones are not. `fan` spreads it sideways
+    (Z), `curl` bends it forward (X, negative = toward +Z) and grows by `curl` again at every
+    knuckle, `splay` tips it forward/back before the fan.
+    """
+    out = []
+    o = tuple(base)
+    acc = 0.0
+    for i, length in enumerate(segs):
+        acc += curl if i else curl * 0.5
+        rx, rz = splay + acc, fan
+        frm = (o[0] - width / 2, o[1] - length, o[2] - depth / 2)
+        out.append(C(frm, (width, length, depth), tip_mat if i == len(segs) - 1 else mat,
+                     paint="claw" if i == len(segs) - 1 else "bone",
+                     rot=(rx, 0.0, rz), origin=o))
+        d = quat_rotate(_euler_q(rx, 0.0, rz), (0.0, -length, 0.0))
+        o = (o[0] + d[0], o[1] + d[1], o[2] + d[2])
+    return out
+
+
+def mirror_cube(c):
+    """The same cube on the other side of the creature (x -> -x)."""
+    m = dict(c)
+    fx, fy, fz = c["from"]
+    w, h, d = c["size"]
+    m["from"] = (-(fx + w), fy, fz)
+    if "rot" in c:
+        rx, ry, rz = c["rot"]
+        m["rot"] = (rx, -ry, -rz)
+        ox, oy, oz = c["origin"]
+        m["origin"] = (-ox, oy, oz)
+    return m
+
+
+# ---------------------------------------------------------------- the creature
+
+class Creature:
+    """A small authored rig exposing the interface the exporters and renderers use."""
+
+    def __init__(self, name, pivots_px, parents, cubes_px, rest=None, height_hint=0.0,
+                 display_scale=1.0, bb_px_per_block=16.0):
         self.name = name
-        self.J = joints
-        self.GEOMETRY = geometry
-        self.ANIMATIONS = anims
-        self.LIGHT_EMISSION = light or {}
-        self.BILLBOARD = billboard or {}
-        # px per block in the emitted model, and the item_display scale that undoes it
+        self.parents = dict(parents)
+        self.REST = {b: tuple(r) for b, r in (rest or {}).items()}
+        self.height_hint = height_hint
+        # Blockbench is authored at true scale; the per-bone ITEM models are written at
+        # 16/display_scale px per block and the item_display scale undoes it, which keeps
+        # every element inside the [-16, 32] box Blockbench will open in Java format.
+        self.BB_PX_PER_BLOCK = bb_px_per_block
         self.DISPLAY_SCALE = display_scale
         self.PX_PER_RU = 16.0 / display_scale
-        self.height_hint = height_hint
+
+        self.J = {b: tuple(v * PX for v in p) for b, p in pivots_px.items()}
+        self.J_PX = {b: tuple(p) for b, p in pivots_px.items()}
 
         order, seen = [], set()
 
         def visit(n):
             if n in seen:
                 return
-            p = parents.get(n)
+            p = self.parents.get(n)
             if p:
                 visit(p)
             seen.add(n)
             order.append(n)
 
-        for n in joints:
+        for n in pivots_px:
             visit(n)
         self.BONE_ORDER = order
-        self.BONES = {n: (parents.get(n), n, None, (0.0, -1.0, 0.0)) for n in order}
+        self.BONES = {n: (self.parents.get(n), n, None, (0.0, -1.0, 0.0)) for n in order}
 
+        # bone-relative cubes, in blocks (what the exporters and the renderer consume)
+        self.CUBES_PX = cubes_px
+        self.GEOMETRY = {}
+        for bone, cubes in cubes_px.items():
+            pv = pivots_px[bone]
+            out = []
+            for c in cubes:
+                r = {"from": [(c["from"][i] - pv[i]) * PX for i in range(3)],
+                     "size": [c["size"][i] * PX for i in range(3)],
+                     "mat": c["mat"], "paint": c.get("paint"), "emit": c.get("emit", 0)}
+                if "rot" in c:
+                    r["rotation"] = {"origin": [(c["origin"][i] - pv[i]) * PX for i in range(3)],
+                                     "x": c["rot"][0], "y": c["rot"][1], "z": c["rot"][2]}
+                out.append(r)
+            self.GEOMETRY[bone] = out
+        self.LIGHT_EMISSION = {b: 15 for b, cs in cubes_px.items() if any(c.get("emit") for c in cs)}
+
+    # ------------------------------------------------------------- kinematics
     def _zero(self):
         return {b: (0.0, 0.0, 0.0) for b in self.BONE_ORDER}
 
+    def rest_rotation(self, bone):
+        return quat_norm(_euler_q(*self.REST.get(bone, (0.0, 0.0, 0.0))))
+
     def solve(self, pose):
+        """World (position, quaternion) per bone. `pose[bone]` is a rotation triple or a
+        {"rotation", "position"} dict as `keyframes.Clip.sample` returns; position in blocks,
+        in the parent's frame, like a Blockbench position keyframe."""
         out = {}
         for bone in self.BONE_ORDER:
-            parent = self.BONES[bone][0]
-            q = quat_from_euler_xyz(*pose.get(bone, (0.0, 0.0, 0.0)))
+            entry = pose.get(bone)
+            if isinstance(entry, dict):
+                rot = entry.get("rotation", (0.0, 0.0, 0.0))
+                off = entry.get("position", (0.0, 0.0, 0.0))
+            else:
+                rot = entry or (0.0, 0.0, 0.0)
+                off = (0.0, 0.0, 0.0)
+            rest = self.REST.get(bone, (0.0, 0.0, 0.0))
+            q = _euler_q(rest[0] + rot[0], rest[1] + rot[1], rest[2] + rot[2])
+            parent = self.parents.get(bone)
             if parent is None or parent not in out:
-                out[bone] = (self.J[bone], quat_norm(q))
+                out[bone] = (tuple(self.J[bone][i] + off[i] for i in range(3)), quat_norm(q))
                 continue
             p_pos, p_q = out[parent]
-            off = vsub(self.J[bone], self.J[parent])
-            out[bone] = (tuple(a + b for a, b in zip(p_pos, quat_rotate(p_q, off))),
+            rel = vsub(self.J[bone], self.J[parent])
+            rel = (rel[0] + off[0], rel[1] + off[1], rel[2] + off[2])
+            out[bone] = (tuple(a + b for a, b in zip(p_pos, quat_rotate(p_q, rel))),
                          quat_norm(quat_mul(p_q, q)))
         return out
 
@@ -88,21 +187,21 @@ class Creature:
         rot = cube.get("rotation")
         if rot:
             o = rot["origin"]
-            rq = quat_from_euler_xyz(rot.get("x", 0.0), rot.get("y", 0.0), rot.get("z", 0.0))
+            rq = _euler_q(rot.get("x", 0.0), rot.get("y", 0.0), rot.get("z", 0.0))
             pts = [tuple(a + b for a, b in
                          zip(o, quat_rotate(rq, (p[0] - o[0], p[1] - o[1], p[2] - o[2]))))
                    for p in pts]
         return pts
 
-    def extents(self, pose):
+    def extents(self, pose, axis=1):
         sol = self.solve(pose)
         lo, hi = 1e9, -1e9
         for bone, cubes in self.GEOMETRY.items():
             pos, q = sol[bone]
             for c in cubes:
                 for p in self._cube_corners(c):
-                    y = pos[1] + quat_rotate(q, p)[1]
-                    lo, hi = min(lo, y), max(hi, y)
+                    v = pos[axis] + quat_rotate(q, p)[axis]
+                    lo, hi = min(lo, v), max(hi, v)
         return lo, hi
 
     def solve_grounded(self, pose):
@@ -111,354 +210,262 @@ class Creature:
                 for b, (p, q) in self.solve(pose).items()}
 
     def model_height(self, pose=None):
-        lo, hi = self.extents(pose if pose is not None else self._zero())
+        lo, hi = self.extents(pose if pose is not None else {})
         return hi - lo
 
-    def rest_rotation(self, bone):
-        return (1.0, 0.0, 0.0, 0.0)
-
-
-# ---------------------------------------------------------------- shared builders
-
-def segmented_limb(length, w0, w1, mat, mat_joint, segs=3, knob=1.5, bow=0.0):
-    """A limb of `segs` tapering sections with a proud joint knob between each.
-
-    Exposed blocky joints are the Locust's defining limb feature, and they carry the Dark
-    Walker's tendrils too — six identical smooth arms would read as cloth on a frame.
-    """
-    out = []
-    step = length / segs
-    for i in range(segs):
-        t0, t1 = i / segs, (i + 1) / segs
-        w = w0 + (w1 - w0) * (t0 + t1) / 2
-        zc = bow * math.sin(math.pi * (t0 + t1) / 2)
-        out.append(_box(-w / 2, -step * (i + 1), zc - w / 2, w, step, w, mat))
-        if i < segs - 1:
-            k = w * knob
-            out.append(_box(-k / 2, -step * (i + 1) - k * 0.22, zc - k / 2,
-                            k, k * 0.44, k, mat_joint))
-    return out
-
-
-def hollow_face(w, h, d, mat, mat_void, eye_w, eye_h, eye_gap, mouth_w, mouth_h,
-                eye_y, mouth_y, rot=None):
-    """A blocky head with eyes and a mouth as proud black plates.
-
-    Both sheets specify hollow black eyes AND a hollow mouth with no expression, so the
-    features are separate cubes sitting just proud of the face rather than painted on — they
-    stay readable at any light level, which a texture alone does not.
-    """
-    r = {"rotation": rot} if rot else {}
-    cubes = [_box(-w / 2, -h * 0.25, -d / 2, w, h, d, mat, **r)]
-    zf = d / 2 - 0.004
-    cubes.append(_box(-eye_gap / 2 - eye_w, eye_y, zf, eye_w, eye_h, 0.05, mat_void, **r))
-    cubes.append(_box(eye_gap / 2, eye_y, zf, eye_w, eye_h, 0.05, mat_void, **r))
-    cubes.append(_box(-mouth_w / 2, mouth_y, zf, mouth_w, mouth_h, 0.05, mat_void, **r))
-    return cubes
+    def cube_count(self):
+        return sum(len(v) for v in self.GEOMETRY.values())
 
 
 # ====================================================================== LOCUST
-# 2.4 blocks. Tall and thin, oversized tilted head, segmented insect limbs, long bony fingers,
-# exposed joints and a segmented spine. "Flexible but fragile."
+# 2.4 blocks, 16 px to the block. Door height: it fits where you fit.
 
 def _locust():
-    J = {
-        "pelvis":   (0.00, 1.02,  0.00),
-        "torso":    (0.00, 1.10,  0.00),
-        "head":     (0.00, 1.84,  0.02),
-        "arm_l":    (0.26, 1.58, -0.01),
-        "arm_r":   (-0.26, 1.58, -0.01),
-        "hand_l":   (0.30, 0.74, -0.01),
-        "hand_r":  (-0.30, 0.74, -0.01),
-        "leg_l":    (0.15, 1.02,  0.00),
-        "leg_r":   (-0.15, 1.02,  0.00),
-        "foot_l":   (0.15, 0.10,  0.00),
-        "foot_r":  (-0.15, 0.10,  0.00),
-    }
-    P = {"torso": "pelvis", "head": "torso",
-         "arm_l": "torso", "arm_r": "torso", "hand_l": "arm_l", "hand_r": "arm_r",
-         "leg_l": "pelvis", "leg_r": "pelvis", "foot_l": "leg_l", "foot_r": "leg_r"}
+    P = {}                       # pivots, absolute px
+    G = {}                       # cubes, absolute px
+    par = {"torso": "pelvis", "head": "torso",
+           "arm_l": "torso", "fore_l": "arm_l", "arm_r": "torso", "fore_r": "arm_r",
+           "leg_l": "pelvis", "shin_l": "leg_l", "leg_r": "pelvis", "shin_r": "leg_r"}
 
-    G = {}
+    P["pelvis"] = (0, 17, 0)
     G["pelvis"] = [
-        _box(-0.17, -0.12, -0.11, 0.34, 0.22, 0.22, "lc_mid"),
-        _box(-0.20, -0.04, -0.09, 0.40, 0.08, 0.18, "lc_joint"),
+        C((-3, 15, -2), (6, 4, 4), "lc_mid", "plate"),
+        C((-4, 16, -1.5), (8, 2, 3), "lc_joint", "joint"),          # hip sockets
     ]
+    P["torso"] = (0, 18, 0)
     G["torso"] = [
-        _box(-0.19, 0.00, -0.12, 0.38, 0.26, 0.24, "lc_mid"),
-        _box(-0.21, 0.26, -0.13, 0.42, 0.22, 0.26, "lc_light"),
-        _box(-0.19, 0.48, -0.12, 0.38, 0.18, 0.24, "lc_mid"),
-        # exposed segmented spine — called out on the sheet's back detail
-        _box(-0.07, 0.04, -0.17, 0.14, 0.07, 0.07, "lc_joint"),
-        _box(-0.07, 0.17, -0.17, 0.14, 0.07, 0.07, "lc_joint"),
-        _box(-0.07, 0.30, -0.18, 0.14, 0.07, 0.07, "lc_joint"),
-        _box(-0.07, 0.43, -0.17, 0.14, 0.07, 0.07, "lc_joint"),
-        _box(-0.07, 0.55, -0.16, 0.14, 0.07, 0.07, "lc_joint"),
-        # shoulder sockets
-        _box(-0.33, 0.40, -0.10, 0.14, 0.17, 0.20, "lc_joint"),
-        _box(0.19, 0.40, -0.10, 0.14, 0.17, 0.20, "lc_joint"),
-        _box(-0.07, 0.64, -0.06, 0.14, 0.10, 0.12, "lc_dark"),      # thin neck
+        C((-2.5, 18, -2), (5, 4, 4), "lc_mid", "segment"),          # waist, pinched
+        C((-3.5, 22, -2.5), (7, 4, 5), "lc_light", "ribs"),         # thorax
+        C((-3, 26, -2), (6, 3, 4), "lc_mid", "plate"),              # collar
+        C((-5, 26, -1.5), (2, 3, 3), "lc_joint", "joint"),          # shoulder sockets
+        C((3, 26, -1.5), (2, 3, 3), "lc_joint", "joint"),
+        C((-1, 29, -1), (2, 2, 2), "lc_dark", "neck"),              # thin neck
     ]
-    # oversized head, tilted on two axes — the single most recognisable feature
-    TILT = {"origin": [0.0, 0.0, 0.0], "x": -9.0, "y": 4.0, "z": 11.0}
-    G["head"] = hollow_face(0.62, 0.58, 0.56, "lc_light", "lc_void",
-                            eye_w=0.17, eye_h=0.15, eye_gap=0.10,
-                            mouth_w=0.22, mouth_h=0.08,
-                            eye_y=0.16, mouth_y=-0.09, rot=TILT)
-    G["head"].append(_box(-0.26, 0.32, -0.22, 0.52, 0.06, 0.44, "lc_mid", rotation=TILT))
+    for y in (18.5, 21, 23.5, 26):                                  # knuckled spine
+        G["torso"].append(C((-1, y, -3), (2, 1.5, 1), "lc_joint", "knob"))
+
+    # The oversized head. Its tilt — the single most recognisable thing about it — is now the
+    # head bone's rest rotation instead of a rotation baked into every cube, so animation
+    # turns the head about its own neck instead of about a skewed box.
+    P["head"] = (0, 30.5, 0.5)
+    G["head"] = [
+        C((-5, 30.5, -4), (10, 9, 9), "lc_light", "skull"),
+        C((-4, 39.5, -3), (8, 1, 7), "lc_mid", "plate"),            # cranial plate
+        C((-4, 34.5, 5), (3, 2, 0.5), "lc_void", "void"),           # eyes: holes, not features
+        C((1, 34.5, 5), (3, 2, 0.5), "lc_void", "void"),
+        C((-2, 31.5, 5), (4, 1, 0.5), "lc_void", "void"),           # mouth
+    ]
 
     for side, sg in (("l", 1), ("r", -1)):
-        G[f"arm_{side}"] = segmented_limb(0.84, 0.13, 0.10, "lc_mid", "lc_joint",
-                                          segs=3, knob=1.7, bow=0.02)
-        # long bony fingers, built for climbing and grabbing
-        fing = [_box(-0.09, -0.10, -0.07, 0.18, 0.10, 0.14, "lc_dark")]
-        for i in range(4):
-            f = (i / 3.0) - 0.5
-            fing.append(_box(-0.028 + f * 0.11, -0.40, -0.028 + abs(f) * 0.05,
-                             0.056, 0.30, 0.056, "lc_light",
-                             rotation={"origin": [f * 0.11, -0.10, 0.0],
-                                       "x": 8.0 + abs(f) * 14, "y": 0.0, "z": f * 30.0}))
-        fing.append(_box(-0.028 - sg * 0.10, -0.30, -0.09, 0.056, 0.20, 0.056, "lc_light",
-                         rotation={"origin": [-sg * 0.10, -0.10, 0.0],
-                                   "x": -26.0, "y": 0.0, "z": sg * 20.0}))
-        G[f"hand_{side}"] = fing
-
-        G[f"leg_{side}"] = segmented_limb(0.92, 0.15, 0.11, "lc_mid", "lc_joint",
-                                          segs=3, knob=1.6, bow=-0.02)
-        G[f"foot_{side}"] = [
-            _box(-0.09, -0.10, -0.10, 0.18, 0.10, 0.20, "lc_dark"),
-            _box(-0.07, -0.10, 0.08, 0.05, 0.06, 0.20, "lc_light"),
-            _box(0.02, -0.10, 0.08, 0.05, 0.06, 0.20, "lc_light"),
-            _box(-0.03, -0.10, -0.26, 0.06, 0.06, 0.18, "lc_light"),
+        sx = 4.0 * sg
+        P[f"arm_{side}"] = (sx, 27.5, 0)
+        P[f"fore_{side}"] = (sx, 20.5, 0)
+        P[f"leg_{side}"] = (2.0 * sg, 16.5, 0)
+        P[f"shin_{side}"] = (2.0 * sg, 9, 0)
+        arm = [C((-1, 20.5, -1), (2, 6.5, 2), "lc_mid", "segment")]
+        fore = [
+            C((-1.5, 19.5, -1.5), (3, 2, 3), "lc_joint", "joint"),  # elbow
+            C((-1, 13, -1), (2, 6.5, 2), "lc_mid", "segment"),
+            C((-1.5, 11, -1.5), (3, 2, 3), "lc_dark", "knuckle"),   # hand
         ]
+        # long bony fingers, built for climbing and grabbing
+        for i, fan in enumerate((-16.0, -5.0, 5.0, 16.0)):
+            fore += finger((-1.0 + i * 0.67, 11.0, 0.0), fan, 9.0, (3.0, 3.5),
+                           "lc_light", "lc_dark", width=0.75, depth=0.75)
+        fore += finger((0.0, 11.5, 1.0), 0.0, -14.0, (2.0, 2.0), "lc_light", "lc_dark",
+                       width=0.75, depth=0.75, splay=-30.0)                 # thumb
+        leg = [C((-1, 9.5, -1), (2, 7, 2), "lc_mid", "segment")]
+        shin = [
+            C((-1.5, 8, -1.5), (3, 2, 3), "lc_joint", "joint"),     # knee
+            C((-1, 2, -1), (2, 6, 2), "lc_mid", "segment"),
+            C((-1.5, 0, -1.5), (3, 2, 3), "lc_dark", "knuckle"),    # ankle
+            C((-1.5, 0, 1.5), (1, 1, 3), "lc_light", "claw"),       # toes
+            C((0.5, 0, 1.5), (1, 1, 3), "lc_light", "claw"),
+            C((-0.5, 0, -3), (1, 1, 1.5), "lc_light", "claw"),      # heel spur
+        ]
+        for key, cubes in ((f"arm_{side}", arm), (f"fore_{side}", fore),
+                           (f"leg_{side}", leg), (f"shin_{side}", shin)):
+            px, py, pz = P[key]
+            moved = []
+            for c in cubes:                                         # authored about x = 0
+                m = dict(c)
+                m["from"] = (c["from"][0] + abs(px), c["from"][1], c["from"][2])
+                if "rot" in c:
+                    m["origin"] = (c["origin"][0] + abs(px), c["origin"][1], c["origin"][2])
+                moved.append(m if sg > 0 else mirror_cube(m))
+            G[key] = moved
 
-    def frozen(phase):
-        return {}
-
-    def twitch(phase):
-        j = math.sin(phase * math.tau * 3.0)
-        return {"head": (1.8 * j, 4.0 * math.sin(phase * math.tau * 2.0), 1.4 * j),
-                "torso": (0.8 * j, 1.2 * j, 0.0)}
-
-    def stalk(phase):
-        """Moves unnaturally — the arm swing is deliberately off-rhythm against the stride."""
-        p = {}
-        for side, off in (("l", 0.0), ("r", 0.5)):
-            a = (phase + off) * math.tau
-            p[f"leg_{side}"] = (34.0 * math.sin(a), 0.0, 0.0)
-            p[f"foot_{side}"] = (-14.0 * math.sin(a), 0.0, 0.0)
-            b = (phase + off + 0.18) * math.tau
-            p[f"arm_{side}"] = (-26.0 * math.sin(b), 0.0, 0.0)
-            p[f"hand_{side}"] = (18.0 + 12.0 * math.sin(b), 0.0, 0.0)
-        p["torso"] = (5.0, 7.0 * math.sin(phase * math.tau), 0.0)
-        p["head"] = (-6.0, -9.0 * math.sin(phase * math.tau), 0.0)
-        return p
-
-    def rear(phase):
-        return {
-            "torso": (-28.0, 0.0, 0.0), "head": (20.0, 0.0, 0.0),
-            "arm_l": (-96.0, 0.0, 26.0), "arm_r": (-96.0, 0.0, -26.0),
-            "hand_l": (-30.0, 0.0, 0.0), "hand_r": (-30.0, 0.0, 0.0),
-            "leg_l": (16.0, 0.0, 0.0), "leg_r": (16.0, 0.0, 0.0),
-        }
-
-    def climb(phase):
-        """On a wall, all four limbs splayed — the sheet's action poses."""
-        p = {"torso": (62.0, 0.0, 0.0), "head": (-46.0, 0.0, 0.0)}
-        for side, sg, off in (("l", 1, 0.0), ("r", -1, 0.5)):
-            s = math.sin((phase + off) * math.tau)
-            p[f"arm_{side}"] = (-74.0 + 24.0 * s, 0.0, sg * 34.0)
-            p[f"hand_{side}"] = (-24.0, 0.0, 0.0)
-            p[f"leg_{side}"] = (46.0 - 22.0 * s, 0.0, sg * 26.0)
-            p[f"foot_{side}"] = (-20.0, 0.0, 0.0)
-        return p
-
-    anims = {"frozen": (frozen, 2), "twitch": (twitch, 8),
-             "stalk": (stalk, 8), "rear": (rear, 2), "climb": (climb, 8)}
-    return Creature("locust", J, P, G, anims, height_hint=2.4)
+    rest = {
+        "torso": (8.0, 0.0, 0.0),                       # it stands hunched
+        "head": (-17.0, 4.0, 11.0),                     # the tilt (and the hunch undone)
+        "arm_l": (-4.0, 0.0, 6.0), "arm_r": (-4.0, 0.0, -6.0),
+        "fore_l": (-14.0, 0.0, -2.0), "fore_r": (-14.0, 0.0, 2.0),
+        "leg_l": (-10.0, 0.0, 3.0), "leg_r": (-10.0, 0.0, -3.0),
+        "shin_l": (16.0, 0.0, -2.0), "shin_r": (16.0, 0.0, 2.0),
+    }
+    return Creature("locust", P, par, G, rest=rest, height_hint=2.4,
+                    display_scale=1.0, bb_px_per_block=16.0)
 
 
 # ================================================================= DARK WALKER
-# Tier 2. Built from five references Aiden supplied: a hilltop silhouette, an ink drawing on
-# pink paper, two frames of something standing in a road at night with lit eyes, and one of
-# it looking over a fence at a house. What all five share is the proportion — the legs are
-# most of the creature — plus a wide flat brim and tendril arms in the two that show detail,
-# and lit eyes in the three shot at night. So it gets all of it.
-#
-# It is deliberately the OUTDOOR tier. The Locust is found standing inside houses at door
-# height; this one is 7.4 blocks and cannot follow you through a door. It is what is in the
-# road, on the ridge, over the fence.
+# Built from Aiden's five references: a hilltop silhouette, an ink drawing on pink paper, two
+# frames of something standing in a road at night with lit eyes, and one of it reaching over a
+# fence at a house. All five agree on the proportion — legs more than half of it, the body the
+# smallest part — and on a wide flat brim, a small head, lit eyes, and arms that hang to the
+# knee. The ink drawing and the hilltop both show SIX arms, fanned, with long fingers; the road
+# frames show the knees bending as it steps.
 
 def _dark_walker():
-    SH = 5.71                                   # shoulder height; the arms hang in tiers
-    J = {
-        "pelvis": (0.00, 4.39, 0.00),
-        "torso":  (0.00, 4.39, 0.00),
-        "neck":   (0.00, 5.85, 0.02),
-        "head":   (0.00, 6.19, 0.02),
-        "hat":    (0.00, 6.47, 0.00),
-    }
-    P = {"torso": "pelvis", "neck": "torso", "head": "neck", "hat": "head"}
+    P, G = {}, {}
+    par = {"torso": "pelvis", "neck": "torso", "head": "neck", "hat": "head"}
 
-    TIERS_Y = ((1, 0.345, SH, -0.02), (2, 0.300, SH - 0.23, -0.06), (3, 0.250, SH - 0.46, -0.10))
-    for n, x, y, z in TIERS_Y:
-        for side, sg in (("l", 1), ("r", -1)):
-            J[f"arm_{side}{n}"] = (sg * x, y, z)
-            J[f"tip_{side}{n}"] = (sg * (x + 0.05), y - 2.86, z + 0.04)
-            P[f"arm_{side}{n}"] = "torso"
-            P[f"tip_{side}{n}"] = f"arm_{side}{n}"
-    for side, sg in (("l", 1), ("r", -1)):
-        J[f"leg_{side}"] = (sg * 0.19, 4.35, 0.00)
-        J[f"foot_{side}"] = (sg * 0.19, 0.13, -0.02)
-        P[f"leg_{side}"] = "pelvis"
-        P[f"foot_{side}"] = f"leg_{side}"
-
-    G = {}
+    HIP, KNEE = 68.0, 35.0
+    P["pelvis"] = (0, HIP, 0)
     G["pelvis"] = [
-        _box(-0.17, -0.10, -0.11, 0.34, 0.22, 0.22, "dw_dark"),
-        _box(-0.20, -0.02, -0.09, 0.40, 0.07, 0.18, "dw_mid"),
+        C((-4.5, HIP - 4, -2.5), (9, 6, 5), "dw_dark", "pelvis"),
+        C((-5, HIP + 1, -2), (10, 1, 4), "dw_pale", "ridge"),       # the crest of the hip bones
     ]
-    # A torso you could close a hand around. In every reference the body is the smallest
-    # part of the creature; the silhouette is legs, arms and hat.
+
+    # A torso you could close a hand around: a pinched waist, a stooped chest, and shoulders
+    # wider than the hips — the ink drawing's long coat-hanger silhouette.
+    P["torso"] = (0, HIP + 1, 0)
+    T = HIP + 1
     G["torso"] = [
-        _box(-0.17, 0.00, -0.11, 0.34, 0.46, 0.22, "dw_dark"),
-        _box(-0.19, 0.46, -0.12, 0.38, 0.56, 0.24, "dw_dark"),
-        _box(-0.21, 1.00, -0.13, 0.42, 0.30, 0.26, "dw_dark"),
-        _box(-0.44, 1.14, -0.10, 0.88, 0.14, 0.20, "dw_mid"),        # the shoulder yoke
-        _box(-0.07, 1.30, -0.05, 0.14, 0.18, 0.10, "dw_dark"),       # neck root
+        C((-3, T, -2), (6, 9, 4), "dw_skin", "waist"),
+        C((-4, T + 9, -2), (8, 8, 5), "dw_skin", "ribs"),
+        C((-5, T + 17, -1.5), (10, 7, 5), "dw_skin", "chest"),
+        C((-8.5, T + 23, -1.5), (17, 3, 5), "dw_dark", "yoke"),     # the shoulder yoke
+        C((-2, T + 26, 0), (4, 2, 3), "dw_dark", "collar"),
     ]
-    for i in range(5):                                                # a faint rib banding
-        G["torso"].append(_box(-0.18, 0.08 + i * 0.21, -0.125, 0.36, 0.035, 0.25, "dw_mid"))
+    for i, y in enumerate((T + 2, T + 6, T + 11, T + 15, T + 20)):  # spine knuckles
+        z = -3.0 if i < 2 else -3.0 + 0.5 * (i - 1)
+        G["torso"].append(C((-1, y, z), (2, 1.5, 1), "dw_pale", "knob"))
 
-    G["neck"] = [_box(-0.055, 0.00, -0.055, 0.11, 0.34, 0.11, "dw_dark")]
+    NECK = T + 27
+    P["neck"] = (0, NECK, 1.5)
+    G["neck"] = [C((-1, NECK - 1, 0.5), (2, 9, 2), "dw_skin", "neck")]
 
+    HEAD = NECK + 7
+    P["head"] = (0, HEAD, 1.5)
     G["head"] = [
-        _box(-0.19, 0.00, -0.17, 0.38, 0.30, 0.34, "dw_dark"),
-        _box(-0.15, 0.30, -0.14, 0.30, 0.06, 0.28, "dw_dark"),
-        # the eyes. Proud of the face and lit, because in three of the five references the
+        C((-2.5, HEAD, -1), (5, 7, 5), "dw_skin", "face"),
+        C((-2, HEAD - 2, 0), (4, 2, 3.5), "dw_skin", "jaw"),
+        C((-3, HEAD + 4, 3.5), (6, 1, 1), "dw_dark", "brow"),       # the brow that shades them
+        # The eyes. Proud of the face and lit, because in three of the five references the
         # eyes are the only thing in the frame that is not a silhouette.
-        _box(-0.145, 0.145, 0.165, 0.10, 0.055, 0.03, "dw_eye", emit=15),
-        _box(0.045, 0.145, 0.165, 0.10, 0.055, 0.03, "dw_eye", emit=15),
+        C((-2, HEAD + 2.5, 4), (1, 1, 0.5), "dw_eye", "eye", emit=15),
+        C((1, HEAD + 2.5, 4), (1, 1, 0.5), "dw_eye", "eye", emit=15),
     ]
 
-    # The hat. Tipped a few degrees so it reads as worn rather than placed, and wide enough
-    # that the brim is the first thing you identify at any distance.
-    TIP = {"origin": [0.0, 0.0, 0.0], "x": 4.0, "y": 0.0, "z": -3.0}
-    G["hat"] = [_box(-0.93, 0.00, -0.93, 1.86, 0.055, 1.86, "dw_hat", rotation=TIP),
-                _box(-0.86, 0.055, -0.86, 1.72, 0.03, 1.72, "dw_mid", rotation=TIP)]
-    for i, (w, h) in enumerate(((0.30, 0.26), (0.26, 0.24), (0.21, 0.22), (0.17, 0.14))):
-        y = 0.055 + sum(k for _, k in ((0.30, 0.26), (0.26, 0.24), (0.21, 0.22))[:i])
-        G["hat"].append(_box(-w, y, -w, w * 2, h, w * 2, "dw_hat", rotation=TIP))
+    # The hat. Wide and flat — the brim is twice the shoulder width and the first thing you
+    # identify at any distance — over a LOW crown that steps in to a blunt point, the way the
+    # hilltop silhouette reads.
+    HAT = HEAD + 6
+    P["hat"] = (0, HAT, 1.5)
+    # the brim is round, the mod way: a stepped disc of plates that never overlap, so
+    # nothing is coplanar and nothing z-fights. A single square plate read as a
+    # mortarboard the moment the head tipped.
+    hz = 1.5
+    brim = [((-10, 10), (-10, 10)),
+            ((-7, 7), (10, 15)), ((-7, 7), (-15, -10)),
+            ((10, 15), (-7, 7)), ((-15, -10), (-7, 7))]
+    for sx in (1, -1):
+        for sz in (1, -1):
+            for (a, b), (c, d) in (((7, 10), (10, 13)), ((10, 13), (7, 10)), ((10, 12), (10, 12))):
+                x0, x1 = sorted((sx * a, sx * b))
+                z0, z1 = sorted((sz * c, sz * d))
+                brim.append(((x0, x1), (z0, z1)))
+    G["hat"] = [C((x0, HAT, hz + z0), (x1 - x0, 1, z1 - z0), "dw_hat", "brim")
+                for (x0, x1), (z0, z1) in brim]
+    G["hat"] += [
+        C((-5.5, HAT + 1, -4), (11, 3, 11), "dw_hat", "crown"),
+        C((-6, HAT + 1, -4.5), (12, 1.5, 12), "dw_band", "band"),
+        C((-4.5, HAT + 4, -3), (9, 2, 9), "dw_hat", "crown"),
+        C((-3.5, HAT + 6, -2), (7, 1, 7), "dw_hat", "crown"),
+        C((-2, HAT + 7, -0.5), (4, 1, 4), "dw_hat", "crown"),
+    ]
 
-    for n, _x, _y, _z in TIERS_Y:
+    # Six arms in three tiers. Each tier sits a little lower, a little further back and a
+    # little narrower than the one above, and is a pixel shorter, so the six never read as
+    # one part repeated.
+    TIERS = ((1, 8.0, T + 25.0, 1.0, 26.0, 24.0),
+             (2, 7.0, T + 22.5, 0.0, 25.0, 24.0),
+             (3, 6.0, T + 20.0, -1.0, 24.0, 23.0))
+    for n, sx, sy, sz, upper, lower in TIERS:
         for side, sg in (("l", 1), ("r", -1)):
-            # Each tendril is a touch longer and thinner than the one above it, and bows
-            # outward a little, so six arms hanging together never read as a repeated part.
-            G[f"arm_{side}{n}"] = segmented_limb(2.86 + n * 0.06, 0.125 - n * 0.012,
-                                                 0.055, "dw_dark", "dw_pale",
-                                                 segs=4, knob=1.35, bow=sg * 0.03 * n)
-            # the splayed cluster at the tip
-            tip = [_box(-0.05, -0.08, -0.05, 0.10, 0.08, 0.10, "dw_pale")]
-            for k in range(5):
-                f = (k / 4.0) - 0.5
-                tip.append(_box(-0.018 + f * 0.085, -0.52, -0.018 + abs(f) * 0.04,
-                                0.036, 0.46, 0.036, "dw_dark",
-                                rotation={"origin": [f * 0.085, -0.08, 0.0],
-                                          "x": 6.0 + abs(f) * 18, "y": 0.0, "z": f * 34.0}))
-            G[f"tip_{side}{n}"] = tip
+            P[f"arm_{side}{n}"] = (sg * sx, sy, sz)
+            P[f"fore_{side}{n}"] = (sg * sx, sy - upper, sz)
+            par[f"arm_{side}{n}"] = "torso"
+            par[f"fore_{side}{n}"] = f"arm_{side}{n}"
+            # authored for the LEFT side about the limb's own axis, then placed / mirrored
+            arm = [
+                C((-1.5, sy - 2.5, sz - 1.5), (3, 3, 3), "dw_pale", "joint"),        # shoulder
+                C((-1, sy - upper + 1, sz - 1), (2, upper - 3, 2), "dw_skin", "limb"),
+            ]
+            ey = sy - upper
+            fore = [
+                C((-1.5, ey - 1.5, sz - 1.5), (3, 3, 3), "dw_pale", "joint"),        # elbow
+                C((-1, ey - lower, sz - 1), (2, lower - 1.5, 2), "dw_skin", "limb"),
+                C((-1.5, ey - lower - 3, sz - 1), (3, 3, 2), "dw_dark", "palm"),
+            ]
+            hy = ey - lower - 3
+            for i, fan in enumerate((-15.0, -5.0, 5.0, 15.0)):
+                fore += finger((-1.125 + i * 0.75, hy + 0.3, sz), fan, -7.0 - 2.0 * n,
+                               (5.0, 5.0), "dw_pale", "dw_claw", width=0.75, depth=0.75)
+            fore += finger((0.0, hy + 1.0, sz + 1.0), 0.0, -10.0, (3.0, 3.5),
+                           "dw_pale", "dw_claw", width=0.75, depth=0.75, splay=-35.0)   # thumb
+            for key, cubes in ((f"arm_{side}{n}", arm), (f"fore_{side}{n}", fore)):
+                moved = []
+                for c in cubes:
+                    m = dict(c)
+                    m["from"] = (c["from"][0] + sx, c["from"][1], c["from"][2])
+                    if "rot" in c:
+                        m["origin"] = (c["origin"][0] + sx, c["origin"][1], c["origin"][2])
+                    moved.append(m if sg > 0 else mirror_cube(m))
+                G[key] = moved
 
     for side, sg in (("l", 1), ("r", -1)):
-        G[f"leg_{side}"] = segmented_limb(4.22, 0.185, 0.085, "dw_dark", "dw_pale",
-                                          segs=3, knob=1.45, bow=-0.05)
-        G[f"foot_{side}"] = [
-            _box(-0.065, -0.11, -0.10, 0.13, 0.11, 0.30, "dw_dark"),
-            _box(-0.05, -0.11, 0.18, 0.10, 0.06, 0.16, "dw_pale"),
+        lx = 3.0
+        P[f"leg_{side}"] = (sg * lx, HIP - 1, 0)
+        P[f"shin_{side}"] = (sg * lx, KNEE, 0)
+        par[f"leg_{side}"] = "pelvis"
+        par[f"shin_{side}"] = f"leg_{side}"
+        leg = [
+            C((-1.5, KNEE + 15, -1.5), (3, HIP - 1 - KNEE - 15, 3), "dw_skin", "thigh"),
+            C((-1, KNEE + 1, -1), (2, 14, 2), "dw_skin", "limb"),
         ]
+        shin = [
+            C((-1.5, KNEE - 1.5, -1.5), (3, 3, 3), "dw_pale", "joint"),             # knee
+            C((-1, 2, -1), (2, KNEE - 3.5, 2), "dw_skin", "limb"),
+            C((-1.5, 0, -2), (3, 2, 3), "dw_dark", "heel"),
+            C((-1, 0, 1), (2, 1, 4), "dw_dark", "foot"),
+            C((-0.5, 0, 5), (1, 1, 2), "dw_claw", "claw"),                          # the toe nail
+        ]
+        for key, cubes in ((f"leg_{side}", leg), (f"shin_{side}", shin)):
+            moved = []
+            for c in cubes:
+                m = dict(c)
+                m["from"] = (c["from"][0] + lx, c["from"][1], c["from"][2])
+                moved.append(m if sg > 0 else mirror_cube(m))
+            G[key] = moved
 
-    def still(phase):
-        return {}
-
-    def watch(phase):
-        """It stands at the end of the road and does not move. Only the tendrils drift —
-        on six different clocks, so they never agree with each other."""
-        p = {"torso": (1.0, 0.0, 0.0)}
-        for i, (n, _x, _y, _z) in enumerate(TIERS_Y):
-            for j, (side, sg) in enumerate((("l", 1), ("r", -1))):
-                o = (i * 2 + j) * 0.17
-                d = math.sin((phase + o) * math.tau)
-                p[f"arm_{side}{n}"] = (3.0 * d, 2.0 * math.sin((phase + o) * math.tau * 0.5),
-                                       sg * (4.0 + 2.5 * d))
-                p[f"tip_{side}{n}"] = (6.0 * math.sin((phase + o + 0.3) * math.tau), 0.0, 0.0)
-        # one slow turn of the head, late, and then it holds
-        k = max(0.0, min(1.0, (phase - 0.55) / 0.3))
-        p["neck"] = (0.0, -26.0 * k, 0.0)
-        p["head"] = (0.0, -12.0 * k, 1.5 * k)
-        return p
-
-    def walk(phase):
-        """The stride. Slow, enormous, and the head never moves — the hat brim holds dead
-        level through the whole cycle while four metres of leg swing underneath it."""
-        p = {}
-        for side, off, reach in (("l", 0.0, 1.0), ("r", 0.5, 0.88)):
-            a = (phase + off) * math.tau
-            sw = math.sin(a)
-            lift = max(0.0, math.cos(a))
-            p[f"leg_{side}"] = (31.0 * sw * reach, 0.0, 0.0)
-            p[f"foot_{side}"] = (-16.0 * sw + 12.0 * lift, 0.0, 0.0)
-        body = math.sin(phase * math.tau * 2.0)
-        p["pelvis"] = (0.0, 2.2 * math.sin(phase * math.tau), 1.1 * body)
-        p["torso"] = (2.0, 0.0, -0.8 * body)
-        p["neck"] = (-2.0, 0.0, 0.8 * body)                  # cancels it: the head is fixed
-        p["head"] = (0.0, 0.0, 0.0)
-        for i, (n, _x, _y, _z) in enumerate(TIERS_Y):
-            for j, (side, sg) in enumerate((("l", 1), ("r", -1))):
-                o = (i * 2 + j) * 0.13
-                d = math.sin((phase + o) * math.tau)
-                p[f"arm_{side}{n}"] = (7.0 * d, 0.0, sg * (3.0 + 2.0 * d))
-                p[f"tip_{side}{n}"] = (10.0 * math.sin((phase + o + 0.22) * math.tau), 0.0, 0.0)
-        return p
-
-    def loom(phase):
-        """It folds down to your height. The brim tips forward over the eyes as it comes."""
-        k = min(1.0, phase * 1.35)
-        e = k * k * (3 - 2 * k)
-        p = {
-            "torso": (46.0 * e, 0.0, 0.0),
-            "neck": (-22.0 * e, 0.0, 0.0),
-            "head": (16.0 * e, 0.0, 0.0),
-            "hat": (9.0 * e, 0.0, 0.0),
-            "leg_l": (16.0 * e, 0.0, 3.0 * e), "leg_r": (13.0 * e, 0.0, -3.0 * e),
-            "foot_l": (-14.0 * e, 0.0, 0.0), "foot_r": (-11.0 * e, 0.0, 0.0),
-        }
-        for i, (n, _x, _y, _z) in enumerate(TIERS_Y):
-            for j, (side, sg) in enumerate((("l", 1), ("r", -1))):
-                o = (i * 2 + j) * 0.15
-                p[f"arm_{side}{n}"] = (-34.0 * e - 8.0 * math.sin((phase + o) * math.tau),
-                                       0.0, sg * (10.0 + 6.0 * i) * e)
-                p[f"tip_{side}{n}"] = (-20.0 * e, 0.0, 0.0)
-        return p
-
-    def reach(phase):
-        """All six come up together. The digits open at the end of the gesture, not before."""
-        k = min(1.0, phase * 1.25)
-        e = k * k * (3 - 2 * k)
-        open_ = max(0.0, (phase - 0.62) / 0.38)
-        p = {"torso": (-9.0 * e, 0.0, 0.0), "neck": (6.0 * e, 0.0, 0.0),
-             "head": (8.0 * e, 0.0, 0.0), "hat": (-4.0 * e, 0.0, 0.0)}
-        for i, (n, _x, _y, _z) in enumerate(TIERS_Y):
-            for j, (side, sg) in enumerate((("l", 1), ("r", -1))):
-                o = (i * 2 + j) * 0.09
-                lead = max(0.0, min(1.0, (phase - o) * 2.2))
-                p[f"arm_{side}{n}"] = (-96.0 * e * lead, 0.0, sg * (6.0 + 9.0 * i) * e)
-                p[f"tip_{side}{n}"] = (-46.0 * e * lead + 30.0 * open_,
-                                       0.0, sg * 18.0 * open_)
-        return p
-
-    anims = {"still": (still, 2), "watch": (watch, 8), "walk": (walk, 8),
-             "loom": (loom, 6), "reach": (reach, 6)}
-    light = {f"head": 15}
-    return Creature("dark_walker", J, P, G, anims, light=light,
-                    height_hint=7.4, display_scale=3.0)
+    rest = {
+        "torso": (7.0, 0.0, 0.0),                     # the stoop
+        "neck": (16.0, 0.0, 0.0),                     # pushes the head out over its chest
+        "head": (-21.0, 0.0, 0.0),                    # ...and keeps the face level
+        "hat": (3.0, 0.0, -2.0),                      # worn, not placed
+        "leg_l": (-3.0, 0.0, 2.0), "leg_r": (-3.0, 0.0, -2.0),
+        "shin_l": (6.0, 0.0, -1.0), "shin_r": (6.0, 0.0, 1.0),
+    }
+    # the fan: tier 1 out widest and a little forward, tier 3 tucked in and back; each
+    # forearm bends back toward the vertical and a little forward, so the hands hang
+    # (the pitch also undoes the torso's stoop, or the arms would hang behind it)
+    for n, splay, pitch, bend in ((1, 30.0, -12.0, 18.0), (2, 22.0, -6.0, 13.0), (3, 15.0, 1.0, 9.0)):
+        for side, sg in (("l", 1), ("r", -1)):
+            rest[f"arm_{side}{n}"] = (pitch, 0.0, sg * splay)
+            rest[f"fore_{side}{n}"] = (-12.0, 0.0, -sg * bend)
+    return Creature("dark_walker", P, par, G, rest=rest, height_hint=7.3,
+                    display_scale=3.0, bb_px_per_block=16.0)
 
 
 LOCUST = _locust()
@@ -468,12 +475,11 @@ TIERS = {"locust": LOCUST, "dark_walker": DARK_WALKER}
 
 if __name__ == "__main__":
     for key, c in TIERS.items():
-        mx = max(max(abs(v) for v in p)
-                 for cubes in c.GEOMETRY.values() for cu in cubes
-                 for p in c._cube_corners(cu))
-        print(f"{key:16s} bones={len(c.BONE_ORDER):2d} "
-              f"cubes={sum(len(v) for v in c.GEOMETRY.values()):3d} "
-              f"height={c.model_height():.2f} (spec {c.height_hint})  "
-              f"max local {mx * c.PX_PER_RU:.1f}px")
-        for a, (fn, n) in c.ANIMATIONS.items():
-            print(f"{'':18s}{a:8s} {n} keyframes, height {c.model_height(fn(0.3)):.2f}")
+        far = max(max(abs(v) for v in p) * c.PX_PER_RU
+                  for cubes in c.GEOMETRY.values() for cu in cubes
+                  for p in c._cube_corners(cu))
+        lo, hi = c.extents({})
+        print(f"{key:12s} bones={len(c.BONE_ORDER):2d} cubes={c.cube_count():3d} "
+              f"height={hi - lo:.2f} blocks (spec {c.height_hint}) "
+              f"width={c.extents({}, 0)[1] - c.extents({}, 0)[0]:.2f}  "
+              f"item model furthest {far:.1f}px from pivot")

@@ -20,7 +20,18 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 import palette as pal
 
 NEAR = 0.08
-FONT = "/System/Library/Fonts/Supplemental/Courier New Bold.ttf"
+def _font():
+    import os
+    for f in ("/System/Library/Fonts/Supplemental/Courier New Bold.ttf",
+              "/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf",
+              "/usr/share/fonts/truetype/liberation/LiberationMono-Bold.ttf",
+              "C:/Windows/Fonts/courbd.ttf"):
+        if os.path.exists(f):
+            return f
+    raise FileNotFoundError("no monospace bold font found for the burn-in text")
+
+
+FONT = _font()
 
 # _corners order: i = 4*dx + 2*dy + dz
 FACES = [
@@ -63,8 +74,21 @@ def sunman_subject():
 
 
 def creature_subject(creature):
+    """Face colours sampled from the painted skin through each face's UV rect, the same way
+    the Sun Man's are — so a render shows the creature the pack actually ships."""
+    import rig
+    from paint_tiers import layout
+    sample = rig._atlas_colours()
+    placed = layout()
+    table = {}
+    for bone, cubes in creature.GEOMETRY.items():
+        for i, cube in enumerate(cubes):
+            faces = placed[(creature.name, bone, i)]["faces"]
+            table[id(cube)] = {d: sample([v / 32.0 for v in rect]) or pal.MATS[cube["mat"]]
+                               for d, rect in faces.items()}
+
     def colour(cube, face):
-        return pal.MATS[cube["mat"]]
+        return table[id(cube)][face]
     return Subject(creature.solve_grounded, creature.GEOMETRY, creature.BONE_ORDER,
                    creature._cube_corners, colour)
 
@@ -362,7 +386,7 @@ def burn_in(img, label, note, idx, total, tape="REC", flash=0.0):
 
 # ====================================================================== output
 
-def save_gif(path, imgs, ms, colors=96):
+def save_gif(path, imgs, ms, colors=160):
     """One palette for the whole clip. Per-frame adaptive palettes make heavy grain crawl,
     which reads as a GIF artefact instead of as tape.
 
@@ -372,8 +396,10 @@ def save_gif(path, imgs, ms, colors=96):
     """
     lum = [float(np.asarray(im, dtype=np.float32).mean()) for im in imgs]
     order = sorted(range(len(imgs)), key=lambda i: lum[i])
+    # ...and enough of them: with too few, a grey creature has no neutral greys to land on
+    # and quantises to whatever tint the sky frames happened to contribute
     picks = {order[0], order[-1]}
-    picks.update(order[i] for i in np.linspace(0, len(order) - 1, 5).astype(int))
+    picks.update(order[i] for i in np.linspace(0, len(order) - 1, 12).astype(int))
     picks = sorted(picks)
     strip = Image.new("RGB", (imgs[0].width, imgs[0].height * len(picks)))
     for i, k in enumerate(picks):

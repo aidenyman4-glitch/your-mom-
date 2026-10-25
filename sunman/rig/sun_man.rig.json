@@ -1,9 +1,10 @@
 {
   "name": "sun_man",
   "height_blocks": 72.892,
-  "px_per_block": 1.3333333333333333,
+  "bbmodel_px_per_block": 1.3333333333333333,
+  "item_px_per_block": 1.3333333333333333,
   "display_scale": 12.0,
-  "note": "v5 geometry, shipped verbatim. Do not reshape \u2014 surface and animation only.",
+  "note": "v5 geometry, shipped verbatim. Do not reshape — surface and animation only.",
   "bones": [
     {
       "name": "root",
@@ -11,6 +12,11 @@
       "pivot_blocks": [
         0.0,
         0.042,
+        0.0
+      ],
+      "rest_rotation": [
+        0.0,
+        0.0,
         0.0
       ],
       "cubes": 0
@@ -23,6 +29,11 @@
         24.822,
         0.0
       ],
+      "rest_rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
       "cubes": 2
     },
     {
@@ -32,6 +43,11 @@
         0.0,
         30.282,
         0.42
+      ],
+      "rest_rotation": [
+        0.0,
+        0.0,
+        0.0
       ],
       "cubes": 32
     },
@@ -43,6 +59,11 @@
         44.142,
         3.36
       ],
+      "rest_rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
       "cubes": 28
     },
     {
@@ -52,6 +73,11 @@
         0.0,
         54.642,
         7.98
+      ],
+      "rest_rotation": [
+        0.0,
+        0.0,
+        0.0
       ],
       "cubes": 13
     },
@@ -63,6 +89,11 @@
         65.142,
         11.76
       ],
+      "rest_rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
       "cubes": 10
     },
     {
@@ -72,6 +103,11 @@
         0.0,
         65.142,
         11.76
+      ],
+      "rest_rotation": [
+        0.0,
+        0.0,
+        0.0
       ],
       "cubes": 32
     },
@@ -83,6 +119,11 @@
         42.462,
         1.68
       ],
+      "rest_rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
       "cubes": 2
     },
     {
@@ -92,6 +133,11 @@
         7.295,
         36.162,
         1.764
+      ],
+      "rest_rotation": [
+        0.0,
+        0.0,
+        0.0
       ],
       "cubes": 4
     },
@@ -103,6 +149,11 @@
         27.762,
         1.806
       ],
+      "rest_rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
       "cubes": 2
     },
     {
@@ -112,6 +163,11 @@
         7.463,
         26.292,
         1.89
+      ],
+      "rest_rotation": [
+        0.0,
+        0.0,
+        0.0
       ],
       "cubes": 6
     },
@@ -123,6 +179,11 @@
         42.462,
         1.68
       ],
+      "rest_rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
       "cubes": 2
     },
     {
@@ -132,6 +193,11 @@
         -7.295,
         36.162,
         1.764
+      ],
+      "rest_rotation": [
+        0.0,
+        0.0,
+        0.0
       ],
       "cubes": 4
     },
@@ -143,6 +209,11 @@
         27.762,
         1.806
       ],
+      "rest_rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
       "cubes": 2
     },
     {
@@ -152,6 +223,11 @@
         -7.463,
         26.292,
         1.89
+      ],
+      "rest_rotation": [
+        0.0,
+        0.0,
+        0.0
       ],
       "cubes": 6
     },
@@ -163,6 +239,11 @@
         23.982,
         -0.21
       ],
+      "rest_rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
       "cubes": 2
     },
     {
@@ -172,6 +253,11 @@
         2.184,
         15.372,
         -0.252
+      ],
+      "rest_rotation": [
+        0.0,
+        0.0,
+        0.0
       ],
       "cubes": 4
     },
@@ -183,6 +269,11 @@
         1.512,
         -0.084
       ],
+      "rest_rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
       "cubes": 6
     },
     {
@@ -192,6 +283,11 @@
         -1.428,
         23.982,
         -0.21
+      ],
+      "rest_rotation": [
+        0.0,
+        0.0,
+        0.0
       ],
       "cubes": 2
     },
@@ -203,6 +299,11 @@
         15.372,
         -0.252
       ],
+      "rest_rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
       "cubes": 4
     },
     {
@@ -212,6 +313,11 @@
         -2.688,
         1.512,
         -0.084
+      ],
+      "rest_rotation": [
+        0.0,
+        0.0,
+        0.0
       ],
       "cubes": 6
     },
@@ -223,6 +329,11 @@
         33.962,
         3.305
       ],
+      "rest_rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
       "cubes": 2
     },
     {
@@ -232,6 +343,11 @@
         6.9825,
         27.662,
         3.389
+      ],
+      "rest_rotation": [
+        0.0,
+        0.0,
+        0.0
       ],
       "cubes": 4
     },
@@ -243,6 +359,11 @@
         19.262,
         3.431
       ],
+      "rest_rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
       "cubes": 2
     },
     {
@@ -252,6 +373,11 @@
         7.1505,
         17.792,
         3.515
+      ],
+      "rest_rotation": [
+        0.0,
+        0.0,
+        0.0
       ],
       "cubes": 6
     },
@@ -263,6 +389,11 @@
         33.962,
         3.305
       ],
+      "rest_rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
       "cubes": 2
     },
     {
@@ -272,6 +403,11 @@
         -6.9825,
         27.662,
         3.389
+      ],
+      "rest_rotation": [
+        0.0,
+        0.0,
+        0.0
       ],
       "cubes": 4
     },
@@ -283,6 +419,11 @@
         19.262,
         3.431
       ],
+      "rest_rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
       "cubes": 2
     },
     {
@@ -293,39 +434,56 @@
         17.792,
         3.515
       ],
+      "rest_rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
       "cubes": 6
     }
   ],
   "clips": {
-    "dread_idle": {
-      "label": "Dread idle",
+    "animation.sun_man.idle": {
+      "loop": "loop",
+      "length": 8.0,
       "note": "stillness, broken twice by a head snap",
-      "fn": "anim.dread_idle"
+      "keys": 153
     },
-    "wrong_walk": {
-      "label": "Wrong walk",
-      "note": "legs walk, the body refuses to agree",
-      "fn": "anim.wrong_walk"
+    "animation.sun_man.walk": {
+      "loop": "loop",
+      "length": 9.6,
+      "note": "the legs walk; the body refuses to agree",
+      "keys": 351
     },
-    "lurch": {
-      "label": "Lurch",
-      "note": "three beats of nothing, then one violent frame",
-      "fn": "anim.lurch"
-    },
-    "stare_down": {
-      "label": "Stare down",
-      "note": "the face descends toward you in jerks",
-      "fn": "anim.stare_down"
-    },
-    "harvest_rise": {
-      "label": "Harvest rise",
-      "note": "day thirty, arms opening",
-      "fn": "anim.harvest_rise"
-    },
-    "sprint": {
-      "label": "Sprint",
+    "animation.sun_man.sprint": {
+      "loop": "loop",
+      "length": 2.6,
       "note": "the head holds still while the body runs",
-      "fn": "anim.sprint"
+      "keys": 295
+    },
+    "animation.sun_man.lurch": {
+      "loop": "hold",
+      "length": 3.4,
+      "note": "three beats of nothing, then it folds over you",
+      "keys": 121
+    },
+    "animation.sun_man.stare_down": {
+      "loop": "hold",
+      "length": 4.0,
+      "note": "the face comes down to you in eight jerks",
+      "keys": 84
+    },
+    "animation.sun_man.harvest_rise": {
+      "loop": "hold",
+      "length": 5.0,
+      "note": "day thirty: the arms open in tiers",
+      "keys": 72
+    },
+    "animation.sun_man.grab": {
+      "loop": "once",
+      "length": 3.8,
+      "note": "it folds down and the lower arms close on you",
+      "keys": 99
     }
   }
 }

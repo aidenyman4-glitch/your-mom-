@@ -12,15 +12,26 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-import anim                      # noqa: E402
-import anim_mobs                 # noqa: E402
 import cine                      # noqa: E402
+import clips_dark_walker         # noqa: E402
+import clips_locust              # noqa: E402
+import clips_sun_man             # noqa: E402
 import palette as pal            # noqa: E402
 import rig                       # noqa: E402
 import tiers                     # noqa: E402
 
-OUT = Path(__file__).resolve().parent.parent / "animations"
+OUT = Path(__file__).resolve().parent.parent / "animations" / "shots"
 SIZE = (400, 540)
+
+SM = clips_sun_man.CLIPS
+LC = clips_locust.CLIPS
+DW = clips_dark_walker.CLIPS
+STILL = {"torso": (1.2, 0.0, 0.0), "neck": (-1.0, 0.0, 0.0)}   # for the shot where only the distance changes
+
+
+def clip_fn(clip):
+    """The renderers take pose(phase); a keyframed clip samples itself at phase * length."""
+    return clip.at
 
 
 def lerp(a, b, t):
@@ -159,7 +170,7 @@ def sunman_charge():
         stride = (p * 3.6) % 1.0
         bob = 0.05 * math.sin(stride * math.tau * 2)
         return {
-            "pose": anim.sprint(stride),
+            "pose": SM["animation.sun_man.sprint"].at(stride),
             "eye": (lerp(0.0, 0.6, k), 1.62 + bob, d),
             "target": (0.0, 30.0, 0.0),
             "fov": lerp(70.0, 96.0, k),
@@ -195,7 +206,7 @@ def sunman_closer():
             if j >= 3:
                 return {"insert": "face", "ms": 90 if j == 3 else 520, "ghost": 0.2}
             return {
-                "pose": anim.still(0.0),
+                "pose": STILL,
                 "eye": (0.0, 1.62, 11.0),
                 "target": (0.0, lerp(5.2, 62.0, (j + 1) / 3.0), 0.0),
                 "fov": 86.0, "shake": 0.05 + 0.05 * j,
@@ -206,7 +217,7 @@ def sunman_closer():
         d = stations[st]
         jump = step == 0 and st > 0
         return {
-            "pose": anim.still(0.0),
+            "pose": STILL,
             "eye": (0.0, 1.62, d),
             "target": (0.0, d * 0.47, 0.0),
             "fov": 74.0,
@@ -229,7 +240,7 @@ def sunman_arch():
     def f(i, p):
         snap = max(0.0, (p - 0.60) / 0.40)
         return {
-            "pose": anim.lurch(p),
+            "pose": SM["animation.sun_man.lurch"].at(p),
             "eye": (1.2, 1.62, 33.0),
             "target": (0.0, 34.0 + 12.0 * snap, 0.0),
             "fov": lerp(76.0, 90.0, snap),
@@ -252,7 +263,7 @@ def sunman_stare():
 
     def f(i, p):
         return {
-            "pose": anim.stare_down(p),
+            "pose": SM["animation.sun_man.stare_down"].at(p),
             "eye": (0.0, 1.62, 40.0),
             "target": (0.0, 34.0, 0.0),
             "fov": 76.0,
@@ -326,8 +337,11 @@ def walker_shot(name, label, note, clip, cam, N=22, ms=100, scene=None, seed=51,
 # ====================================================================== all of them
 
 def every_shot():
-    L = anim_mobs.LOCUST_CLIPS
-    W = anim_mobs.WALKER_CLIPS
+    def L(name):
+        return LC[f"animation.locust.{name}"]
+
+    def W(name):
+        return DW[f"animation.dark_walker.{name}"]
 
     def still_cam(d, h=1.62, ty=1.5, fov=70.0, shake=0.006, fog=40.0, **kw):
         def c(p):
@@ -383,47 +397,49 @@ def every_shot():
         sunman_arch(),
         sunman_stare(),
         sunman_wide("dread_idle", "Dread idle", "state 0 · stillness, broken twice",
-                    anim.dread_idle, dist=80.0, ms=130),
+                    clip_fn(SM["animation.sun_man.idle"]), dist=80.0, ms=130),
         sunman_wide("wrong_walk", "Wrong walk", "state 1 · the body refuses the legs",
-                    anim.wrong_walk, dist=70.0, ms=95),
+                    clip_fn(SM["animation.sun_man.walk"]), dist=70.0, ms=95),
         sunman_wide("harvest_rise", "Harvest", "state 4 · day thirty",
-                    anim.harvest_rise, dist=86.0, ty=40.0, ms=100),
+                    clip_fn(SM["animation.sun_man.harvest_rise"]), dist=86.0, ty=40.0, ms=100),
         # ---- the Locust
-        locust_shot("locust_frozen", "Locust · frozen", L["frozen_wrong"][2],
-                    L["frozen_wrong"][0], still_cam(3.4, ty=1.30, fov=62.0),
+        locust_shot("locust_frozen", "Locust · frozen", L("head_snap").note,
+                    # standing with its back to you; the clip turns the head round to you
+                    lambda p: {**L("head_snap").at(p), "pelvis": {"rotation": (0.0, 164.0, 0.0)}},
+                    still_cam(3.4, ty=1.30, fov=62.0),
                     N=14, ms=430, intensity=0.26),
-        locust_shot("locust_scuttle", "Locust · scuttle", L["scuttle"][2],
-                    L["scuttle"][0], run_cam(7.0, 1.30, ty=1.25),
+        locust_shot("locust_scuttle", "Locust · scuttle", L("scuttle").note,
+                    lambda p: L("scuttle").at(p * 3 % 1.0), run_cam(7.0, 1.30, ty=1.25),
                     N=26, scene=cine.ground_quads()
                     + cine.treeline(5, count=18, near=6.0, far=60.0, road=4.0),
                     tail=[("black", 300)], seed=29),
-        locust_shot("locust_rear", "Locust · rear", L["shriek"][2],
-                    L["shriek"][0], still_cam(3.6, ty=1.45, fov=66.0, shake=0.02),
+        locust_shot("locust_rear", "Locust · rear", L("rear").note,
+                    clip_fn(L("rear")), still_cam(3.6, ty=1.45, fov=66.0, shake=0.02),
                     N=22, ms=95, flash=lambda p: 0.45 if 0.52 <= p < 0.60 else 0.0),
-        locust_shot("locust_climb", "Locust · climb", L["climb_wall"][2],
-                    L["climb_wall"][0],
+        locust_shot("locust_climb", "Locust · climb", L("climb").note,
+                    clip_fn(L("climb")),
                     still_cam(2.7, h=0.42, ty=1.95, fov=76.0, roll=4.0),
                     N=20, ms=95, scene=cine.ground_quads() + cine.wall(), seed=23),
         # ---- the Dark Walker
-        walker_shot("walker_road", "Dark Walker", W["walker_road"][2],
-                    W["walker_road"][0], walker_approach(),
+        walker_shot("walker_road", "Dark Walker", W("walk").note,
+                    lambda p: W("walk").at(p * 2 % 1.0), walker_approach(),
                     N=34, seed=53, tail=[("black", 300)]),
-        walker_shot("walker_ridge", "Dark Walker · ridge", W["walker_watch"][2],
-                    W["walker_watch"][0],
+        walker_shot("walker_ridge", "Dark Walker · ridge", W("notice").note,
+                    clip_fn(W("notice")),
                     still_cam(44.0, ty=4.6, fov=42.0, shake=0.004, fog=170.0),
                     N=18, ms=150, intensity=0.5, bloom=0.3, mono=True,
                     sky=((196, 194, 194), (138, 136, 139)),
                     scene=cine.ground_quads()
                     + cine.treeline(29, count=14, near=60.0, far=140.0, road=22.0),
                     seed=59),
-        walker_shot("walker_loom", "Dark Walker · loom", W["walker_loom"][2],
-                    W["walker_loom"][0],
+        walker_shot("walker_loom", "Dark Walker · loom", W("loom").note,
+                    clip_fn(W("loom")),
                     lambda p: {"eye": (5.4, 1.30, 5.0), "target": (0.0, 3.4, 0.0),
                                "fov": 82.0, "shake": 0.018, "fog": 60.0},
                     N=24, ms=105, intensity=0.42, bloom=0.9, lamp=1.5, lamp_reach=8.0,
                     seed=61),
-        walker_shot("walker_reach", "Dark Walker · reach", W["walker_reach"][2],
-                    W["walker_reach"][0],
+        walker_shot("walker_reach", "Dark Walker · reach", W("attack").note,
+                    clip_fn(W("attack")),
                     lambda p: {"eye": (0.7, 0.30, 2.9), "target": (0.0, 3.1, 0.0),
                                "fov": 94.0, "roll": 6.0, "shake": 0.028, "fog": 46.0},
                     N=20, ms=95, intensity=0.55, bloom=1.1, lamp=2.0, lamp_reach=6.0,

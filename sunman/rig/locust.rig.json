@@ -1,7 +1,8 @@
 {
   "name": "locust",
-  "height_blocks": 2.367,
-  "px_per_block": 16.0,
+  "height_blocks": 2.604,
+  "bbmodel_px_per_block": 16.0,
+  "item_px_per_block": 16.0,
   "display_scale": 1.0,
   "bones": [
     {
@@ -9,7 +10,12 @@
       "parent": null,
       "pivot_blocks": [
         0.0,
-        1.02,
+        1.0625,
+        0.0
+      ],
+      "rest_rotation": [
+        0.0,
+        0.0,
         0.0
       ],
       "cubes": 2,
@@ -23,10 +29,15 @@
       "parent": "pelvis",
       "pivot_blocks": [
         0.0,
-        1.1,
+        1.125,
         0.0
       ],
-      "cubes": 11,
+      "rest_rotation": [
+        8.0,
+        0.0,
+        0.0
+      ],
+      "cubes": 10,
       "materials": [
         "lc_dark",
         "lc_joint",
@@ -39,8 +50,13 @@
       "parent": "torso",
       "pivot_blocks": [
         0.0,
-        1.84,
-        0.02
+        1.9062,
+        0.0312
+      ],
+      "rest_rotation": [
+        -17.0,
+        4.0,
+        11.0
       ],
       "cubes": 5,
       "materials": [
@@ -53,13 +69,77 @@
       "name": "arm_l",
       "parent": "torso",
       "pivot_blocks": [
-        0.26,
-        1.58,
-        -0.01
+        0.25,
+        1.7188,
+        0.0
       ],
-      "cubes": 5,
+      "rest_rotation": [
+        -4.0,
+        0.0,
+        6.0
+      ],
+      "cubes": 1,
       "materials": [
+        "lc_mid"
+      ]
+    },
+    {
+      "name": "fore_l",
+      "parent": "arm_l",
+      "pivot_blocks": [
+        0.25,
+        1.2812,
+        0.0
+      ],
+      "rest_rotation": [
+        -14.0,
+        0.0,
+        -2.0
+      ],
+      "cubes": 13,
+      "materials": [
+        "lc_dark",
         "lc_joint",
+        "lc_light",
+        "lc_mid"
+      ]
+    },
+    {
+      "name": "leg_l",
+      "parent": "pelvis",
+      "pivot_blocks": [
+        0.125,
+        1.0312,
+        0.0
+      ],
+      "rest_rotation": [
+        -10.0,
+        0.0,
+        3.0
+      ],
+      "cubes": 1,
+      "materials": [
+        "lc_mid"
+      ]
+    },
+    {
+      "name": "shin_l",
+      "parent": "leg_l",
+      "pivot_blocks": [
+        0.125,
+        0.5625,
+        0.0
+      ],
+      "rest_rotation": [
+        16.0,
+        0.0,
+        -2.0
+      ],
+      "cubes": 6,
+      "materials": [
+        "lc_dark",
+        "lc_joint",
+        "lc_light",
         "lc_mid"
       ]
     },
@@ -67,55 +147,38 @@
       "name": "arm_r",
       "parent": "torso",
       "pivot_blocks": [
-        -0.26,
-        1.58,
-        -0.01
+        -0.25,
+        1.7188,
+        0.0
       ],
-      "cubes": 5,
+      "rest_rotation": [
+        -4.0,
+        0.0,
+        -6.0
+      ],
+      "cubes": 1,
       "materials": [
-        "lc_joint",
         "lc_mid"
       ]
     },
     {
-      "name": "hand_l",
-      "parent": "arm_l",
-      "pivot_blocks": [
-        0.3,
-        0.74,
-        -0.01
-      ],
-      "cubes": 6,
-      "materials": [
-        "lc_dark",
-        "lc_light"
-      ]
-    },
-    {
-      "name": "hand_r",
+      "name": "fore_r",
       "parent": "arm_r",
       "pivot_blocks": [
-        -0.3,
-        0.74,
-        -0.01
-      ],
-      "cubes": 6,
-      "materials": [
-        "lc_dark",
-        "lc_light"
-      ]
-    },
-    {
-      "name": "leg_l",
-      "parent": "pelvis",
-      "pivot_blocks": [
-        0.15,
-        1.02,
+        -0.25,
+        1.2812,
         0.0
       ],
-      "cubes": 5,
+      "rest_rotation": [
+        -14.0,
+        0.0,
+        2.0
+      ],
+      "cubes": 13,
       "materials": [
+        "lc_dark",
         "lc_joint",
+        "lc_light",
         "lc_mid"
       ]
     },
@@ -123,87 +186,90 @@
       "name": "leg_r",
       "parent": "pelvis",
       "pivot_blocks": [
-        -0.15,
-        1.02,
+        -0.125,
+        1.0312,
         0.0
       ],
-      "cubes": 5,
+      "rest_rotation": [
+        -10.0,
+        0.0,
+        -3.0
+      ],
+      "cubes": 1,
       "materials": [
-        "lc_joint",
         "lc_mid"
       ]
     },
     {
-      "name": "foot_l",
-      "parent": "leg_l",
-      "pivot_blocks": [
-        0.15,
-        0.1,
-        0.0
-      ],
-      "cubes": 4,
-      "materials": [
-        "lc_dark",
-        "lc_light"
-      ]
-    },
-    {
-      "name": "foot_r",
+      "name": "shin_r",
       "parent": "leg_r",
       "pivot_blocks": [
-        -0.15,
-        0.1,
+        -0.125,
+        0.5625,
         0.0
       ],
-      "cubes": 4,
+      "rest_rotation": [
+        16.0,
+        0.0,
+        2.0
+      ],
+      "cubes": 6,
       "materials": [
         "lc_dark",
-        "lc_light"
+        "lc_joint",
+        "lc_light",
+        "lc_mid"
       ]
     }
   ],
-  "datapack_clips": {
-    "frozen": {
-      "keyframes": 2
+  "clips": {
+    "animation.locust.frozen": {
+      "loop": "loop",
+      "length": 6.0,
+      "note": "it does not move. almost",
+      "keys": 20
     },
-    "twitch": {
-      "keyframes": 8
+    "animation.locust.head_snap": {
+      "loop": "hold",
+      "length": 2.4,
+      "note": "between two frames its head is facing you",
+      "keys": 17
     },
-    "stalk": {
-      "keyframes": 8
+    "animation.locust.twitch": {
+      "loop": "loop",
+      "length": 3.0,
+      "note": "a slow weave, broken by jerks on no rhythm",
+      "keys": 41
     },
-    "rear": {
-      "keyframes": 2
+    "animation.locust.stalk": {
+      "loop": "loop",
+      "length": 3.2,
+      "note": "the arms swing three to the legs' two",
+      "keys": 235
     },
-    "climb": {
-      "keyframes": 8
-    }
-  },
-  "render_clips": {
-    "frozen_wrong": {
-      "label": "Frozen",
-      "note": "it does not move. then its head is facing you",
-      "fn": "anim_mobs.frozen_wrong"
+    "animation.locust.scuttle": {
+      "loop": "loop",
+      "length": 0.8,
+      "note": "low and fast, the arms reaching ahead, clawing",
+      "keys": 139
     },
-    "twitch_hard": {
-      "label": "Twitch",
-      "note": "inside 22 blocks",
-      "fn": "anim_mobs.twitch_hard"
+    "animation.locust.rear": {
+      "loop": "hold",
+      "length": 1.6,
+      "note": "it sinks, and then it is already up",
+      "keys": 55
     },
-    "scuttle": {
-      "label": "Scuttle",
-      "note": "door height, and it fits where you fit",
-      "fn": "anim_mobs.scuttle"
+    "animation.locust.climb": {
+      "loop": "loop",
+      "length": 1.6,
+      "note": "facing the wall; its head turned round to the floor",
+      "keys": 124
     },
-    "shriek": {
-      "label": "Rear",
-      "note": "waking is one-way",
-      "fn": "anim_mobs.shriek"
-    },
-    "climb_wall": {
-      "label": "Climb",
-      "note": "craned back down at the floor",
-      "fn": "anim_mobs.climb_wall"
+    "animation.locust.attack": {
+      "loop": "once",
+      "length": 1.0,
+      "note": "drop, lunge, rake, rake",
+      "keys": 53
     }
   }
 }
