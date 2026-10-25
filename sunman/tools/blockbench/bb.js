@@ -50,6 +50,7 @@ const path = require('path');
         Animator.preview();
       } else if (!Modes.edit) Modes.options.edit.select();
       const p = Preview.selected || main_preview;
+      if (o.background) { try { p.renderer.setClearColor(o.background, 1); } catch (e) {} }
       p.camera.position.set(...o.position);
       p.controls.target.set(...o.target);
       p.controls.update();

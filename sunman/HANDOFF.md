@@ -1,6 +1,6 @@
 # Sun Man — rig handoff
 
-Three creatures. Every `.bbmodel` is a **Bedrock Entity** project that opens in Blockbench with
+Five models: three creatures, plus the Birthday People in two variants. Every `.bbmodel` is a **Bedrock Entity** project that opens in Blockbench with
 its texture embedded, assembled in its rest pose, hierarchy intact — and with its clips in the
 Animate tab as real keyframes.
 
@@ -9,6 +9,8 @@ Animate tab as real keyframes.
 | `blockbench/sun_man.bbmodel` | 29 | 197 | 8 | 72.89 blocks | 16/12 px per block (display scale 12) |
 | `blockbench/locust.bbmodel` | 11 | 113 | 10 | 3.42 blocks | 16 px per block, true scale |
 | `blockbench/dark_walker.bbmodel` | 21 | 144 | 7 | 7.28 blocks | 16 px per block, true scale |
+| `blockbench/birthday_crown.bbmodel` | 18 | 195 | 7 | 6.4 blocks (7.55 with the strings) | 16 px per block, true scale |
+| `blockbench/birthday_tree.bbmodel` | 18 | 274 | 7 | 7.56 blocks | 16 px per block, true scale |
 
 `rig/<name>.rig.json` is the same skeleton as data: bone, parent, pivot **in blocks**, rest
 rotation, cube count, materials, and the clip index. `bedrock/` holds the `.geo.json` +
@@ -29,6 +31,37 @@ rotation was added, and hashes the face quadrant. His own thirteen material tile
 and have been repainted (see below); every other tile is hashed against the handoff too.
 
 The Locust and Dark Walker are open to reshaping, and have been.
+
+## The Birthday People (after Dr. Nowhere)
+
+New: `tools/birthday.py`, `tools/paint_birthday.py`, `tools/clips_birthday.py` (and the two
+per-variant modules `clips_birthday_crown.py` and `clips_birthday_tree.py`). They were built
+from the five references in `docs/references/birthday_people/`.
+
+- **Two variants, one skeleton:** `birthday_crown` (a ring of ball-tipped spikes, five across the
+  front as in the drawings) and `birthday_tree` (the column narrows into a leaning trunk that
+  splits into dead branches). The tree is grown from a fixed seed, so it rebuilds identically.
+  The variants share every body cube and every texel of it.
+- **The body:** a pale, starved body with a washboard of proud ribs and shadows gone red, a
+  sunken belly with a dark hollow in it, and arms that hang dead straight nearly to the ground.
+  Each arm ends in four black fingers longer than a forearm. A tall black column of a head is
+  painted as pencil strokes and frays onto the shoulders. A small pale bearded face looks out of
+  it, a third of the way down. Two red strings rise from the head (their own bone, so a datapack
+  can hide them).
+- **Size:** 6.4 blocks to the tip of the crown (5.6 to the top of the column) and 7.6 blocks
+  to the tree's twigs. No reference shows one next to a person, but in every frame they tower,
+  so the face sits three blocks above a player's eyes.
+- **Rig:** 18 bones. The chain is pelvis → torso → chest → head, with crown and strings on the
+  head. Each arm has three bones, so the hand bends at the wrist. Each leg has three, with a real
+  ankle so the foot can be keyed flat while walking.
+- **Texture:** its own `textures/entity/birthday_people.png` (512×512, 32 texels/block, 12% used).
+  The Sun Man atlas is untouched.
+- **Clips:** idle, walk, turn, reach, grab, dangle, death (see `animations/CLIPS.md`). The walk's
+  feet are placed by IK and kept flat by the ankle (`_level_feet`). The grab re-solves the pelvis
+  so the feet stay down. The death is grounded every 0.05 s. `check.py` asserts that nothing goes
+  through the floor in any clip.
+- **Previews** are rendered on paper grey, like the drawings, so the black columns read. Each
+  variant also gets a 36-frame turntable GIF in `docs/`.
 
 ## Third pass: the Locust matched to its references
 
@@ -174,6 +207,7 @@ Rebuild, in order:
 
     python3 tools/paint_tiers.py      # tier skins into the free quadrant (face hash-guarded)
     python3 tools/paint_sun_man.py    # the Sun Man's own tiles (face + every other tile guarded)
+    python3 tools/paint_birthday.py   # the Birthday People's own texture
     python3 tools/export_tiers.py     # per-bone item models for the datapack
     python3 tools/export_bb.py        # .bbmodel projects (+ clips) and rig JSON
     python3 tools/check.py            # every contract

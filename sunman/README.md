@@ -1,6 +1,6 @@
-# Sun Man, the Locust and the Dark Walker
+# Sun Man, the Locust, the Dark Walker and the Birthday People
 
-Three horror creatures for Minecraft Java 26.3, modelled and animated in Blockbench mod style.
+Horror creatures for Minecraft Java 26.3, modelled and animated in Blockbench mod style.
 Open any `.bbmodel` in [`blockbench/`](blockbench) and press play in the Animate tab.
 
 | | bones | cubes | clips | height |
@@ -8,6 +8,13 @@ Open any `.bbmodel` in [`blockbench/`](blockbench) and press play in the Animate
 | **Sun Man** | 29 | 197 | idle · walk · sprint · lurch · stare_down · harvest_rise · grab · peer | 72.9 blocks |
 | **Locust** | 11 | 113 | frozen · head_snap · twitch · stalk · scuttle · rear · climb · attack · peek · death | 3.4 blocks |
 | **Dark Walker** | 21 | 144 | idle · walk · chase · notice · loom · attack · death | 7.3 blocks |
+| **Birthday Person** (crown) | 18 | 195 | idle · walk · turn · reach · grab · dangle · death | 6.4 blocks to the crown |
+| **Birthday Person** (tree) | 18 | 274 | idle · walk · turn · reach · grab · dangle · death | 7.6 blocks to the twigs |
+
+| Birthday Person · crown | Birthday Person · tree |
+|---|---|
+| ![](docs/birthday_crown_turntable.gif) | ![](docs/birthday_tree_turntable.gif) |
+| ![](animations/previews/birthday_crown_walk.gif) | ![](animations/previews/birthday_tree_dangle.gif) |
 
 ![Dark Walker](docs/dark_walker_turnaround.png)
 ![Locust](docs/locust_turnaround.png)
@@ -25,10 +32,12 @@ itself. What each clip is for, and the movement speed each walk is tuned to, is 
 
 ## What's where
 
-- `blockbench/` — the three projects (Bedrock Entity format, texture embedded, clips included)
+- `blockbench/` — the projects (Bedrock Entity format, texture embedded, clips included)
 - `bedrock/` — `.geo.json` + `.animation.json` for each, for GeckoLib or Bedrock
-- `resourcepack/` — the per-bone item models and the atlas the datapack rig uses
+- `resourcepack/` — the per-bone item models, the atlas the datapack rig uses, and the Birthday
+  People's own texture
 - `rig/` — each skeleton as JSON: pivots in blocks, rest rotations, clip index
+- `docs/references/` — the reference images each creature was built from
 - `tools/` — the generators; `python3 tools/check.py` verifies every contract
 - [`HANDOFF.md`](HANDOFF.md) — the technical handoff: constraints, conventions, how to rebuild
 

@@ -6,13 +6,15 @@ the first broken one.
   * the starburst face at atlas (256,256) is pixel-identical, and so is every tile in the top
     half that is not one of the Sun Man's own thirteen (the villager prop's, the unused ones)
   * the Sun Man's 197 cubes, 29 pivots, per-cube rotations and UVs are exactly the author's
-  * bone budgets: Sun Man 29, Locust 11, Dark Walker 21 (a bone is an entity in the datapack)
+  * bone budgets: Sun Man 29, Locust 11, Dark Walker 21, the Birthday People 16 each (a bone
+    is an entity in the datapack)
   * every .bbmodel is a Bedrock Entity project carrying all of its creature's clips
   * every clip keys only bones that exist, inside its own length, and every looping track
     ends on the value it starts on (Blockbench wraps Catmull-Rom on loops, so that is what
     makes a loop seamless) — or, for a linear spin, a whole number of turns from it
   * no clip rotates the Sun Man's head against a stretched neck (it would shear the face)
   * the walk cycles keep their feet planted: through stance the sole stays on the ground
+  * no Birthday People clip puts any part of the body through the floor
   * every posed bone ships an item model + item definition, inside the [-16, 32] box, and
     nothing ships for a bone that no longer exists
 """
@@ -24,6 +26,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from PIL import Image                     # noqa: E402
 
+import birthday                           # noqa: E402
+import clips_birthday_crown               # noqa: E402
+import clips_birthday_tree                # noqa: E402
 import clips_dark_walker                  # noqa: E402
 import clips_locust                       # noqa: E402
 import clips_sun_man                      # noqa: E402
@@ -40,8 +45,10 @@ FACE_HASH = "394858d53b822f85e30a8657ef4310e15fb496916295d27e9463b4f2bad2906c"
 UNTOUCHED_TILES = "6965a50e70d3444c67de00eb12edad93cec2bb11bcdd301d9a204ce0a02ebdac"
 # sha256 over the Sun Man's elements as the handoff shipped them (see sun_man_geometry_hash)
 SUN_MAN_GEOMETRY = "0141eb210bcc6c7aa391847c39f2f6117a41f62de914fd3fa8477959a94312b0"
-BUDGET = {"sun_man": 29, "locust": 11, "dark_walker": 21}
-CLIPS = {"sun_man": clips_sun_man, "locust": clips_locust, "dark_walker": clips_dark_walker}
+BUDGET = {"sun_man": 29, "locust": 11, "dark_walker": 21,
+          "birthday_crown": birthday.BONES, "birthday_tree": birthday.BONES}
+CLIPS = {"sun_man": clips_sun_man, "locust": clips_locust, "dark_walker": clips_dark_walker,
+         "birthday_crown": clips_birthday_crown, "birthday_tree": clips_birthday_tree}
 
 failures = []
 
@@ -140,6 +147,8 @@ def main():
                            (clips_dark_walker, "animation.dark_walker.chase", 0.8),
                            (clips_locust, "animation.locust.stalk", 0.4),
                            (clips_locust, "animation.locust.scuttle", 0.4),
+                           (clips_birthday_crown, "animation.birthday_crown.walk", 0.4),
+                           (clips_birthday_tree, "animation.birthday_tree.walk", 0.4),
                            (clips_sun_man, "animation.sun_man.walk", 0.25),
                            (clips_sun_man, "animation.sun_man.sprint", 0.4)):
         ppb = getattr(mod, "PPB", 16.0)
@@ -176,8 +185,20 @@ def main():
         unit = "blocks" if ppb == 1.0 else "px"
         check(worst <= tol, f"{name}: planted foot stays within {worst:.2f} {unit} of the ground")
 
+    print("ground")
+    for mod in (clips_birthday_crown, clips_birthday_tree):
+        body = {b: cs for b, cs in mod.C.GEOMETRY.items() if b != "strings"}
+        for clip in mod.CLIPS.values():
+            lo = 0.0
+            n = int(clip.length * 40)
+            for i in range(n + 1):
+                sol = mod.C.solve_m(clip.sample(clip.length * i / n))
+                lo = min([lo] + [sol[b][0][1] + rig.mat_vec(sol[b][1], p)[1]
+                                 for b, cs in body.items() for cu in cs for p in mod.C._cube_corners(cu)])
+            check(lo * 16 > -0.5, f"{clip.name}: nothing goes through the floor (lowest {lo * 16:.2f} px)")
+
     print("item models")
-    for c in tiers.TIERS.values():
+    for c in list(tiers.TIERS.values()) + list(birthday.PEOPLE.values()):
         models = PACK / "models" / "item" / c.name
         posed = [b for b in c.BONE_ORDER if c.GEOMETRY.get(b)]
         have = sorted(p.stem for p in models.glob("*.json"))

@@ -24,6 +24,8 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import birthday                           # noqa: E402
+import paint_birthday                     # noqa: E402
 import tiers                              # noqa: E402
 from paint_tiers import layout            # noqa: E402
 
@@ -55,7 +57,7 @@ def _element(cube, px_per_ru, faces_px):
     return el
 
 
-def export(creature, uvs=None):
+def export(creature, uvs=None, texture="sunman:entity/sun_man"):
     uvs = uvs or layout()
     models = PACK / "models" / "item" / creature.name
     items = PACK / "items"
@@ -72,7 +74,7 @@ def export(creature, uvs=None):
         lit += sum(1 for e in elements if "light_emission" in e)
         far = max([far] + [abs(v - 8.0) for e in elements for v in e["from"] + e["to"]])
         (models / f"{bone}.json").write_text(json.dumps({
-            "textures": {"0": "sunman:entity/sun_man", "particle": "sunman:entity/sun_man"},
+            "textures": {"0": texture, "particle": texture},
             "elements": elements,
             "gui_light": "front",
         }, indent=2) + "\n")
@@ -100,3 +102,6 @@ if __name__ == "__main__":
     uv = layout()
     for c in tiers.TIERS.values():
         export(c, uv)
+    people = paint_birthday.layout()
+    for c in birthday.PEOPLE.values():
+        export(c, people, f"sunman:entity/{paint_birthday.TEXTURE.stem}")

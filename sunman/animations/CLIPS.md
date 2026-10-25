@@ -44,6 +44,7 @@ clip's or the feet will slide:
 | `locust.stalk`           | 0.62             | high, pulled steps on reverse-bending knees |
 | `locust.scuttle`         | 2.17             | four-legged: blade points and feet, diagonal pairs |
 | `sun_man.walk`           | 4.52             | the left leg reaches 22% further than the right |
+| `birthday_*.walk`        | 0.67             | 18 px strides lifted high at the knee, foot down 60% of the cycle |
 | `sun_man.sprint`         | 15.7             | the left a third again as long as the right |
 
 **Scale keys** stretch the Sun Man's neck. Blockbench, GeckoLib and Bedrock all scale a bone in
@@ -129,6 +130,24 @@ the pale thing caught in a headlight, and two of the five references are exactly
 mid-grey does both: backlit against a bright sky it reads as a pure silhouette, and in a light
 at night it is the thing in the road. The hat stays black in every light.
 
+## Birthday People — after Dr. Nowhere
+
+Both variants (`birthday_crown`, `birthday_tree`) carry the same seven clips, built by
+`tools/clips_birthday.py` against either one. The crown bone carries the spikes or the tree, so
+in the tree variant the same keys make the branches sway. They are marionettes nobody is
+working: the arms never swing on their own, they dangle and lag, and the column rides on top
+like something balanced there.
+
+| clip     | loop | length | the idea |
+|----------|------|--------|----------|
+| `idle`   | loop | 6 s    | it hangs under its strings and sways like something hanging: the body one way, the column the other a beat late, the arms swinging off the shoulders like weights on threads. Once, a hand closes and opens; once, the strings twitch and the whole of it lifts a pixel and settles |
+| `walk`   | loop | 2.8 s  | a marionette's walk: each foot lifted high by the knee and set down stiff and flat (IK, with the ankle keeping the sole level), the arms not swinging but dragged a beat behind, the long black fingers trailing, the column swaying on top |
+| `turn`   | hold | 3.4 s  | it has noticed you. The body does not move; the column winds round in notches, like something heavy being turned by hand, and the crown or the tree comes round after it and overshoots |
+| `reach`  | hold | 3.0 s  | both arms lifted slowly as if by the wrists, the hands hanging off the ends until the arms are up — then the fingers open, and the column leans in after them so the face comes toward you |
+| `grab`   | once | 1.4 s  | far too fast for something that size: up, over, the fingers close, and it pulls whatever it caught in to the face |
+| `dangle` | loop | 4.0 s  | hauled up off the floor on its strings: limp, turning slowly on the threads, every limb swinging dead on its own clock — then the strings jerk, it all jumps, and swings |
+| `death`  | hold | 2.6 s  | the strings are cut: the knees go, the column topples it face first, the arms land last across it, and the slack strings fall down over the body. The fall is solved against the ground |
+
 ## The grade
 
 Shots are degraded like tape on purpose, and it is not decoration: `fx/overlay_vhs` is a
@@ -183,7 +202,8 @@ works from the resource pack alone — no datapack needed.
 
 ## The atlas
 
-Everything lives in the one 512×512 atlas the pack already ships, because the item models have to
+The Birthday People have their own texture, `textures/entity/birthday_people.png`
+(`tools/paint_birthday.py`), painted the same way in pencil tones. Everything else lives in the one 512×512 atlas the pack already ships, because the item models have to
 find their texture in-game and that one is known to work.
 
 **The Locust and the Dark Walker** — `tools/paint_tiers.py` — are painted into the free quadrant

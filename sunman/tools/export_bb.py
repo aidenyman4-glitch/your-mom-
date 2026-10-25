@@ -1,4 +1,4 @@
-"""Blockbench projects + machine-readable rigs for all three creatures.
+"""Blockbench projects + machine-readable rigs for every creature.
 
     python3 tools/export_bb.py     ->  blockbench/*.bbmodel  +  rig/*.rig.json
 
@@ -15,7 +15,8 @@ sits and who its parent is. Nothing is reinterpreted, so nothing can drift — t
 29 pivots and per-cube rotations come out exactly as they went in.
 
 The Locust and the Dark Walker are built straight from `tiers.py` at true scale, 16 px to the
-block, with the UVs `paint_tiers.layout()` painted.
+block, with the UVs `paint_tiers.layout()` painted. The Birthday People (`birthday.py`, both
+variants) are built the same way against their own texture and `paint_birthday.layout()`.
 
 Keyframes are written in the pre-5.0 value convention (Bedrock's), and the file declares
 format 4.10, so it opens identically in Blockbench 4.x and 5.x — 5.x converts on load.
@@ -28,6 +29,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import rig as sunman                       # noqa: E402
+import birthday                            # noqa: E402
+import paint_birthday                      # noqa: E402
 import tiers                               # noqa: E402
 from paint_tiers import layout             # noqa: E402
 
@@ -49,13 +52,13 @@ def _r(v, n=4):
     return 0.0 if v == 0 else v
 
 
-def _texture():
-    raw = base64.b64encode(ATLAS.read_bytes()).decode()
-    return {"name": "sun_man.png", "folder": "entity", "namespace": "sunman", "id": "0",
+def _texture(path=ATLAS):
+    raw = base64.b64encode(path.read_bytes()).decode()
+    return {"name": path.name, "folder": "entity", "namespace": "sunman", "id": "0",
             "particle": True, "render_mode": "default", "render_sides": "auto",
             "frame_time": 1, "frame_order_type": "loop", "frame_order": "",
             "frame_interpolate": False, "visible": True, "internal": True, "saved": False,
-            "uuid": _uid("tex"), "mode": "bitmap", "width": 512, "height": 512,
+            "uuid": _uid("tex") if path == ATLAS else _uid("tex", path.name), "mode": "bitmap", "width": 512, "height": 512,
             "uv_width": 512, "uv_height": 512,
             "source": "data:image/png;base64," + raw}
 
@@ -68,7 +71,8 @@ def _clips(name):
     return list(mod.CLIPS.values())
 
 
-def _project(name, elements, groups, bones, parents, clips, px_per_block, visible_box):
+def _project(name, elements, groups, bones, parents, clips, px_per_block, visible_box,
+             texture=ATLAS):
     outliner = []
     for bone in bones:
         p = parents.get(bone)
@@ -85,7 +89,7 @@ def _project(name, elements, groups, bones, parents, clips, px_per_block, visibl
         "timeline_setups": [], "unhandled_root_fields": {},
         "resolution": {"width": 512, "height": 512},
         "elements": elements, "outliner": outliner,
-        "textures": [_texture()],
+        "textures": [_texture(texture)],
         "animations": [c.to_bbmodel(group_uuid, px_per_block) for c in clips],
     }
 
@@ -151,8 +155,8 @@ def sun_man():
 
 # ====================================================================== tiers
 
-def creature(c):
-    uvs = layout()
+def creature(c, uvs=None, texture=ATLAS):
+    uvs = uvs or layout()
     elements, groups = [], {}
     for bone in c.BONE_ORDER:
         groups[bone] = _group(c.name, bone, c.J_PX[bone], c.REST.get(bone, (0, 0, 0)))
@@ -176,11 +180,12 @@ def creature(c):
     xlo, xhi = c.extents({}, 0)
     doc = _project(c.name, elements, groups, c.BONE_ORDER, c.parents, clips,
                    c.BB_PX_PER_BLOCK, [round(max(1.0, xhi - xlo) + 0.5, 1),
-                                       round(hi - lo + 0.5, 1), 0])
+                                       round(hi - lo + 0.5, 1), 0], texture)
     rigdoc = {
         "name": c.name, "height_blocks": round(hi - lo, 3),
         "bbmodel_px_per_block": c.BB_PX_PER_BLOCK, "item_px_per_block": c.PX_PER_RU,
         "display_scale": c.DISPLAY_SCALE,
+        "texture": f"sunman:entity/{texture.stem}",
         "bones": [{"name": b, "parent": c.parents.get(b),
                    "pivot_blocks": [round(v, 4) for v in c.J[b]],
                    "rest_rotation": list(c.REST.get(b, (0.0, 0.0, 0.0))),
@@ -198,7 +203,9 @@ def _clip_index(clips):
 
 
 def jobs():
-    return [sun_man()] + [creature(c) for c in tiers.TIERS.values()]
+    people = paint_birthday.layout()
+    return ([sun_man()] + [creature(c) for c in tiers.TIERS.values()]
+            + [creature(c, people, paint_birthday.TEXTURE) for c in birthday.PEOPLE.values()])
 
 
 if __name__ == "__main__":

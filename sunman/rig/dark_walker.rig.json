@@ -4,6 +4,7 @@
   "bbmodel_px_per_block": 16.0,
   "item_px_per_block": 5.333333333333333,
   "display_scale": 3.0,
+  "texture": "sunman:entity/sun_man",
   "bones": [
     {
       "name": "pelvis",

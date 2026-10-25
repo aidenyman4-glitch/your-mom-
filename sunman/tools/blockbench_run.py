@@ -19,6 +19,7 @@ index.html — e.g. `npm run build-web` in a Blockbench checkout). Validated aga
 """
 import argparse
 import functools
+import math
 import http.server
 import json
 import socketserver
@@ -33,8 +34,15 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 ROOT = Path(__file__).resolve().parent.parent
 TOOLS = Path(__file__).resolve().parent
 BB = ROOT / "blockbench"
-NAMES = ("sun_man", "locust", "dark_walker")
-PPB = {"sun_man": 4.0 / 3.0, "locust": 16.0, "dark_walker": 16.0}
+NAMES = ("sun_man", "locust", "dark_walker", "birthday_crown", "birthday_tree")
+PPB = {"sun_man": 4.0 / 3.0, "locust": 16.0, "dark_walker": 16.0,
+       "birthday_crown": 16.0, "birthday_tree": 16.0}
+# the Birthday People are drawn in pencil on paper; render them on paper grey, so the black
+# columns read the way they do in the drawings
+BACKGROUND = {"birthday_crown": "#b8b2a8", "birthday_tree": "#b8b2a8"}
+# creatures that also get a 360-degree turntable GIF in docs/
+TURNTABLE = {"birthday_crown": ([0, 70, 175], [0, 58, 0]),
+             "birthday_tree": ([0, 74, 185], [0, 62, 0])}
 
 # camera per clip: (fps, eye, target, extra frames held on the last pose)
 CAM = {
@@ -57,6 +65,15 @@ CAM = {
                "attack": (15, [62, 38, 60], [0, 25, 8], 0),
                "peek": (10, [12, 40, 75], [0, 32, 0], 4),
                "death": (12.5, [58, 38, 70], [0, 18, 0], 4)},
+    **{name: {"_still": ([95, 76, 160], [0, 58, 0]),
+              "idle": (10, [70, 84, 150], [0, 64, 0], 0),
+              "walk": (12.5, [185, 66, 40], [0, 54, 0], 0),
+              "turn": (10, [36, 92, 120], [0, 78, 0], 4),
+              "reach": (10, [150, 74, 110], [0, 62, 18], 4),
+              "grab": (15, [150, 74, 120], [0, 60, 14], 0),
+              "dangle": (12.5, [95, 80, 150], [0, 64, 0], 0),
+              "death": (10, [60, 105, 215], [0, 30, 30], 4)}
+       for name in ("birthday_crown", "birthday_tree")},
     "sun_man": {"_still": ([80, 60, 140], [0, 48, 0]),
                 "idle": (6, [60, 80, 110], [0, 70, 6], 0),
                 "walk": (6, [170, 50, 30], [0, 46, 0], 0),
@@ -173,14 +190,33 @@ def previews(url, names=NAMES):
                 short = clip.name.split(".")[-1]
                 fps, eye, target, hold = cams[short]
                 clips.append({"animation": clip.name, "fps": fps, "position": eye, "target": target,
-                              "frames_dir": f"{tmp}/{short}", "hold_frames": hold})
+                              "frames_dir": f"{tmp}/{short}", "hold_frames": hold,
+                              "background": BACKGROUND.get(name)})
             eye, target = cams["_still"]
             sides = [("front", eye, target),
                      ("side", [eye[2] * 1.15, eye[1], 0], target),
                      ("back", [-eye[0], eye[1], -eye[2]], target)]
+            shots = [{"name": f"still_{s}", "position": e, "target": t} for s, e, t in sides]
+            if name in TURNTABLE:
+                (tx, ty, tz), tgt = TURNTABLE[name]
+                for k in range(36):
+                    a = math.tau * k / 36
+                    shots.append({"name": f"spin_{k:02d}", "target": tgt,
+                                  "position": [tz * math.sin(a), ty, tz * math.cos(a)]})
+            for sh in shots:
+                sh["background"] = BACKGROUND.get(name)
             run_job({"url": url, "model": str(BB / f"{name}.bbmodel"), "out_dir": tmp,
-                     "clips": clips,
-                     "shots": [{"name": f"still_{s}", "position": e, "target": t} for s, e, t in sides]})
+                     "clips": clips, "shots": shots})
+            if name in TURNTABLE:
+                spin = [_centre(Image.open(f"{tmp}/spin_{k:02d}.png").convert("RGB"), 0.62)
+                        for k in range(36)]
+                spin = [im.resize((300, int(im.height * 300 / im.width)), Image.LANCZOS) for im in spin]
+                pal = spin[0].quantize(colors=128, method=Image.MEDIANCUT)
+                q = [im.quantize(palette=pal, dither=Image.NONE) for im in spin]
+                path = docs / f"{name}_turntable.gif"
+                q[0].save(path, save_all=True, append_images=q[1:], duration=110, loop=0,
+                          optimize=True, disposal=1)
+                print(f"  {path.relative_to(ROOT)}  36 frames  {path.stat().st_size // 1024} KB")
             stills = [_centre(Image.open(f"{tmp}/still_{s}.png").convert("RGB")) for s, _, _ in sides]
             w = 420
             stills = [s.resize((w, int(s.height * w / s.width)), Image.LANCZOS) for s in stills]
