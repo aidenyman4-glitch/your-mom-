@@ -1,0 +1,389 @@
+{
+  "name": "birthday_crown",
+  "height_blocks": 7.548,
+  "bbmodel_px_per_block": 16.0,
+  "item_px_per_block": 5.333333333333333,
+  "display_scale": 3.0,
+  "texture": "sunman:entity/birthday_people",
+  "bones": [
+    {
+      "name": "pelvis",
+      "parent": null,
+      "pivot_blocks": [
+        0.0,
+        2.6562,
+        0.0
+      ],
+      "rest_rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "cubes": 4,
+      "materials": [
+        "bp_skin"
+      ]
+    },
+    {
+      "name": "torso",
+      "parent": "pelvis",
+      "pivot_blocks": [
+        0.0,
+        2.7812,
+        0.0
+      ],
+      "rest_rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "cubes": 6,
+      "materials": [
+        "bp_bone",
+        "bp_skin"
+      ]
+    },
+    {
+      "name": "chest",
+      "parent": "torso",
+      "pivot_blocks": [
+        0.0,
+        3.2812,
+        0.0
+      ],
+      "rest_rotation": [
+        2.0,
+        0.0,
+        0.0
+      ],
+      "cubes": 20,
+      "materials": [
+        "bp_bone",
+        "bp_skin"
+      ]
+    },
+    {
+      "name": "head",
+      "parent": "chest",
+      "pivot_blocks": [
+        0.0,
+        4.4688,
+        0.0
+      ],
+      "rest_rotation": [
+        -2.0,
+        0.0,
+        0.0
+      ],
+      "cubes": 24,
+      "materials": [
+        "bp_dark",
+        "bp_face"
+      ]
+    },
+    {
+      "name": "arm_l",
+      "parent": "chest",
+      "pivot_blocks": [
+        0.4219,
+        4.375,
+        0.0
+      ],
+      "rest_rotation": [
+        0.0,
+        0.0,
+        2.5
+      ],
+      "cubes": 3,
+      "materials": [
+        "bp_bone",
+        "bp_skin"
+      ]
+    },
+    {
+      "name": "fore_l",
+      "parent": "arm_l",
+      "pivot_blocks": [
+        0.4219,
+        3.0,
+        0.0
+      ],
+      "rest_rotation": [
+        -2.0,
+        0.0,
+        -1.0
+      ],
+      "cubes": 3,
+      "materials": [
+        "bp_bone",
+        "bp_skin"
+      ]
+    },
+    {
+      "name": "hand_l",
+      "parent": "fore_l",
+      "pivot_blocks": [
+        0.4219,
+        1.75,
+        0.0
+      ],
+      "rest_rotation": [
+        0.0,
+        0.0,
+        -1.5
+      ],
+      "cubes": 15,
+      "materials": [
+        "bp_hand"
+      ]
+    },
+    {
+      "name": "leg_l",
+      "parent": "pelvis",
+      "pivot_blocks": [
+        0.1406,
+        2.625,
+        0.0
+      ],
+      "rest_rotation": [
+        0.0,
+        0.0,
+        0.75
+      ],
+      "cubes": 2,
+      "materials": [
+        "bp_skin"
+      ]
+    },
+    {
+      "name": "shin_l",
+      "parent": "leg_l",
+      "pivot_blocks": [
+        0.1406,
+        1.3125,
+        0.0
+      ],
+      "rest_rotation": [
+        0.0,
+        0.0,
+        -0.75
+      ],
+      "cubes": 3,
+      "materials": [
+        "bp_bone",
+        "bp_skin"
+      ]
+    },
+    {
+      "name": "foot_l",
+      "parent": "shin_l",
+      "pivot_blocks": [
+        0.1406,
+        0.125,
+        0.0
+      ],
+      "rest_rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "cubes": 6,
+      "materials": [
+        "bp_hand",
+        "bp_skin"
+      ]
+    },
+    {
+      "name": "arm_r",
+      "parent": "chest",
+      "pivot_blocks": [
+        -0.4219,
+        4.375,
+        0.0
+      ],
+      "rest_rotation": [
+        0.0,
+        0.0,
+        -2.5
+      ],
+      "cubes": 3,
+      "materials": [
+        "bp_bone",
+        "bp_skin"
+      ]
+    },
+    {
+      "name": "fore_r",
+      "parent": "arm_r",
+      "pivot_blocks": [
+        -0.4219,
+        3.0,
+        0.0
+      ],
+      "rest_rotation": [
+        -2.0,
+        0.0,
+        1.0
+      ],
+      "cubes": 3,
+      "materials": [
+        "bp_bone",
+        "bp_skin"
+      ]
+    },
+    {
+      "name": "hand_r",
+      "parent": "fore_r",
+      "pivot_blocks": [
+        -0.4219,
+        1.75,
+        0.0
+      ],
+      "rest_rotation": [
+        0.0,
+        0.0,
+        1.5
+      ],
+      "cubes": 15,
+      "materials": [
+        "bp_hand"
+      ]
+    },
+    {
+      "name": "leg_r",
+      "parent": "pelvis",
+      "pivot_blocks": [
+        -0.1406,
+        2.625,
+        0.0
+      ],
+      "rest_rotation": [
+        0.0,
+        0.0,
+        -0.75
+      ],
+      "cubes": 2,
+      "materials": [
+        "bp_skin"
+      ]
+    },
+    {
+      "name": "shin_r",
+      "parent": "leg_r",
+      "pivot_blocks": [
+        -0.1406,
+        1.3125,
+        0.0
+      ],
+      "rest_rotation": [
+        0.0,
+        0.0,
+        0.75
+      ],
+      "cubes": 3,
+      "materials": [
+        "bp_bone",
+        "bp_skin"
+      ]
+    },
+    {
+      "name": "foot_r",
+      "parent": "shin_r",
+      "pivot_blocks": [
+        -0.1406,
+        0.125,
+        0.0
+      ],
+      "rest_rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "cubes": 6,
+      "materials": [
+        "bp_hand",
+        "bp_skin"
+      ]
+    },
+    {
+      "name": "strings",
+      "parent": "head",
+      "pivot_blocks": [
+        0.0,
+        5.5625,
+        0.0
+      ],
+      "rest_rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "cubes": 36,
+      "materials": [
+        "bp_string"
+      ]
+    },
+    {
+      "name": "crown",
+      "parent": "head",
+      "pivot_blocks": [
+        0.0,
+        5.5625,
+        0.0
+      ],
+      "rest_rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "cubes": 41,
+      "materials": [
+        "bp_dark"
+      ]
+    }
+  ],
+  "clips": {
+    "animation.birthday_crown.idle": {
+      "loop": "loop",
+      "length": 6.0,
+      "note": "hanging sway, a hand that closes once, a twitch of the strings",
+      "keys": 147
+    },
+    "animation.birthday_crown.walk": {
+      "loop": "loop",
+      "length": 2.8,
+      "note": "lifted by the knees, arms dragged, fingers trailing",
+      "keys": 302
+    },
+    "animation.birthday_crown.turn": {
+      "loop": "hold",
+      "length": 3.4,
+      "note": "the column winds round to you in notches",
+      "keys": 34
+    },
+    "animation.birthday_crown.reach": {
+      "loop": "hold",
+      "length": 3.0,
+      "note": "arms lifted by the wrists; the face leans in",
+      "keys": 42
+    },
+    "animation.birthday_crown.grab": {
+      "loop": "once",
+      "length": 1.4,
+      "note": "too fast: up, over, the fingers close, pulled in",
+      "keys": 58
+    },
+    "animation.birthday_crown.dangle": {
+      "loop": "loop",
+      "length": 4.0,
+      "note": "hauled up on its strings, limp, turning, jerked",
+      "keys": 225
+    },
+    "animation.birthday_crown.death": {
+      "loop": "hold",
+      "length": 2.6,
+      "note": "the strings are cut; the column topples it over",
+      "keys": 123
+    }
+  }
+}

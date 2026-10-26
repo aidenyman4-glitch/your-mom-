@@ -1,0 +1,1 @@
+$summon item_display ~ ~ ~ {Tags:["sunman_dead_grass"],item:{id:"minecraft:paper",count:1,components:{"minecraft:item_model":"sunman:dead_grass_$(v)"}},item_display:"fixed",Rotation:[$(yaw)f,0f],view_range:0.8f,shadow_radius:0f}

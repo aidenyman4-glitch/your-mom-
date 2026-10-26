@@ -1,0 +1,130 @@
+{
+  "sun_man.heartbeat": {
+    "sounds": [
+      {
+        "name": "sunman:sun_man/heartbeat",
+        "stream": false
+      }
+    ]
+  },
+  "sun_man.drone": {
+    "sounds": [
+      {
+        "name": "sunman:sun_man/drone",
+        "stream": false
+      }
+    ]
+  },
+  "sun_man.notice": {
+    "sounds": [
+      {
+        "name": "sunman:sun_man/notice",
+        "stream": false
+      }
+    ]
+  },
+  "sun_man.toll": {
+    "sounds": [
+      {
+        "name": "sunman:sun_man/toll",
+        "stream": false
+      }
+    ]
+  },
+  "sun_man.step": {
+    "sounds": [
+      {
+        "name": "sunman:sun_man/step",
+        "stream": false
+      }
+    ]
+  },
+  "sun_man.gaze": {
+    "sounds": [
+      {
+        "name": "sunman:sun_man/gaze",
+        "stream": false
+      }
+    ]
+  },
+  "sun_man.harvest": {
+    "sounds": [
+      {
+        "name": "sunman:sun_man/harvest",
+        "stream": false
+      }
+    ]
+  },
+  "locust.click": {
+    "sounds": [
+      {
+        "name": "sunman:locust/click",
+        "stream": false
+      }
+    ]
+  },
+  "locust.shriek": {
+    "sounds": [
+      {
+        "name": "sunman:locust/shriek",
+        "stream": false
+      }
+    ]
+  },
+  "locust.step": {
+    "sounds": [
+      {
+        "name": "sunman:locust/step",
+        "stream": false
+      }
+    ]
+  },
+  "dark_walker.step": {
+    "sounds": [
+      {
+        "name": "sunman:dark_walker/step",
+        "stream": false
+      }
+    ]
+  },
+  "dark_walker.drift": {
+    "sounds": [
+      {
+        "name": "sunman:dark_walker/drift",
+        "stream": false
+      }
+    ]
+  },
+  "dark_walker.notice": {
+    "sounds": [
+      {
+        "name": "sunman:dark_walker/notice",
+        "stream": false
+      }
+    ]
+  },
+  "dark_walker.reach": {
+    "sounds": [
+      {
+        "name": "sunman:dark_walker/reach",
+        "stream": false
+      }
+    ]
+  },
+  "village.whisper": {
+    "sounds": [
+      {
+        "name": "sunman:village/whisper",
+        "stream": false
+      }
+    ]
+  },
+  "music.dread": {
+    "sounds": [
+      {
+        "name": "sunman:music/dread",
+        "stream": true
+      }
+    ]
+  }
+}

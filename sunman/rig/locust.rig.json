@@ -1,0 +1,285 @@
+{
+  "name": "locust",
+  "height_blocks": 3.425,
+  "bbmodel_px_per_block": 16.0,
+  "item_px_per_block": 10.666666666666666,
+  "display_scale": 1.5,
+  "texture": "sunman:entity/sun_man",
+  "bones": [
+    {
+      "name": "pelvis",
+      "parent": null,
+      "pivot_blocks": [
+        0.0,
+        1.7188,
+        0.0
+      ],
+      "rest_rotation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "cubes": 5,
+      "materials": [
+        "lc_rag"
+      ]
+    },
+    {
+      "name": "torso",
+      "parent": "pelvis",
+      "pivot_blocks": [
+        0.0,
+        1.7812,
+        0.0
+      ],
+      "rest_rotation": [
+        3.0,
+        0.0,
+        0.0
+      ],
+      "cubes": 12,
+      "materials": [
+        "lc_bone",
+        "lc_flesh",
+        "lc_skin",
+        "lc_wrap"
+      ]
+    },
+    {
+      "name": "head",
+      "parent": "torso",
+      "pivot_blocks": [
+        0.0,
+        2.4688,
+        0.0
+      ],
+      "rest_rotation": [
+        -2.0,
+        4.0,
+        8.0
+      ],
+      "cubes": 54,
+      "materials": [
+        "lc_hair",
+        "lc_mask",
+        "lc_skin"
+      ]
+    },
+    {
+      "name": "arm_l",
+      "parent": "torso",
+      "pivot_blocks": [
+        0.25,
+        2.4375,
+        0.0
+      ],
+      "rest_rotation": [
+        0.0,
+        0.0,
+        8.0
+      ],
+      "cubes": 4,
+      "materials": [
+        "lc_bone",
+        "lc_wrap"
+      ]
+    },
+    {
+      "name": "fore_l",
+      "parent": "arm_l",
+      "pivot_blocks": [
+        0.25,
+        1.875,
+        0.0
+      ],
+      "rest_rotation": [
+        -3.0,
+        0.0,
+        2.0
+      ],
+      "cubes": 9,
+      "materials": [
+        "lc_bone",
+        "lc_needle",
+        "lc_wrap"
+      ]
+    },
+    {
+      "name": "leg_l",
+      "parent": "pelvis",
+      "pivot_blocks": [
+        0.1,
+        1.6875,
+        0.0
+      ],
+      "rest_rotation": [
+        -2.0,
+        0.0,
+        1.5
+      ],
+      "cubes": 2,
+      "materials": [
+        "lc_bone",
+        "lc_rag"
+      ]
+    },
+    {
+      "name": "shin_l",
+      "parent": "leg_l",
+      "pivot_blocks": [
+        0.1,
+        0.875,
+        0.0
+      ],
+      "rest_rotation": [
+        3.0,
+        0.0,
+        -1.0
+      ],
+      "cubes": 6,
+      "materials": [
+        "lc_bone",
+        "lc_wrap"
+      ]
+    },
+    {
+      "name": "arm_r",
+      "parent": "torso",
+      "pivot_blocks": [
+        -0.25,
+        2.4375,
+        0.0
+      ],
+      "rest_rotation": [
+        0.0,
+        0.0,
+        -8.0
+      ],
+      "cubes": 4,
+      "materials": [
+        "lc_bone",
+        "lc_wrap"
+      ]
+    },
+    {
+      "name": "fore_r",
+      "parent": "arm_r",
+      "pivot_blocks": [
+        -0.25,
+        1.875,
+        0.0
+      ],
+      "rest_rotation": [
+        -3.0,
+        0.0,
+        -2.0
+      ],
+      "cubes": 9,
+      "materials": [
+        "lc_bone",
+        "lc_needle",
+        "lc_wrap"
+      ]
+    },
+    {
+      "name": "leg_r",
+      "parent": "pelvis",
+      "pivot_blocks": [
+        -0.1,
+        1.6875,
+        0.0
+      ],
+      "rest_rotation": [
+        -2.0,
+        0.0,
+        -1.5
+      ],
+      "cubes": 2,
+      "materials": [
+        "lc_bone",
+        "lc_rag"
+      ]
+    },
+    {
+      "name": "shin_r",
+      "parent": "leg_r",
+      "pivot_blocks": [
+        -0.1,
+        0.875,
+        0.0
+      ],
+      "rest_rotation": [
+        3.0,
+        0.0,
+        1.0
+      ],
+      "cubes": 6,
+      "materials": [
+        "lc_bone",
+        "lc_wrap"
+      ]
+    }
+  ],
+  "clips": {
+    "animation.locust.frozen": {
+      "loop": "loop",
+      "length": 7.0,
+      "note": "it does not move. then it is upright again",
+      "keys": 23
+    },
+    "animation.locust.head_snap": {
+      "loop": "hold",
+      "length": 2.8,
+      "note": "its face comes round; then the neck cracks over",
+      "keys": 27
+    },
+    "animation.locust.twitch": {
+      "loop": "loop",
+      "length": 3.2,
+      "note": "a slow weave, broken by spasms on no rhythm",
+      "keys": 52
+    },
+    "animation.locust.stalk": {
+      "loop": "loop",
+      "length": 3.2,
+      "note": "high pulled steps; its knees bend the wrong way",
+      "keys": 236
+    },
+    "animation.locust.scuttle": {
+      "loop": "loop",
+      "length": 0.9,
+      "note": "hunched over, stilting on the blades of its arms",
+      "keys": 156
+    },
+    "animation.locust.rear": {
+      "loop": "hold",
+      "length": 1.9,
+      "note": "it sinks, and then it is already up",
+      "keys": 66
+    },
+    "animation.locust.climb": {
+      "loop": "loop",
+      "length": 1.6,
+      "note": "facing the wall; its head turned round to the floor",
+      "keys": 124
+    },
+    "animation.locust.attack": {
+      "loop": "once",
+      "length": 1.1,
+      "note": "drop, lunge, blades in, twist, tear out",
+      "keys": 63
+    },
+    "animation.locust.peek": {
+      "loop": "hold",
+      "length": 3.2,
+      "note": "the neck laid out sideways round a door frame",
+      "keys": 35
+    },
+    "animation.locust.death": {
+      "loop": "hold",
+      "length": 2.2,
+      "note": "the strings are cut; it drops into a heap",
+      "keys": 109
+    }
+  }
+}

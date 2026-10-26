@@ -1,0 +1,11 @@
+{
+  "values": [
+    "#minecraft:air",
+    "#sunman:plants",
+    "minecraft:cobweb",
+    "#sunman:light_out",
+    "minecraft:redstone_wire",
+    "minecraft:vine",
+    "minecraft:ladder"
+  ]
+}

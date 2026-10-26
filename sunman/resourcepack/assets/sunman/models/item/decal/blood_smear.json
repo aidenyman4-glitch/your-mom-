@@ -1,0 +1,40 @@
+{
+  "textures": {
+    "0": "sunman:decal/blood_smear",
+    "particle": "sunman:decal/blood_smear"
+  },
+  "elements": [
+    {
+      "from": [
+        0.0,
+        -4.0,
+        7.995
+      ],
+      "to": [
+        16.0,
+        20.0,
+        8.0
+      ],
+      "faces": {
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "north": {
+          "uv": [
+            16,
+            0,
+            0,
+            16
+          ],
+          "texture": "#0"
+        }
+      }
+    }
+  ]
+}
