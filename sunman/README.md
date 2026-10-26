@@ -15,7 +15,8 @@ Open any `.bbmodel` in [`blockbench/`](blockbench) and press play in the Animate
 
 `/function sunman:world/decay_village` (and automatically, when a player nears a village):
 the light out, walls clawed open, roofs fallen in, the villagers replaced by their bodies,
-blood everywhere, Locusts frozen inside. **Destructive and permanent**: read
+the iron golem dead in the street, one villager crucified on a rooftop facing the bell, broken
+wood and dead grass everywhere, blood everywhere, Locusts frozen inside. **Destructive and permanent**: read
 [`docs/VILLAGE.md`](docs/VILLAGE.md) first.
 
 | before | after |
@@ -23,6 +24,7 @@ blood everywhere, Locusts frozen inside. **Destructive and permanent**: read
 | ![](docs/village_before.png) | ![](docs/village_after.png) |
 
 ![](docs/dead_villagers.png)
+![](docs/village_props.png)
 
 | Birthday Person · crown | Birthday Person · tree |
 |---|---|

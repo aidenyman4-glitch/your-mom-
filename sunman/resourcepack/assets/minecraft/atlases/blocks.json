@@ -15,7 +15,7 @@
     },
     {
       "type": "minecraft:single",
-      "resource": "sunman:entity/dead_villagers"
+      "resource": "sunman:entity/village_props"
     }
   ]
 }

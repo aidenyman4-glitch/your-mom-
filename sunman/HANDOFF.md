@@ -38,8 +38,12 @@ The Locust and Dark Walker are open to reshaping, and have been.
 New: the datapack's first real content. `sunman:world/decay_village` ruins a generated village
 in place: the light out, glass and beds gone, stone aged, fields dead, walls clawed open and
 roofs fallen in, the villagers replaced by dead villagers (Blockbench models,
-`blockbench/dead_villagers.bbmodel`), painted blood on the ground and up the walls, and Locusts
-standing frozen inside. **Destructive and permanent, and automatic by default**: see
+`blockbench/village_props.bbmodel`), painted blood on the ground and up the walls, and Locusts
+standing frozen inside. The same Blockbench project holds the other props: a crucified villager
+(placed on one rooftop, facing the bell), a dead iron golem (where each golem stood; no blood),
+two dead-grass tufts and three pieces of broken wood (dropped under the breaches). All twelve
+share `textures/entity/village_props.png`; the old `dead_villagers.bbmodel` and its texture are
+gone. **Destructive and permanent, and automatic by default**: see
 `docs/VILLAGE.md`, which also lists every deviation from the build brief and why.
 
 The resource pack gained the `pack.mcmeta` and atlas sources 26.3 needs to show any `sunman:`
@@ -223,7 +227,7 @@ Rebuild, in order:
     python3 tools/paint_sun_man.py    # the Sun Man's own tiles (face + every other tile guarded)
     python3 tools/paint_birthday.py   # the Birthday People's own texture
     python3 tools/paint_decals.py     # the blood decals (textures, models, item definitions)
-    python3 tools/props.py            # the dead villagers (texture, models, .bbmodel)
+    python3 tools/props.py            # the village props (texture, models, .bbmodel)
     python3 tools/audio.py            # every sound + sounds.json (needs `pip install soundfile`)
     python3 tools/export_tiers.py     # per-bone item models for the datapack
     python3 tools/export_bb.py        # .bbmodel projects (+ clips) and rig JSON

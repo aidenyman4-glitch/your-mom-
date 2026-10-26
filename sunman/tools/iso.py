@@ -342,7 +342,7 @@ def draw_entity(canvas, S, e):
         quad(canvas, im, S(x + o[0], y + 0.01, z + o[2]), S(x + u[0], y + 0.01, z + u[2]),
              S(x + v[0], y + 0.01, z + v[2]))
         return
-    if e.type == "item_display" and "dead_villager" in model:
+    if e.type == "item_display" and model.split(":")[-1] in __import__("props").PROPS:
         draw_corpse(canvas, S, e, model.split(":")[-1])
         return
     if e.type == "interaction" and "sunman_locust" in e.tags:
@@ -386,26 +386,17 @@ def _draw_boxes(canvas, S, boxes):
 
 
 def draw_corpse(canvas, S, e, name):
+    """Any of the village props, from its real geometry (props.py), at the entity's yaw.
+    Colour is each material's mid tone; dead grass is drawn as straw-coloured planes."""
     import props
-    parts, _ = props.PROPS[name]()
+    parts, _, _ = props.parts_of(name)
     boxes = []
     for c in parts:
-        col = props.RAMPS[c["mat"]][2]
-        fx, fy, fz = c["from"]
-        sx, sy, sz = c["size"]
+        col = props.RAMPS[c["mat"]][2 if c["paint"] != "blades" else 3]
         cs = []
-        for dx in (0, 1):
-            for dy in (0, 1):
-                for dz in (0, 1):
-                    px_, py_, pz_ = fx + dx * sx, fy + dy * sy, fz + dz * sz
-                    if c.get("ry"):
-                        a = math.radians(c["ry"])
-                        ox_, _, oz_ = c["origin"]
-                        rx_ = ox_ + (px_ - ox_) * math.cos(a) + (pz_ - oz_) * math.sin(a)
-                        rz_ = oz_ - (px_ - ox_) * math.sin(a) + (pz_ - oz_) * math.cos(a)
-                        px_, pz_ = rx_, rz_
-                    w = _rot_y((px_ / 16, py_ / 16, pz_ / 16), e.rot[0])
-                    cs.append((e.pos[0] + w[0], e.pos[1] + w[1], e.pos[2] + w[2]))
+        for p in props._corners(c):
+            w = _rot_y((p[0] / 16, p[1] / 16, p[2] / 16), e.rot[0])
+            cs.append((e.pos[0] + w[0], e.pos[1] + w[1], e.pos[2] + w[2]))
         boxes.append((cs, col))
     _draw_boxes(canvas, S, boxes)
 

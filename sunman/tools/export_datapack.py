@@ -65,6 +65,7 @@ OBJECTIVES = [
     ("sm.decals", "how many decals exist (the cap)"),
     ("sm.head", "headroom at a placement spot"),
     ("sm.stage", "which stage a village's decay job is at"),
+    ("sm.cy", "the height of the village centre (for finding roofs)"),
 ]
 
 BOX = "~-16 ~-6 ~-16 ~16 ~10 ~16"        # the 32 x 16 x 32 box round the village centre
@@ -130,6 +131,13 @@ def block_tags():
     tag("smashable", ["#sunman:ruinable", "#minecraft:logs", "#minecraft:wooden_trapdoors",
                       "#minecraft:fence_gates", "minecraft:hay_block", "minecraft:bookshelf",
                       "minecraft:white_terracotta", "minecraft:mud_bricks", "minecraft:packed_mud"])
+    tag("living_plants", ["minecraft:short_grass", "minecraft:tall_grass", "minecraft:fern",
+                          "minecraft:large_fern", "minecraft:bush", "minecraft:firefly_bush",
+                          "#minecraft:small_flowers", "minecraft:sunflower", "minecraft:lilac",
+                          "minecraft:rose_bush", "minecraft:peony", "minecraft:pink_petals",
+                          "minecraft:wildflowers"])
+    tag("dead_ground", ["minecraft:grass_block", "minecraft:coarse_dirt", "minecraft:dirt",
+                        "minecraft:podzol", "minecraft:rooted_dirt"])
     tag("roofing", ["#minecraft:planks", "#minecraft:wooden_stairs", "#minecraft:wooden_slabs"])
     plants = ["minecraft:short_grass", "minecraft:tall_grass", "minecraft:fern", "minecraft:large_fern",
               "minecraft:dead_bush", "minecraft:short_dry_grass", "minecraft:tall_dry_grass",
@@ -294,7 +302,7 @@ def village():
        f"function {D}/doors",
        "# the villagers are gone, and their bodies will be here instead",
        f"execute as @e[type=villager,distance=..48] at @s run function {D}/vanish",
-       f"execute as @e[type=iron_golem,distance=..48] at @s run function {D}/vanish",
+       f"execute as @e[type=iron_golem,distance=..48] at @s run function {D}/vanish_golem",
        "summon marker ~ ~ ~ {Tags:[\"sm_decay_job\",\"sm_new\"]}",
        "scoreboard players set @e[type=marker,tag=sm_new,tag=sm_decay_job] sm.stage 2",
        "tag @e[type=marker,tag=sm_new] remove sm_new",
@@ -336,10 +344,27 @@ def village():
        "# the ground died where it stood: patches of dead earth, dead bushes",
        "scoreboard players set #sm sm.i 0",
        "scoreboard players set #sm sm.n 22",
-       f"function {D}/blight_loop")
+       f"function {D}/blight_loop",
+       "# the broken wood under the breaches",
+       f"execute as @e[type=marker,tag=sm_debris_spot,distance=..48] at @s run function {D}/debris_drop",
+       "# and dead grass where the green was: 40 tufts",
+       "scoreboard players set #sm sm.i 0",
+       "scoreboard players set #sm sm.n 40",
+       f"function {D}/grass_loop")
     fn("world/decay/stage_dead",
        "# 3.7: the bodies, and the pieces of others",
-       f"function {D}/corpses")
+       f"function {D}/corpses",
+       "# the golem, dead where it stood (or somewhere in the open, if the village had none)",
+       "scoreboard players set #sm sm.i 0",
+       "scoreboard players set #sm sm.try 60",
+       f"execute unless entity @e[type=marker,tag=sm_golem_spot,distance=..64] run function {D}/golem_spot_search",
+       f"execute as @e[type=marker,tag=sm_golem_spot,distance=..64] at @s run function {D}/dead_golem",
+       "kill @e[type=marker,tag=sm_golem_spot,distance=..64]",
+       "# and one of them nailed up on a roof, facing the bell",
+       "execute store result score #sm sm.cy run data get entity @s Pos[1]",
+       "scoreboard players set #sm sm.i 0",
+       "scoreboard players set #sm sm.try 150",
+       f"function {D}/crucifix_search")
     fn("world/decay/stage_blood",
        "# 3.6: blood, 34 decals",
        "scoreboard players set #sm sm.i 0",
@@ -374,7 +399,9 @@ def village():
        "# 3.4 The fields are dead and the paths gone to coarse dirt.",
        f"fill {BOX} air replace #sunman:crops",
        f"fill {BOX} coarse_dirt replace farmland",
-       f"fill {BOX} coarse_dirt replace dirt_path")
+       f"fill {BOX} coarse_dirt replace dirt_path",
+       "# and everything green dies: the only grass left is the dead grass laid down later",
+       f"fill {BOX} air replace #sunman:living_plants")
     fn("world/decay/doors",
        "# Every door torn off. Whatever came through did not use the handle.",
        f"fill {BOX} air replace #minecraft:wooden_doors")
@@ -407,23 +434,27 @@ def village():
        "# clawed through a wall, east-west: a tall ragged gap",
        "fill ~ ~-1 ~-1 ~ ~1 ~1 air replace #sunman:smashable",
        "fill ~ ~ ~-2 ~ ~ ~2 air replace #sunman:smashable",
+       f"function {D}/debris",
        "return 1")
     fn("world/decay/smash_1",
        "# clawed through a wall, north-south",
        "fill ~-1 ~-1 ~ ~1 ~1 ~ air replace #sunman:smashable",
        "fill ~-2 ~ ~ ~2 ~ ~ air replace #sunman:smashable",
+       f"function {D}/debris",
        "return 1")
     fn("world/decay/smash_2",
        "# burst up through a roof",
        "fill ~-1 ~ ~-1 ~1 ~1 ~1 air replace #sunman:smashable",
        "fill ~ ~-1 ~ ~ ~2 ~ air replace #sunman:smashable",
        "fill ~-2 ~1 ~ ~2 ~1 ~ air replace #sunman:roofing",
+       f"function {D}/debris",
        "return 1")
     fn("world/decay/smash_3",
        "# a roof caved in: the roofing gone over five by five, the frame left standing",
        "execute if block ~ ~-3 ~ #sunman:see_through if block ~ ~-2 ~ #sunman:see_through run return fail",
        "fill ~-2 ~-1 ~-2 ~2 ~1 ~2 air replace #sunman:roofing",
        "fill ~-1 ~-2 ~-1 ~1 ~-2 ~1 air replace #minecraft:wooden_slabs",
+       f"function {D}/debris",
        "return 1")
     fn("world/decay/smash_5",
        "# (as 3: caved roofs are what reads from the road)",
@@ -432,6 +463,7 @@ def village():
        "# torn open low down, the way something big gets in: a doorway where there was a wall",
        "fill ~-1 ~ ~ ~1 ~2 ~ air replace #sunman:smashable",
        "fill ~ ~ ~-1 ~ ~2 ~1 air replace #sunman:smashable",
+       f"function {D}/debris",
        "return 1")
 
     # ------------------------------------------------------------------ webs, dead ground
@@ -548,7 +580,117 @@ def village():
        "tag @e[type=item_display,tag=sm_new] remove sm_new",
        "return 1")
 
+
+    # ------------------------------------------------------------------ what is left
+    fn("world/decay/debris",
+       "# A breach: mark it. What came out of the wall is laid on the floor below it once all",
+       "# the ruin is done (stage 3), so a later breach cannot pull the floor out from under it.",
+       f"function {NS}:util/roll",
+       "execute if score #sm sm.rng matches ..69 run summon marker ~ ~ ~ {Tags:[\"sm_debris_spot\"]}")
+    fn("world/decay/debris_drop",
+       "# As a debris marker: down to the floor, and a piece of broken wood on it.",
+       _rand("yaw", -180, 180, "w"),
+       "execute store result score #sm sm.rng run random value 0..2",
+       f"execute if score #sm sm.rng matches 0 run data modify storage {STORAGE} w.v set value \"a\"",
+       f"execute if score #sm sm.rng matches 1 run data modify storage {STORAGE} w.v set value \"b\"",
+       f"execute if score #sm sm.rng matches 2 run data modify storage {STORAGE} w.v set value \"c\"",
+       "scoreboard players set #sm sm.probe 0",
+       f"function {NS}:util/ground",
+       f"execute at @s if block ~ ~ ~ #minecraft:air unless block ~ ~-1 ~ #sunman:see_through unless entity @e[type=item_display,tag=sunman_debris,distance=..1.5] run function {D}/wood_piece with storage {STORAGE} w",
+       "kill @s")
+    fn("world/decay/wood_piece",
+       "$summon item_display ~ ~ ~ " + display(f"{NS}:broken_wood_$(v)", ["sunman_debris"],
+                                                 "Rotation:[$(yaw)f,0f],view_range:1.2f,shadow_radius:0.6f,shadow_strength:0.5f"))
+
+    fn("world/decay/grass_probe",
+       _rand("bx", -15, 15), _rand("bz", -15, 15), _rand("yaw", -180, 180),
+       f"function {NS}:util/roll",
+       f"data modify storage {STORAGE} p.v set value \"a\"",
+       f"execute if score #sm sm.rng matches 50.. run data modify storage {STORAGE} p.v set value \"b\"",
+       f"function {D}/grass_at with storage {STORAGE} p")
+    _loop("world/decay/grass_loop", "sm.n", "world/decay/grass_probe")
+    fn("world/decay/grass_at",
+       "$execute positioned ~$(bx) ~8 ~$(bz) summon marker run tag @s add sm_probe",
+       "scoreboard players set #sm sm.probe 0",
+       f"execute as @e[type=marker,tag=sm_probe,limit=1,sort=nearest] at @s run function {NS}:util/ground",
+       f"execute as @e[type=marker,tag=sm_probe,limit=1,sort=nearest] at @s if block ~ ~ ~ #minecraft:air if block ~ ~-1 ~ #sunman:dead_ground run function {D}/tuft with storage {STORAGE} p",
+       "kill @e[type=marker,tag=sm_probe]")
+    fn("world/decay/tuft",
+       "$summon item_display ~ ~ ~ " + display(f"{NS}:dead_grass_$(v)", ["sunman_dead_grass"],
+                                                 "Rotation:[$(yaw)f,0f],view_range:0.8f,shadow_radius:0f"))
+
+    fn("world/decay/golem_spot_search",
+       "# no golem here: lay one out in the open somewhere near the middle",
+       _rand("bx", -12, 12), _rand("bz", -12, 12),
+       f"execute store success score #sm sm.ok run function {D}/golem_spot_at with storage {STORAGE} p",
+       "execute if score #sm sm.ok matches 1 run scoreboard players add #sm sm.i 1",
+       "scoreboard players remove #sm sm.try 1",
+       f"execute if score #sm sm.i matches ..0 if score #sm sm.try matches 1.. run function {D}/golem_spot_search")
+    fn("world/decay/golem_spot_at",
+       "$execute positioned ~$(bx) ~8 ~$(bz) summon marker run tag @s add sm_probe",
+       "scoreboard players set #sm sm.probe 0",
+       f"execute as @e[type=marker,tag=sm_probe,limit=1,sort=nearest] at @s run function {NS}:util/ground",
+       "scoreboard players set #sm sm.ok 0",
+       f"execute as @e[type=marker,tag=sm_probe,limit=1,sort=nearest] at @s if block ~ ~ ~ #sunman:see_through unless block ~ ~-1 ~ #sunman:see_through unless function {NS}:util/roofed run function {D}/golem_spot_mark",
+       "kill @e[type=marker,tag=sm_probe]",
+       "execute if score #sm sm.ok matches 1 run return 1",
+       "return fail")
+    fn("world/decay/golem_spot_mark",
+       "summon marker ~ ~ ~ {Tags:[\"sm_golem_spot\"]}",
+       "scoreboard players set #sm sm.ok 1")
+    fn("world/decay/dead_golem",
+       "# As the spot marker: from a little above where it stood, down to the ground, and the",
+       "# golem lying on it. No blood.",
+       "tp @s ~ ~3 ~",
+       "scoreboard players set #sm sm.probe 0",
+       f"execute at @s run function {NS}:util/ground",
+       _rand("yaw", -180, 180, "g"),
+       f"execute at @s if block ~ ~ ~ #sunman:see_through unless block ~ ~-1 ~ #sunman:see_through run function {D}/golem_body with storage {STORAGE} g")
+    fn("world/decay/golem_body",
+       "execute if block ~ ~ ~ #sunman:plants run setblock ~ ~ ~ air",
+       "$summon item_display ~ ~ ~ " + display(f"{NS}:dead_iron_golem", ["sunman_corpse", "sunman_golem"],
+                                                 "Rotation:[$(yaw)f,0f],view_range:2.0f,shadow_radius:1.6f,shadow_strength:0.6f," + 'transformation:{left_rotation:[0f,0f,0f,1f],right_rotation:[0f,0f,0f,1f],translation:[0f,0f,0f],scale:[2f,2f,2f]}'))
+
+    fn("world/decay/crucifix_search",
+       _rand("bx", -13, 13), _rand("bz", -13, 13),
+       f"execute store success score #sm sm.ok run function {D}/crucifix_at with storage {STORAGE} p",
+       "execute if score #sm sm.ok matches 1 run scoreboard players add #sm sm.i 1",
+       "scoreboard players remove #sm sm.try 1",
+       f"execute if score #sm sm.i matches ..0 if score #sm sm.try matches 1.. run function {D}/crucifix_search")
+    fn("world/decay/crucifix_at",
+       "# From high above down onto whatever is there; it has to be a roof, four blocks up or more.",
+       "$execute positioned ~$(bx) ~16 ~$(bz) summon marker run tag @s add sm_probe",
+       "scoreboard players set #sm sm.probe 0",
+       f"execute as @e[type=marker,tag=sm_probe,limit=1,sort=nearest] at @s run function {NS}:util/ground",
+       "scoreboard players set #sm sm.ok 0",
+       f"execute as @e[type=marker,tag=sm_probe,limit=1,sort=nearest] at @s run function {D}/crucifix_check",
+       "kill @e[type=marker,tag=sm_probe]",
+       "execute if score #sm sm.ok matches 1 run return 1",
+       "return fail")
+    fn("world/decay/crucifix_check",
+       "execute store result score #sm sm.head run data get entity @s Pos[1]",
+       "scoreboard players operation #sm sm.head -= #sm sm.cy",
+       "execute unless score #sm sm.head matches 4.. run return fail",
+       "# on a house, not over the bell itself",
+       "execute if entity @e[type=marker,tag=sm_decay_job,distance=..6] run return fail",
+       "execute unless block ~ ~ ~ #minecraft:air run return fail",
+       "execute unless block ~ ~1 ~ #minecraft:air run return fail",
+       "execute unless block ~ ~-1 ~ #sunman:smashable unless block ~ ~-1 ~ #sunman:solid run return fail",
+       "# facing the bell, so it is the first thing you see from the middle of the village",
+       "execute facing entity @e[type=marker,tag=sm_decay_job,limit=1,sort=nearest] feet run summon item_display ~ ~ ~ " +
+       display(f"{NS}:crucified_villager", ["sunman_corpse", "sunman_crucified", "sm_new"],
+               "view_range:3.0f,shadow_radius:0f," + 'transformation:{left_rotation:[0f,0f,0f,1f],right_rotation:[0f,0f,0f,1f],translation:[0f,0f,0f],scale:[3f,3f,3f]}'),
+       "execute facing entity @e[type=marker,tag=sm_decay_job,limit=1,sort=nearest] feet as @e[type=item_display,tag=sm_new] run tp @s ~ ~ ~ ~ 0",
+       "tag @e[type=item_display,tag=sm_new] remove sm_new",
+       "scoreboard players set #sm sm.ok 1",
+       "return 1")
+
     # ------------------------------------------------------------------ 3.7 the dead
+    fn("world/decay/vanish_golem",
+       "# The golem goes the same way, but leaves its body where it stood (stage 4).",
+       "summon marker ~ ~ ~ {Tags:[\"sm_golem_spot\"]}",
+       "tp @s ~ -2100 ~",
+       "kill @s")
     fn("world/decay/vanish",
        "# A living villager (or golem) leaves no trace: out of the world, then gone.",
        "tp @s ~ -2100 ~",
@@ -787,7 +929,7 @@ def pack_meta():
         {"type": "minecraft:directory", "source": "decal", "prefix": "decal/"},
         {"type": "minecraft:single", "resource": f"{NS}:entity/sun_man"},
         {"type": "minecraft:single", "resource": f"{NS}:entity/birthday_people"},
-        {"type": "minecraft:single", "resource": f"{NS}:entity/dead_villagers"},
+        {"type": "minecraft:single", "resource": f"{NS}:entity/village_props"},
     ]}
     atl = RP / "assets" / "minecraft" / "atlases"
     atl.mkdir(parents=True, exist_ok=True)

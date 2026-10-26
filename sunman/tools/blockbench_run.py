@@ -246,29 +246,45 @@ def previews(url, names=NAMES):
 
 
 def props(url):
-    """Stills of the dead villagers (blockbench/dead_villagers.bbmodel) on grass green."""
+    """Stills of the village props (blockbench/village_props.bbmodel): the dead villagers
+    (docs/dead_villagers.png) and the rest (docs/village_props.png), on grass green."""
     from PIL import Image
-    out = ROOT / "docs" / "dead_villagers.png"
+    g = "#6a9a3c"
     with tempfile.TemporaryDirectory() as tmp:
         shots = []
         for i, x in enumerate((-88, -44, 0)):
-            shots.append({"name": f"p{i}_a", "position": [x + 26, 30, 34], "target": [x, 2, 2], "background": "#6a9a3c"})
-            shots.append({"name": f"p{i}_b", "position": [x - 30, 26, -30], "target": [x, 2, 0], "background": "#6a9a3c"})
-        shots.append({"name": "head", "position": [62, 18, 22], "target": [44, 2, 0], "background": "#6a9a3c"})
-        shots.append({"name": "arm", "position": [104, 16, 20], "target": [88, 1, 0], "background": "#6a9a3c"})
-        run_job({"url": url, "model": str(BB / "dead_villagers.bbmodel"), "out_dir": tmp, "clips": [], "shots": shots})
-        ims = []
-        for name in [s["name"] for s in shots]:
-            im = _centre(Image.open(f"{tmp}/{name}.png").convert("RGB"), 1.2)
-            ims.append(im.resize((420, int(im.height * 420 / im.width)), Image.LANCZOS))
-        h = ims[0].height
+            shots.append({"name": f"p{i}_a", "position": [x + 26, 30, 34], "target": [x, 2, 2], "background": g})
+            shots.append({"name": f"p{i}_b", "position": [x - 30, 26, -30], "target": [x, 2, 0], "background": g})
+        shots.append({"name": "head", "position": [62, 18, 22], "target": [44, 2, 0], "background": g})
+        shots.append({"name": "arm", "position": [104, 16, 20], "target": [88, 1, 0], "background": g})
+        # the cross faces -Z in the model: look at it from there, and from below, as from the street
+        shots.append({"name": "cross_front", "position": [-40, 40, 10], "target": [-60, 30, 70], "background": "#3c4250"})
+        shots.append({"name": "cross_low", "position": [-96, 10, 20], "target": [-60, 30, 70], "background": "#3c4250"})
+        shots.append({"name": "golem_a", "position": [58, 46, 108], "target": [18, 4, 70], "background": g})
+        shots.append({"name": "golem_b", "position": [20, 62, 28], "target": [16, 2, 72], "background": g})
+        shots.append({"name": "grass", "position": [-48, 15, 172], "target": [-48, 4, 130], "background": g})
+        shots.append({"name": "wood_a", "position": [30, 24, 156], "target": [10, 1, 130], "background": g})
+        shots.append({"name": "wood_b", "position": [70, 22, 158], "target": [52, 2, 130], "background": g})
+        shots.append({"name": "wood_c", "position": [118, 28, 160], "target": [97, 1, 132], "background": g})
+        run_job({"url": url, "model": str(BB / "village_props.bbmodel"), "out_dir": tmp, "clips": [], "shots": shots})
+
+        def im(name, w=420):
+            i = _centre(Image.open(f"{tmp}/{name}.png").convert("RGB"), 1.2)
+            return i.resize((w, int(i.height * w / i.width)), Image.LANCZOS)
+        ims = {s["name"]: im(s["name"]) for s in shots}
+        h = ims["p0_a"].height
         sheet = Image.new("RGB", (420 * 3, h * 3), (106, 154, 60))
-        for k, idx in enumerate([0, 2, 4, 1, 3, 5]):          # each body from two sides
-            sheet.paste(ims[idx], ((k % 3) * 420, (k // 3) * h))
-        sheet.paste(ims[6], (210, 2 * h))                     # the loose pieces
-        sheet.paste(ims[7], (630, 2 * h))
-        sheet.save(out, optimize=True)
-    print(f"  {out.relative_to(ROOT)}")
+        for k, name in enumerate(["p0_a", "p1_a", "p2_a", "p0_b", "p1_b", "p2_b"]):
+            sheet.paste(ims[name], ((k % 3) * 420, (k // 3) * h))
+        sheet.paste(ims["head"], (210, 2 * h))
+        sheet.paste(ims["arm"], (630, 2 * h))
+        sheet.save(ROOT / "docs" / "dead_villagers.png", optimize=True)
+        sheet = Image.new("RGB", (420 * 4, h * 2), (106, 154, 60))
+        for k, name in enumerate(["cross_front", "cross_low", "golem_a", "golem_b",
+                                  "grass", "wood_a", "wood_b", "wood_c"]):
+            sheet.paste(ims[name], ((k % 4) * 420, (k // 4) * h))
+        sheet.save(ROOT / "docs" / "village_props.png", optimize=True)
+    print("  docs/dead_villagers.png, docs/village_props.png")
 
 
 def main():

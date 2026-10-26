@@ -1,0 +1,1 @@
+$summon item_display ~ ~ ~ {Tags:["sunman_debris"],item:{id:"minecraft:paper",count:1,components:{"minecraft:item_model":"sunman:broken_wood_$(v)"}},item_display:"fixed",Rotation:[$(yaw)f,0f],view_range:1.2f,shadow_radius:0.6f,shadow_strength:0.5f}

@@ -1,0 +1,2 @@
+execute if block ~ ~ ~ #sunman:plants run setblock ~ ~ ~ air
+$summon item_display ~ ~ ~ {Tags:["sunman_corpse","sunman_golem"],item:{id:"minecraft:paper",count:1,components:{"minecraft:item_model":"sunman:dead_iron_golem"}},item_display:"fixed",Rotation:[$(yaw)f,0f],view_range:2.0f,shadow_radius:1.6f,shadow_strength:0.6f,transformation:{left_rotation:[0f,0f,0f,1f],right_rotation:[0f,0f,0f,1f],translation:[0f,0f,0f],scale:[2f,2f,2f]}}

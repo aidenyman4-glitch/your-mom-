@@ -113,7 +113,9 @@ def populate(w, bell, n=7, with_bell=True):
         nbt = {"Brain": {"memories": {"minecraft:meeting_point": {"value": {
             "dimension": "minecraft:overworld", "pos": list(bell)}}}}} if with_bell else {}
         w.summon("villager", pos, nbt)
-    w.summon("iron_golem", (bell[0] + 3.5, GROUND + 1, bell[2] - 2.5))
+    gx, gz = bell[0] + 6, bell[2] - 4
+    gy = max(y for (x, y, z) in w.blocks if x == gx and z == gz) + 1      # on the surface
+    w.summon("iron_golem", (gx + 0.5, gy, gz + 0.5))
 
 
 def player(w, pos):
@@ -219,6 +221,38 @@ def test(seed=1, render=False, verbose=False):
     items = [e for e in ents if e.type == "item"]
     cores = tagged("sunman_core", "interaction")
     bones = tagged("sunman_locust_part", "item_display")
+    golems = [e for e in tagged("sunman_golem", "item_display")]
+    crosses = [e for e in tagged("sunman_crucified", "item_display")]
+    grass = [e for e in tagged("sunman_dead_grass", "item_display")]
+    wood = [e for e in tagged("sunman_debris", "item_display")]
+    pieces = [e for e in pieces if e not in golems and e not in crosses]
+    report.update(golems=len(golems), crucified=len(crosses), dead_grass=len(grass), broken_wood=len(wood))
+    if len(golems) != 1:
+        problems.append(f"{len(golems)} dead iron golems (the village had one)")
+    if len(crosses) != 1:
+        problems.append(f"{len(crosses)} crucified villagers (one, on a roof, wanted)")
+    for e in crosses:
+        x, y, z = (math.floor(v) for v in e.pos)
+        if math.dist((e.pos[0], e.pos[2]), (bell[0] + 0.5, bell[2] + 0.5)) < 6:
+            problems.append("the cross is over the bell, not on a house")
+        if y < bell[1] + 4:
+            problems.append(f"the crucified villager is at y {y}, not up on a roof (bell at {bell[1]})")
+        if w.block((x, y - 1, z))[0] not in w.tag_members("sunman:smashable") | w.tag_members("sunman:solid"):
+            problems.append(f"the cross stands on {w.block((x, y - 1, z))[0]}, not on a building")
+        bx, bz = bell[0] + 0.5 - e.pos[0], bell[2] + 0.5 - e.pos[2]
+        want = math.degrees(math.atan2(-bx, bz))
+        if abs((e.rot[0] - want + 180) % 360 - 180) > 2:
+            problems.append(f"the cross faces yaw {e.rot[0]:.0f}, not the bell ({want:.0f})")
+    if len(grass) < 15:
+        problems.append(f"only {len(grass)} tufts of dead grass")
+    if len(wood) < 8:
+        problems.append(f"only {len(wood)} pieces of broken wood under the breaches")
+    living_green = sum(n for b, n in census(w, bell)[0].items() if b in w.tag_members("sunman:living_plants"))
+    if living_green:
+        problems.append(f"{living_green} living plants left in the box")
+    if any(e.nbt.get("item", {}).get("components", {}).get("minecraft:item_model", "").startswith("sunman:blood")
+           and math.dist(e.pos, g.pos) < 0.5 for e in ents for g in golems):
+        problems.append("blood under the golem (it has none)")
     report.update(corpses=len(corpses), pieces=len(pieces), floor_blood=len(floor_blood),
                   smears=len(smears), items=len(items), locusts=len(cores))
     if not 4 <= len(corpses) <= 8:
@@ -233,7 +267,7 @@ def test(seed=1, render=False, verbose=False):
         problems.append(f"{len(cores)} Locusts placed (2-4 wanted)")
     if len(bones) != 11 * len(cores):
         problems.append(f"{len(bones)} Locust bones for {len(cores)} Locusts (11 each)")
-    if any("sm_new" in e.tags or "sm_probe" in e.tags for e in ents):
+    if any(t in e.tags for e in ents for t in ("sm_new", "sm_probe", "sm_golem_spot", "sm_debris_spot")):
         problems.append("working tags (sm_new / sm_probe) or probe markers left behind")
     if [e for e in ents if e.type == "marker" and "sm_probe" in e.tags]:
         problems.append("probe markers left alive")
@@ -256,7 +290,7 @@ def test(seed=1, render=False, verbose=False):
     def bpos(p):
         return (math.floor(p[0]), math.floor(p[1] + 1e-6), math.floor(p[2]))
 
-    for e in floor_blood + corpses + pieces + items:
+    for e in floor_blood + corpses + pieces + items + golems + grass + wood:
         x, y, z = bpos(e.pos)
         if w.block((x, y, z))[0] not in see:
             problems.append(f"{e.nbt.get('item', e.nbt.get('Item'))['id'] if e.type == 'item' else e.nbt['item']['components']['minecraft:item_model']} inside {w.block((x, y, z))[0]} at {(x, y, z)}")

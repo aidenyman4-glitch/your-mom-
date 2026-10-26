@@ -549,6 +549,21 @@ class World:
                     n += 1 if ok else 0
                 return (n > 0, n)
             return self.c_execute(t[3:], ctx.but(rot=self.rotation(t[1:3], ctx)), stores)
+        if k == "facing":
+            if t[1] == "entity":
+                ents = self.select(t[2], ctx)
+                n = 0
+                for e in ents:
+                    dx, dy, dz = (e.pos[i] - ctx.pos[i] for i in range(3))
+                    yaw = math.degrees(math.atan2(-dx, dz))
+                    pitch = math.degrees(-math.atan2(dy, math.hypot(dx, dz)))
+                    ok, _ = self.c_execute(t[4:], ctx.but(rot=(yaw, pitch)), stores)
+                    n += 1 if ok else 0
+                return (n > 0, n)
+            tgt = self.vec3(t[1:4], ctx)
+            dx, dy, dz = (tgt[i] - ctx.pos[i] for i in range(3))
+            rot = (math.degrees(math.atan2(-dx, dz)), math.degrees(-math.atan2(dy, math.hypot(dx, dz))))
+            return self.c_execute(t[4:], ctx.but(rot=rot), stores)
         if k == "align":
             p = list(ctx.pos)
             for ax in t[1]:
@@ -752,6 +767,24 @@ class World:
         return (bool(es), len(es))
 
     def c_data(self, t, ctx):
+        if t[0] == "get":
+            if t[1] == "entity":
+                es = self.select(t[2], ctx)
+                if not es:
+                    return (False, 0)
+                e = es[0]
+                if t[3].startswith("Pos"):
+                    v = e.pos[int(t[3][4])] if len(t[3]) > 3 else None
+                elif t[3].startswith("Rotation"):
+                    v = e.rot[int(t[3][9])]
+                else:
+                    v = self.path_get(e.nbt, t[3])
+            else:
+                v = self.path_get(self.store(t[2]), t[3])
+            if v is None:
+                return (False, 0)
+            scale = float(t[4]) if len(t) > 4 else 1.0
+            return (True, int(math.floor(v * scale)) if isinstance(v, (int, float)) else 1)
         if t[0] == "merge" and t[1] == "storage":
             self.store(t[2]).update(SNBT.parse(t[3]))
             return (True, 1)
