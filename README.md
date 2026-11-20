@@ -154,3 +154,12 @@ Packaging:
 ```bash
 ./tools/package.sh         # -> dist/67-jumpscare-v<version>.zip
 ```
+
+## Pixel Rearranger
+
+Also in this repo: [`pixel-rearranger/`](pixel-rearranger) — open
+`pixel-rearranger/index.html` in a browser, drop in any picture, and every one of
+its pixels gets moved (never recolored) until they rebuild the star-eyed target
+image. Has an animation of the pixels flying into place, PNG export and video
+recording. Edit `pixel-rearranger/src/page.html`, then run
+`python3 pixel-rearranger/build.py` to rebuild `index.html`.

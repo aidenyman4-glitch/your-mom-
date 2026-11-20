@@ -1,0 +1,620 @@
+<title>Pixel Rearranger</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a light-table. Inputs stacked on the left, a big pixel stage on the right with a transport bar under it. */
+:root {
+  color-scheme: dark;
+  --bg: #0c0b17;
+  --panel: #151429;
+  --raised: #1e1c3a;
+  --line: #2b2952;
+  --stage: #07060f;
+  --fg: #eeebff;
+  --muted: #9b96c6;
+  --accent: #7fd8ff;
+  --accent-2: #ff8fd6;
+  --on-accent: #07122a;
+  --font-display: "Unbounded", "Arial Black", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 14px; line-height: 1.5; }
+.wrap {
+  max-width: 1200px; margin: 0 auto;
+  padding-block: 28px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+header.top { display: grid; gap: 8px; margin-bottom: 24px; }
+h1 {
+  font-family: var(--font-display); font-weight: 800; letter-spacing: -0.01em;
+  font-size: clamp(28px, 4.2vw, 46px); line-height: 1.05; margin: 0; text-wrap: balance;
+}
+h1 .hl { background: linear-gradient(90deg, var(--accent), var(--accent-2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.lede { margin: 0; color: var(--muted); max-width: 62ch; font-size: 15px; }
+
+.layout { display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr); gap: 24px; align-items: start; }
+@media (max-width: 860px) { .layout { grid-template-columns: minmax(0, 1fr); } .stage-col { order: -1; } }
+
+.side { display: grid; gap: 16px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: grid; gap: 10px; }
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+h2 { font-family: var(--font-display); font-weight: 600; font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; margin: 0; }
+.tag { font: 600 11px var(--font-mono); color: var(--accent-2); border: 1px solid var(--line); border-radius: 999px; padding: 1px 8px; }
+.meta { margin: 0; color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
+
+.drop { position: relative; display: block; cursor: pointer; border-radius: 8px; outline: 1px dashed var(--line); outline-offset: 3px; transition: outline-color .15s; }
+.drop:hover, .drop.over { outline-color: var(--accent); }
+.drop canvas, .thumb { display: block; width: 100%; height: auto; border-radius: 8px; background: var(--stage); }
+.drop-hint {
+  position: absolute; left: 8px; right: 8px; bottom: 8px; text-align: center;
+  font-size: 12px; font-weight: 500; padding: 6px 8px; border-radius: 6px;
+  background: color-mix(in srgb, var(--stage) 78%, transparent); color: var(--fg);
+}
+.drop-hint u { color: var(--accent); text-underline-offset: 2px; }
+
+.field { display: grid; gap: 6px; border: 0; margin: 0; padding: 0; min-width: 0; }
+.field-row { display: flex; justify-content: space-between; align-items: baseline; }
+.field label, .field legend { font-weight: 600; font-size: 13px; padding: 0; }
+output, .v { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+output { color: var(--accent); font-size: 12px; }
+.hint { margin: 0; color: var(--muted); font-size: 12px; }
+input[type=range] { width: 100%; accent-color: var(--accent); }
+
+.seg { display: grid; grid-template-columns: 1fr 1fr; background: var(--raised); border: 1px solid var(--line); border-radius: 8px; padding: 3px; gap: 3px; }
+.seg input { position: absolute; opacity: 0; pointer-events: none; }
+.seg label { text-align: center; padding: 7px 6px; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 13px; color: var(--muted); }
+.seg input:checked + label { background: var(--accent); color: var(--on-accent); font-weight: 600; }
+.seg input:focus-visible + label { outline: 2px solid var(--accent-2); outline-offset: 1px; }
+
+.btn {
+  font: 600 14px var(--font-body); color: var(--fg); background: var(--raised);
+  border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-align: center;
+}
+.btn:hover:not(:disabled) { border-color: var(--accent); }
+.btn:disabled { opacity: .5; cursor: default; }
+.btn.primary { background: var(--accent); color: var(--on-accent); border-color: transparent; }
+.btn.primary:hover:not(:disabled) { background: var(--fg); }
+.btn.small { padding: 7px 12px; font-size: 13px; }
+.btn svg { width: 14px; height: 14px; fill: currentColor; }
+.linkbtn { background: none; border: 0; color: var(--accent); font: 500 12px var(--font-body); cursor: pointer; padding: 0; }
+:is(.btn, .linkbtn, input, .drop):focus-visible { outline: 2px solid var(--accent-2); outline-offset: 2px; }
+
+.stage-col { display: grid; gap: 14px; min-width: 0; }
+.stage-frame { position: relative; background: var(--stage); border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
+#stage { display: block; width: 100%; height: auto; max-height: 72vh; object-fit: contain; image-rendering: pixelated; border-radius: 4px; }
+.bar { position: absolute; left: 12px; right: 12px; top: 5px; height: 3px; border-radius: 2px; overflow: hidden; opacity: 0; transition: opacity .3s; }
+.bar.on { opacity: 1; }
+.bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--accent), var(--accent-2)); }
+
+.transport { display: flex; gap: 14px; align-items: center; }
+.scrub { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.scrub-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); letter-spacing: .04em; text-transform: uppercase; }
+
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.stats > div { background: var(--panel); padding: 10px 12px; display: grid; gap: 2px; min-width: 0; }
+.k { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.v { font-size: 15px; font-weight: 600; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+.actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.status { margin: 0; color: var(--muted); font-size: 13px; flex: 1 1 200px; min-width: 0; }
+.note { margin: 0; color: var(--muted); font-size: 12px; max-width: 70ch; }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <h1>Pixel <span class="hl">Rearranger</span></h1>
+    <p class="lede">Give it any picture. It takes every pixel of that picture and moves it somewhere else until the pixels form the target image. Nothing gets recolored, added or thrown away.</p>
+  </header>
+
+  <div class="layout">
+    <aside class="side">
+      <section class="card" aria-labelledby="srcH">
+        <div class="card-head"><h2 id="srcH">Your image</h2><span class="tag" id="srcTag">demo</span></div>
+        <label class="drop" id="drop" for="srcFile">
+          <canvas id="srcThumb" width="300" height="256"></canvas>
+          <span class="drop-hint">Drop, paste, or <u>choose an image</u></span>
+        </label>
+        <input type="file" id="srcFile" accept="image/*" hidden>
+        <p class="meta" id="srcMeta">Built-in beach scene. Swap in your own picture.</p>
+      </section>
+
+      <section class="card" aria-labelledby="tgtH">
+        <div class="card-head"><h2 id="tgtH">Target</h2><button class="linkbtn" id="tgtReset" hidden>Restore original</button></div>
+        <canvas id="tgtThumb" class="thumb" width="300" height="256"></canvas>
+        <label class="btn small" for="tgtFile">Change target</label>
+        <input type="file" id="tgtFile" accept="image/*" hidden>
+      </section>
+
+      <section class="card" aria-label="Settings">
+        <div class="field">
+          <div class="field-row"><label for="res">Resolution</label><output id="resOut" for="res">160 × 137</output></div>
+          <input type="range" id="res" min="48" max="256" step="8" value="160">
+          <p class="hint">More pixels give a sharper result and take longer to match.</p>
+        </div>
+        <fieldset class="field">
+          <legend>Match by</legend>
+          <div class="seg">
+            <input type="radio" id="mColor" name="mode" value="color" checked><label for="mColor">Color</label>
+            <input type="radio" id="mLuma" name="mode" value="luma"><label for="mLuma">Brightness</label>
+          </div>
+        </fieldset>
+        <button class="btn primary" id="go">Rearrange pixels</button>
+      </section>
+    </aside>
+
+    <main class="stage-col">
+      <div class="stage-frame">
+        <div class="bar" id="barWrap"><i id="bar"></i></div>
+        <canvas id="stage" width="640" height="548" aria-label="Rearranged image"></canvas>
+      </div>
+      <div class="transport">
+        <button class="btn" id="play"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5v11l9-5.5z"/></svg><span id="playLbl">Play</span></button>
+        <div class="scrub">
+          <input type="range" id="scrub" min="0" max="1000" value="1000" aria-label="Animation position">
+          <div class="scrub-labels"><span>Your image</span><span>Rearranged</span></div>
+        </div>
+      </div>
+      <div class="stats">
+        <div><span class="k">Pixels</span><span class="v" id="sPix">–</span></div>
+        <div><span class="k">Moved</span><span class="v" id="sMoved">–</span></div>
+        <div><span class="k">Swaps made</span><span class="v" id="sSwaps">–</span></div>
+        <div><span class="k">Color error</span><span class="v" id="sErr">–</span></div>
+      </div>
+      <div class="actions">
+        <button class="btn" id="savePng">Save PNG</button>
+        <button class="btn" id="rec">Record video</button>
+        <p class="status" id="status" aria-live="polite"></p>
+      </div>
+      <p class="note">Color error is the average distance between each placed pixel and the target pixel it stands in for (0 is a perfect match, out of 255). Pictures with colors close to the target's (lots of blues, purples and whites here) come out best.</p>
+    </main>
+  </div>
+</div>
+
+<script>
+(() => {
+"use strict";
+const TARGET_SRC = "data:image/jpeg;base64,__TARGET_B64__";
+
+/* ---------- worker: finds which source pixel goes where ---------- */
+function workerMain() {
+  self.onmessage = (e) => {
+    const { W, H, src, tgt, mode, budgetMs } = e.data;
+    const N = W * H;
+    const LW = mode === "luma" ? 1 : 1.6;   // luma weight
+    const CW = mode === "luma" ? 0 : 1;     // chroma weight
+    const feat = (px) => {
+      const y = new Float32Array(N), u = new Float32Array(N), v = new Float32Array(N);
+      for (let i = 0; i < N; i++) {
+        const r = px[i * 4], g = px[i * 4 + 1], b = px[i * 4 + 2];
+        const Y = 0.299 * r + 0.587 * g + 0.114 * b;
+        y[i] = Y; u[i] = (b - Y) * 0.565; v[i] = (r - Y) * 0.713;
+      }
+      return [y, u, v];
+    };
+    const [sy, su, sv] = feat(src);
+    const [ty, tu, tv] = feat(tgt);
+
+    // Start: match by brightness rank (darkest source pixel -> darkest target spot).
+    const sOrd = new Int32Array(N), tOrd = new Int32Array(N);
+    for (let i = 0; i < N; i++) { sOrd[i] = i; tOrd[i] = i; }
+    sOrd.sort((a, b) => sy[a] - sy[b] || su[a] - su[b]);
+    tOrd.sort((a, b) => ty[a] - ty[b] || tu[a] - tu[b]);
+    const rank = new Int32Array(N);
+    const assign = new Int32Array(N);
+    const py = new Float32Array(N), pu = new Float32Array(N), pv = new Float32Array(N);
+    for (let k = 0; k < N; k++) {
+      const p = tOrd[k], o = sOrd[k];
+      rank[p] = k; assign[p] = o; py[p] = sy[o]; pu[p] = su[o]; pv[p] = sv[o];
+    }
+    const d = (p, Y, U, V) => {
+      const a = Y - ty[p], b = U - tu[p], c = V - tv[p];
+      return LW * a * a + CW * (b * b + c * c);
+    };
+    let total = 0;
+    for (let p = 0; p < N; p++) total += d(p, py[p], pu[p], pv[p]);
+
+    const t0 = performance.now();
+    let lastPost = 0, attempts = 0, swaps = 0;
+    const maxAttempts = N * 1500;
+    const win = Math.max(16, Math.round(N * 0.01));
+    let seed = (Math.random() * 0xffffffff) >>> 0 || 1;
+    const rnd = () => { seed ^= seed << 13; seed ^= seed >>> 17; seed ^= seed << 5; return seed >>> 0; };
+    const report = (done) => {
+      const el = performance.now() - t0;
+      self.postMessage({
+        assign: assign.slice(), swaps, done,
+        err: Math.sqrt(Math.max(0, total) / N / (LW + 2 * CW)),
+        progress: done ? 1 : Math.min(1, Math.max(el / budgetMs, attempts / maxAttempts)),
+      });
+    };
+    report(false);
+    if (CW === 0) { report(true); return; }  // brightness rank order is already optimal
+
+    const BATCH = 200000;
+    for (;;) {
+      let made = 0;
+      for (let k = 0; k < BATCH; k++) {
+        const i = rnd() % N;
+        let j;
+        if (k & 1) j = rnd() % N;
+        else {
+          let r = rank[i] + (rnd() % (2 * win + 1)) - win;
+          if (r < 0) r = -r; if (r >= N) r = 2 * N - 2 - r;
+          j = tOrd[r];
+        }
+        if (i === j) continue;
+        const cur = d(i, py[i], pu[i], pv[i]) + d(j, py[j], pu[j], pv[j]);
+        const alt = d(i, py[j], pu[j], pv[j]) + d(j, py[i], pu[i], pv[i]);
+        if (alt < cur) {
+          total += alt - cur;
+          let t = assign[i]; assign[i] = assign[j]; assign[j] = t;
+          let f = py[i]; py[i] = py[j]; py[j] = f;
+          f = pu[i]; pu[i] = pu[j]; pu[j] = f;
+          f = pv[i]; pv[i] = pv[j]; pv[j] = f;
+          made++;
+        }
+      }
+      attempts += BATCH; swaps += made;
+      const el = performance.now() - t0;
+      const stalled = attempts > N * 60 && made / BATCH < 0.00003;
+      if (el > budgetMs || attempts >= maxAttempts || stalled) { report(true); return; }
+      if (el - lastPost > 110) { lastPost = el; report(false); }
+    }
+  };
+}
+const workerURL = URL.createObjectURL(new Blob(["(" + workerMain.toString() + ")()"], { type: "text/javascript" }));
+
+/* ---------- state ---------- */
+const $ = (id) => document.getElementById(id);
+const stage = $("stage"), sctx = stage.getContext("2d");
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+let W = 160, H = 137, S = 4;
+let srcImg = null, tgtImg = null, defaultTgt = null;
+let srcPix = null, assign = null;
+let worker = null, runId = 0, solving = false;
+let imgData = null, buf32 = null;
+let ox, oy, dx, dy, col, delay, arc;
+let tNow = 1, rafId = 0, playing = false, recording = false;
+const MAXD = 0.35, SPAN = 1 - MAXD;
+
+const cssColor = (name) => {
+  const hex = getComputedStyle(document.documentElement).getPropertyValue(name).trim().replace("#", "");
+  const n = parseInt(hex.length === 3 ? hex.split("").map((c) => c + c).join("") : hex, 16) || 0;
+  return ((255 << 24) | ((n & 255) << 16) | (((n >> 8) & 255) << 8) | ((n >> 16) & 255)) >>> 0;
+};
+const BG = cssColor("--stage");
+
+const status = (msg) => { $("status").textContent = msg; };
+const fmt = (n) => n.toLocaleString("en-US");
+
+/* ---------- images ---------- */
+const loadImage = (src) => new Promise((res, rej) => {
+  const im = new Image();
+  im.onload = () => res(im);
+  im.onerror = () => rej(new Error("That file could not be read as an image."));
+  im.src = src;
+});
+function drawCover(ctx, img, w, h) {
+  const iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height;
+  const sc = Math.max(w / iw, h / ih), sw = w / sc, sh = h / sc;
+  ctx.drawImage(img, (iw - sw) / 2, (ih - sh) / 2, sw, sh, 0, 0, w, h);
+}
+function pixelsOf(img, w, h) {
+  // Step down in halves first so big photos don't alias when shrunk.
+  let cur = img, cw = img.naturalWidth || img.width, ch = img.naturalHeight || img.height;
+  const sc = Math.max(w / cw, h / ch);
+  let tw = cw * sc, th = ch * sc;
+  const c = document.createElement("canvas");
+  if (cw > tw * 2.5) {
+    const tmp = document.createElement("canvas");
+    let ww = cw, hh = ch;
+    while (ww / 2 > tw * 1.5) {
+      ww = Math.round(ww / 2); hh = Math.round(hh / 2);
+      tmp.width = ww; tmp.height = hh;
+      const tx = tmp.getContext("2d");
+      tx.imageSmoothingQuality = "high";
+      tx.drawImage(cur, 0, 0, ww, hh);
+      const copy = document.createElement("canvas");
+      copy.width = ww; copy.height = hh; copy.getContext("2d").drawImage(tmp, 0, 0);
+      cur = copy;
+    }
+  }
+  c.width = w; c.height = h;
+  const x = c.getContext("2d", { willReadFrequently: true });
+  x.fillStyle = "#ffffff"; x.fillRect(0, 0, w, h);
+  x.imageSmoothingEnabled = true; x.imageSmoothingQuality = "high";
+  drawCover(x, cur, w, h);
+  return x.getImageData(0, 0, w, h).data;
+}
+function drawThumb(canvas, img) {
+  const tw = 300, th = Math.round(300 * H / W);
+  canvas.width = tw * 2; canvas.height = th * 2;
+  const x = canvas.getContext("2d");
+  x.fillStyle = "#ffffff"; x.fillRect(0, 0, canvas.width, canvas.height);
+  x.imageSmoothingQuality = "high";
+  drawCover(x, img, canvas.width, canvas.height);
+}
+
+function demoImage() {
+  const w = 640, h = 480, c = document.createElement("canvas");
+  c.width = w; c.height = h;
+  const x = c.getContext("2d");
+  const sky = x.createLinearGradient(0, 0, 0, h * 0.58);
+  sky.addColorStop(0, "#1a2f86"); sky.addColorStop(0.45, "#5b6fd8"); sky.addColorStop(0.8, "#ff9ccc"); sky.addColorStop(1, "#ffd6a0");
+  x.fillStyle = sky; x.fillRect(0, 0, w, h * 0.58);
+  const glow = x.createRadialGradient(w * 0.62, h * 0.5, 10, w * 0.62, h * 0.5, 170);
+  glow.addColorStop(0, "rgba(255,250,220,1)"); glow.addColorStop(0.25, "rgba(255,240,200,.85)"); glow.addColorStop(1, "rgba(255,200,220,0)");
+  x.fillStyle = glow; x.fillRect(0, 0, w, h * 0.58);
+  x.fillStyle = "#ffffff";
+  x.beginPath(); x.arc(w * 0.62, h * 0.5, 34, 0, Math.PI * 2); x.fill();
+  x.fillStyle = "rgba(255,190,225,.9)";
+  [[120, 90, 70, 16], [190, 110, 90, 18], [470, 70, 80, 14], [540, 92, 60, 12], [300, 150, 110, 15]].forEach(([cx, cy, rx, ry]) => {
+    x.beginPath(); x.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2); x.fill();
+  });
+  const sea = x.createLinearGradient(0, h * 0.58, 0, h * 0.84);
+  sea.addColorStop(0, "#3d6fe0"); sea.addColorStop(1, "#0b2c78");
+  x.fillStyle = sea; x.fillRect(0, h * 0.58, w, h * 0.26);
+  x.fillStyle = "rgba(255,245,230,.85)";
+  for (let i = 0; i < 14; i++) {
+    const yy = h * 0.6 + i * 9, ww = 70 - i * 3.5;
+    x.fillRect(w * 0.62 - ww / 2, yy, ww, 3);
+  }
+  const sand = x.createLinearGradient(0, h * 0.84, 0, h);
+  sand.addColorStop(0, "#f4d3a1"); sand.addColorStop(1, "#c98f5a");
+  x.fillStyle = sand; x.fillRect(0, h * 0.84, w, h * 0.16);
+  x.fillStyle = "rgba(255,255,255,.9)";
+  x.beginPath(); x.moveTo(0, h * 0.84);
+  for (let i = 0; i <= w; i += 20) x.lineTo(i, h * 0.84 + Math.sin(i / 30) * 4 + 3);
+  x.lineTo(w, h * 0.84); x.fill();
+  return loadImage(c.toDataURL("image/png"));
+}
+
+/* ---------- sizing + drawing ---------- */
+function calcSize() {
+  const tw = tgtImg.naturalWidth, th = tgtImg.naturalHeight;
+  W = +$("res").value;
+  H = Math.max(8, Math.round(W * th / tw));
+  S = Math.max(1, Math.min(6, Math.floor(720 / W)));
+  stage.width = W * S; stage.height = H * S;
+  imgData = sctx.createImageData(stage.width, stage.height);
+  buf32 = new Uint32Array(imgData.data.buffer);
+  $("resOut").textContent = `${W} × ${H}`;
+  const n = W * H;
+  ox = new Float32Array(n); oy = new Float32Array(n); dx = new Float32Array(n); dy = new Float32Array(n);
+  col = new Uint32Array(n); delay = new Float32Array(n); arc = new Float32Array(n);
+  for (let p = 0; p < n; p++) {
+    delay[p] = Math.random() * MAXD;
+    arc[p] = (Math.random() - 0.5) * H * 0.35;
+    dx[p] = p % W; dy[p] = (p / W) | 0;
+  }
+}
+function setAssign(a) {
+  assign = a;
+  const n = W * H;
+  let moved = 0;
+  for (let p = 0; p < n; p++) {
+    const o = a[p];
+    if (o !== p) moved++;
+    ox[p] = o % W; oy[p] = (o / W) | 0;
+    const i = o * 4;
+    col[p] = ((255 << 24) | (srcPix[i + 2] << 16) | (srcPix[i + 1] << 8) | srcPix[i]) >>> 0;
+  }
+  $("sMoved").textContent = fmt(moved);
+}
+function frame(t) {
+  if (!assign) return;
+  buf32.fill(BG);
+  const SW = stage.width, SH = stage.height, n = W * H, s = S;
+  for (let p = 0; p < n; p++) {
+    let lt = (t - delay[p]) / SPAN;
+    lt = lt < 0 ? 0 : lt > 1 ? 1 : lt;
+    const e = lt < 0.5 ? 4 * lt * lt * lt : 1 - Math.pow(-2 * lt + 2, 3) / 2;
+    const x = ox[p] + (dx[p] - ox[p]) * e;
+    const y = oy[p] + (dy[p] - oy[p]) * e + arc[p] * Math.sin(Math.PI * e);
+    const px = Math.round(x * s), py = Math.round(y * s), c = col[p];
+    for (let yy = 0; yy < s; yy++) {
+      const row = py + yy;
+      if (row < 0 || row >= SH) continue;
+      const base = row * SW;
+      for (let xx = 0; xx < s; xx++) {
+        const cx = px + xx;
+        if (cx >= 0 && cx < SW) buf32[base + cx] = c;
+      }
+    }
+  }
+  sctx.putImageData(imgData, 0, 0);
+}
+function setT(t) { tNow = t; frame(t); $("scrub").value = Math.round(t * 1000); }
+
+/* ---------- playback ---------- */
+function stopPlay() {
+  cancelAnimationFrame(rafId); playing = false; $("playLbl").textContent = "Play";
+}
+function play({ hold = 450, dur = 3200, after = 0 } = {}) {
+  return new Promise((resolve) => {
+    if (!assign) return resolve();
+    stopPlay();
+    playing = true; $("playLbl").textContent = "Pause";
+    const start = performance.now();
+    const step = (now) => {
+      const el = now - start;
+      const t = Math.min(1, Math.max(0, (el - hold) / dur));
+      setT(t);
+      if (el < hold + dur + after && playing) rafId = requestAnimationFrame(step);
+      else { stopPlay(); resolve(); }
+    };
+    rafId = requestAnimationFrame(step);
+  });
+}
+
+/* ---------- solving ---------- */
+function setBusy(b) {
+  solving = b;
+  $("go").disabled = b;
+  $("go").textContent = b ? "Matching pixels…" : "Rearrange pixels";
+  $("barWrap").classList.toggle("on", b);
+  ["play", "scrub", "savePng", "rec"].forEach((id) => { $(id).disabled = b || recording; });
+}
+function solve() {
+  if (!srcImg || !tgtImg) return;
+  stopPlay();
+  calcSize();
+  drawThumb($("srcThumb"), srcImg);
+  drawThumb($("tgtThumb"), tgtImg);
+  srcPix = pixelsOf(srcImg, W, H);
+  const tgtPix = pixelsOf(tgtImg, W, H);
+  if (worker) worker.terminate();
+  worker = new Worker(workerURL);
+  const id = ++runId;
+  const mode = document.querySelector("input[name=mode]:checked").value;
+  setBusy(true);
+  $("bar").style.width = "0%";
+  $("sPix").textContent = fmt(W * H);
+  status(`Matching ${fmt(W * H)} pixels…`);
+  const t0 = performance.now();
+  worker.onmessage = (e) => {
+    if (id !== runId) return;
+    const m = e.data;
+    setAssign(m.assign);
+    setT(1);
+    $("bar").style.width = (m.progress * 100).toFixed(1) + "%";
+    $("sSwaps").textContent = fmt(m.swaps);
+    $("sErr").textContent = m.err.toFixed(1);
+    if (m.done) {
+      worker.terminate(); worker = null;
+      setBusy(false);
+      status(`Done in ${((performance.now() - t0) / 1000).toFixed(1)} s. Drag the slider or press Play to watch the pixels move.`);
+      if (!reduceMotion) play();
+    }
+  };
+  worker.onerror = () => { if (id === runId) { setBusy(false); status("Matching failed in this browser. Try a lower resolution."); } };
+  worker.postMessage({ W, H, src: srcPix, tgt: tgtPix, mode, budgetMs: 2500 + W * H * 0.06 });
+}
+
+/* ---------- saving ---------- */
+const dlReady = (window.claude && typeof window.claude.use === "function")
+  ? window.claude.use("downloads").catch(() => null) : Promise.resolve(null);
+async function offer(blob, filename) {
+  const dl = await dlReady;
+  if (dl) {
+    try { await dl.save({ filename, data: blob }); status(`Saved ${filename}.`); }
+    catch (e) {
+      if (e && e.code === "declined") status("Save cancelled.");
+      else if (e && e.code === "rate_limited") status("A save prompt is already open. Finish that one first.");
+      else status("Saving isn't available here. Right-click the picture and choose Save image.");
+    }
+    return;
+  }
+  if (window.claude) { status("Saving isn't available here. Right-click the picture and choose Save image."); return; }
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  status(`Saved ${filename}.`);
+}
+function savePng() {
+  if (!assign) return;
+  const small = document.createElement("canvas");
+  small.width = W; small.height = H;
+  const sx = small.getContext("2d");
+  const id = sx.createImageData(W, H);
+  const n = W * H;
+  for (let p = 0; p < n; p++) {
+    const o = assign[p] * 4, q = p * 4;
+    id.data[q] = srcPix[o]; id.data[q + 1] = srcPix[o + 1]; id.data[q + 2] = srcPix[o + 2]; id.data[q + 3] = 255;
+  }
+  sx.putImageData(id, 0, 0);
+  const k = Math.max(1, Math.round(1024 / W));
+  const big = document.createElement("canvas");
+  big.width = W * k; big.height = H * k;
+  const bx = big.getContext("2d");
+  bx.imageSmoothingEnabled = false;
+  bx.drawImage(small, 0, 0, big.width, big.height);
+  big.toBlob((b) => b && offer(b, `rearranged-${W}x${H}.png`), "image/png");
+}
+async function record() {
+  if (!assign || recording) return;
+  if (!window.MediaRecorder || !stage.captureStream) { status("This browser can't record video. Try Chrome, Edge or Firefox."); return; }
+  const types = ["video/mp4;codecs=avc1", "video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm", "video/mp4"];
+  const mime = types.find((t) => MediaRecorder.isTypeSupported(t));
+  if (!mime) { status("This browser can't record video."); return; }
+  const ext = mime.startsWith("video/mp4") ? "mp4" : "webm";
+  recording = true; setBusy(false);
+  status("Recording…");
+  const stream = stage.captureStream(60);
+  const rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 10e6 });
+  const chunks = [];
+  rec.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
+  const stopped = new Promise((r) => { rec.onstop = r; });
+  rec.start();
+  await play({ hold: 700, dur: 3400, after: 1200 });
+  rec.stop();
+  await stopped;
+  stream.getTracks().forEach((t) => t.stop());
+  recording = false; setBusy(false);
+  const blob = new Blob(chunks, { type: mime.split(";")[0] });
+  if (!blob.size) { status("The recording came out empty. Try again."); return; }
+  offer(blob, `pixel-rearrange.${ext}`);
+}
+
+/* ---------- inputs ---------- */
+async function useSource(file) {
+  if (!file || !file.type.startsWith("image/")) { status("That isn't an image file. Try a PNG, JPG, GIF or WebP."); return; }
+  try {
+    srcImg = await loadImage(URL.createObjectURL(file));
+    $("srcTag").textContent = "yours";
+    $("srcMeta").textContent = `${file.name || "Pasted image"} · ${srcImg.naturalWidth} × ${srcImg.naturalHeight}, cropped to the target's shape`;
+    solve();
+  } catch (err) { status(err.message); }
+}
+async function useTarget(file) {
+  if (!file || !file.type.startsWith("image/")) { status("That isn't an image file."); return; }
+  try {
+    tgtImg = await loadImage(URL.createObjectURL(file));
+    $("tgtReset").hidden = false;
+    solve();
+  } catch (err) { status(err.message); }
+}
+
+$("srcFile").addEventListener("change", (e) => { useSource(e.target.files[0]); e.target.value = ""; });
+$("tgtFile").addEventListener("change", (e) => { useTarget(e.target.files[0]); e.target.value = ""; });
+$("tgtReset").addEventListener("click", () => { tgtImg = defaultTgt; $("tgtReset").hidden = true; solve(); });
+const drop = $("drop");
+["dragenter", "dragover"].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add("over"); }));
+["dragleave", "drop"].forEach((ev) => drop.addEventListener(ev, () => drop.classList.remove("over")));
+drop.addEventListener("drop", (e) => { e.preventDefault(); useSource(e.dataTransfer.files[0]); });
+document.addEventListener("dragover", (e) => e.preventDefault());
+document.addEventListener("drop", (e) => { e.preventDefault(); if (e.dataTransfer.files[0]) useSource(e.dataTransfer.files[0]); });
+document.addEventListener("paste", (e) => {
+  const item = [...(e.clipboardData?.items || [])].find((i) => i.type.startsWith("image/"));
+  if (item) useSource(item.getAsFile());
+});
+$("res").addEventListener("input", () => {
+  const th = tgtImg ? tgtImg.naturalHeight / tgtImg.naturalWidth : 341 / 399;
+  $("resOut").textContent = `${$("res").value} × ${Math.round($("res").value * th)}`;
+});
+$("res").addEventListener("change", solve);
+document.querySelectorAll("input[name=mode]").forEach((r) => r.addEventListener("change", solve));
+$("go").addEventListener("click", solve);
+$("play").addEventListener("click", () => { if (playing) stopPlay(); else play(); });
+$("scrub").addEventListener("input", (e) => { stopPlay(); setT(e.target.value / 1000); });
+$("savePng").addEventListener("click", savePng);
+$("rec").addEventListener("click", record);
+
+/* ---------- boot ---------- */
+(async () => {
+  try {
+    defaultTgt = tgtImg = await loadImage(TARGET_SRC);
+    srcImg = await demoImage();
+    solve();
+  } catch (err) { status("Couldn't load the built-in images. " + err.message); }
+})();
+})();
+</script>
