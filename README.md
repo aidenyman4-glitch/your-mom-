@@ -154,3 +154,16 @@ Packaging:
 ```bash
 ./tools/package.sh         # -> dist/67-jumpscare-v<version>.zip
 ```
+
+## Pixel Rearranger
+
+Also in this repo: a web page that takes any picture and moves its pixels
+(never recolors them) until they rebuild the star-eyed target image, with an
+animation of the pixels flying into place, PNG export and video recording.
+
+- **Live site:** https://aidenyman4-glitch.github.io/your-mom-/ (served by GitHub
+  Pages from the `docs/` folder)
+- **Offline:** open `docs/index.html` straight from disk. It's a single
+  self-contained file.
+- **Editing:** change `pixel-rearranger/src/page.html`, then run
+  `python3 pixel-rearranger/build.py` to rebuild `docs/index.html`.
