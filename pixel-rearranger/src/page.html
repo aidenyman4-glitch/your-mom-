@@ -105,6 +105,18 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
 .actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
 .status { margin: 0; color: var(--muted); font-size: 13px; flex: 1 1 200px; min-width: 0; }
 .note { margin: 0; color: var(--muted); font-size: 12px; max-width: 70ch; }
+
+.how { margin-top: 56px; display: grid; gap: 18px; }
+.how h2 { font-size: 15px; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; counter-reset: step; }
+.steps li { counter-increment: step; border-top: 2px solid var(--line); padding-top: 14px; display: grid; gap: 6px; align-content: start; min-width: 0; }
+.steps li::before { content: counter(step); font: 600 12px var(--font-mono); color: var(--accent); }
+.steps h3 { margin: 0; font-size: 16px; font-weight: 600; }
+.steps p { margin: 0; color: var(--muted); max-width: 46ch; }
+@media (max-width: 760px) { .steps { grid-template-columns: minmax(0, 1fr); } }
+.private { margin: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; color: var(--fg); background: var(--panel); font-size: 13px; }
+footer { margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 8px 20px; justify-content: space-between; color: var(--muted); font-size: 12px; }
+footer a { color: var(--accent); text-underline-offset: 2px; }
 </style>
 
 <div class="wrap">
@@ -175,6 +187,21 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
       <p class="note">Color error is the average distance between each placed pixel and the target pixel it stands in for (0 is a perfect match, out of 255). Pictures with colors close to the target's (lots of blues, purples and whites here) come out best.</p>
     </main>
   </div>
+
+  <section class="how" aria-labelledby="howH">
+    <h2 id="howH">How it works</h2>
+    <ol class="steps">
+      <li><h3>Same grid</h3><p>Both pictures get cropped to the target's shape and shrunk to the same grid. At 160 pixels wide that's 21,920 pixels each, so every pixel of yours has exactly one spot waiting for it.</p></li>
+      <li><h3>Darkest to darkest</h3><p>Your pixels are lined up from darkest to brightest, and so are the target's spots. The darkest pixel goes to the darkest spot, the next one to the next, all the way up.</p></li>
+      <li><h3>Swap to fix colors</h3><p>Then it tries millions of random swaps between two pixels. A swap is kept only if, added together, the two pixels end up closer to the colors they're standing in for.</p></li>
+    </ol>
+    <p class="private">Your pictures stay on your device. Everything runs in your browser and nothing gets uploaded.</p>
+  </section>
+
+  <footer>
+    <span>Pixel Rearranger. Made with Claude Code.</span>
+    <a href="https://github.com/aidenyman4-glitch/your-mom-" id="srcLink">Source on GitHub</a>
+  </footer>
 </div>
 
 <script>
